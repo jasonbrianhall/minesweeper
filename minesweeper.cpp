@@ -159,10 +159,36 @@ private:
 
     void drawEnterName() {
         clear();
-        mvprintw(height/2 - 2, width, "Congratulations!");
-        mvprintw(height/2 - 1, width, "Your time: %s", timer.getTimeString().c_str());
-        mvprintw(height/2, width, "Enter your name: %s", playerName.c_str());
-        mvprintw(height/2 + 1, width, "Press Enter when done");
+    
+        // Calculate center position for better layout
+        int centerX = (width * 2) / 2;
+    
+        // Draw header with the game title
+        attron(COLOR_PAIR(10) | A_BOLD);
+        mvprintw(2, centerX - 5, "MINESWEEPER");
+        attroff(COLOR_PAIR(10) | A_BOLD);
+    
+        // Show high score achievement
+        attron(A_BOLD);
+        mvprintw(5, centerX - 14, "*** NEW HIGH SCORE! ***");
+        attroff(A_BOLD);
+    
+        // Show game stats
+        mvprintw(7, centerX - 10, "Difficulty: %s", 
+        difficulty == Difficulty::EASY ? "Easy" :
+        difficulty == Difficulty::MEDIUM ? "Medium" : "Hard");
+        mvprintw(8, centerX - 10, "Your time: %s", timer.getTimeString().c_str());
+    
+        // Show name entry prompt
+        mvprintw(10, centerX - 10, "Enter your name:");
+        attron(A_REVERSE);
+        mvprintw(11, centerX - 10, "%-20s", playerName.c_str());
+        attroff(A_REVERSE);
+    
+        // Show instructions
+        mvprintw(13, centerX - 15, "Press Enter when done (max 20 chars)");
+    
+        refresh();
     }
 
     void saveHighscore() {
@@ -393,40 +419,50 @@ private:
         mvprintw(9, 4, "C: Clear Screen and get rid of any artifacts");
         mvprintw(10, 4, "N: New Game");
         mvprintw(11, 4, "R: Reset");
-        mvprintw(12, 4, "Q: Quit game");
-        mvprintw(14, 2, "Tips:");
-        mvprintw(15, 4, "- First click is always safe");
-        mvprintw(16, 4, "- Numbers show adjacent mines");
-        mvprintw(17, 4, "- Flag suspected mines with F");
-        mvprintw(18, 4, "- Press space on revealed numbers to clear adjacent cells");
-        mvprintw(19, 2, "Press any key to return");
+        mvprintw(12, 4, "K: High Scores");
+        mvprintw(13, 4, "Q: Quit game");
+
+        mvprintw(15, 2, "Tips:");
+        mvprintw(16, 4, "- First click is always safe");
+        mvprintw(17, 4, "- Numbers show adjacent mines");
+        mvprintw(18, 4, "- Flag suspected mines with F");
+        mvprintw(19, 4, "- Press space on revealed numbers to clear adjacent cells");
+        mvprintw(20, 2, "Press any key to return");
     }
     
     void handleNameEntry(int ch) {
         if (ch == '\n' || ch == KEY_ENTER || ch == '\r') {
-            Score score;
-            score.name = playerName;
-            score.time = timer.getElapsedSeconds();
+            if (!playerName.empty()) {  // Only accept if name isn't empty
+                Score score;
+                score.name = playerName;
+                score.time = timer.getElapsedSeconds();
             
-            switch(difficulty) {
-                case Difficulty::EASY:
-                    score.difficulty = "Easy";
-                    break;
-                case Difficulty::MEDIUM:
-                    score.difficulty = "Medium";
-                    break;
-                case Difficulty::HARD:
-                    score.difficulty = "Hard";
-                    break;
+                switch(difficulty) {
+                    case Difficulty::EASY:
+                        score.difficulty = "Easy";
+                        break;
+                    case Difficulty::MEDIUM:
+                        score.difficulty = "Medium";
+                        break;
+                    case Difficulty::HARD:
+                        score.difficulty = "Hard";
+                        break;
+                }
+            
+                highscores.addScore(score);
+                state = GameState::HIGHSCORES;
+                enteringName = false;
+                clear();  // Clear screen before showing highscores
             }
-            
-            highscores.addScore(score);
-            state = GameState::HIGHSCORES;
-            enteringName = false;
         } else if (ch == KEY_BACKSPACE || ch == 127 || ch == '\b') {
             if (!playerName.empty()) {
                 playerName.pop_back();
             }
+        } else if (ch == 27) {  // ESC key
+            // Allow canceling name entry, go straight to highscores
+            state = GameState::HIGHSCORES;
+            enteringName = false;
+            clear();
         } else if (isprint(ch) && playerName.length() < 20) {
             playerName += ch;
         }
@@ -471,6 +507,11 @@ public:
     }
 
     void draw() {
+        if (state == GameState::HIGHSCORES) {
+            drawHighscores();
+            state = GameState::MENU;
+            return;
+        }
         if (state == GameState::MENU) {
             drawMenu();
             return;
@@ -584,7 +625,11 @@ public:
                 case 'h':
                 case 'H':
                     state = GameState::HELP;
-                    break;    
+                    break;
+                case 'k':
+                case 'K':
+                    state = GameState::HIGHSCORES;
+                    break;
                 case 'q':
                 case 'Q':
                     return false;
@@ -665,6 +710,11 @@ public:
             case 'C':
                 clear();
                 break;
+            case 'k':
+            case 'K':
+                state = GameState::ENTER_NAME;
+                break;
+
             case 'q':
             case 'Q':
                 return false;
