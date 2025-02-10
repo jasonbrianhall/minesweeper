@@ -24,6 +24,7 @@ A modern, feature-rich implementation of the classic Minesweeper game for termin
 - **F**: Flag/unflag cell
 - **H**: Show/hide help menu
 - **N**: Start new game
+- **R**: Restart current game
 - **C**: Clear screen (removes artifacts)
 - **Q**: Quit game
 
