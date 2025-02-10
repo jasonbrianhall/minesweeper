@@ -196,15 +196,16 @@ private:
     }
 
     bool checkWin() {
-        int revealedCount = 0;
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                if (revealed[y][x] && !minefield[y][x]) revealedCount++;
+                if (!minefield[y][x] && !revealed[y][x]) {
+                    return false;
+                }
             }
         }
-        return revealedCount == (height * width - mines);
+        return true;
     }
-
+    
     void drawTitle() {
         attron(COLOR_PAIR(10) | A_BOLD);
         mvprintw(0, 0, "MINESWEEPER");
