@@ -102,7 +102,7 @@ private:
                 clrtoeol();
             
                 attron(COLOR_PAIR(10) | A_BOLD);
-                mvprintw(0, 0, "%s", title.c_str());
+                mvprintw(0, pos, "%s", title.c_str());
                 attroff(COLOR_PAIR(10) | A_BOLD);
             
                 if (!firstMove && !checkWin()) {
@@ -115,11 +115,9 @@ private:
                 }
             
                 refresh();
-            
-                pos += direction;
-                if (pos >= maxPos || pos <= 0) {
-                    direction *= -1;
-                }
+
+                // This would animate the banner but it's really annoying            
+                //pos = (pos + direction)%10;
             }
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
         }
