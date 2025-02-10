@@ -106,11 +106,11 @@ private:
             
                 if (!firstMove && !checkWin()) {
                     timer.update();
-                    mvprintw(0, width * 2 + 5, "Time: %s", timer.getTimeString().c_str());
+                    mvprintw(0, width * 2 + 5, "Time: %s - currentseed: %i", timer.getTimeString().c_str(), currentSeed);
                 } else if (firstMove) {
                     mvprintw(0, width * 2 + 5, "Time: %s", timer.getTimeString().c_str());
                 } else {
-                    mvprintw(0, width * 2 + 5, "Time: %s - You win", timer.getTimeString().c_str());
+                    mvprintw(0, width * 2 + 5, "Time: %s - currentseed: %i - You win", timer.getTimeString().c_str(), currentSeed);
                 }
             
                 refresh();
