@@ -2,10 +2,23 @@
 #include <fstream>
 #include <algorithm>
 #include <cstdlib>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 Highscores::Highscores() {
     const char* home = getenv("HOME");
-    scorePath = std::string(home ? home : ".") + "/.minesweeper_scores.txt";
+    if (!home) {
+        home = ".";
+    }
+
+    // Create the .minesweeper directory path
+    std::string dirPath = std::string(home) + "/.minesweeper";
+    
+    // Create directory with rwx------ permissions (0700 in octal)
+    mkdir(dirPath.c_str(), 0700);
+    
+    // Set the scores file path inside the .minesweeper directory
+    scorePath = dirPath + "/scores.txt";
     loadScores();
 }
 

@@ -140,39 +140,45 @@ private:
     void drawHighscores() {
         clear();
         mvprintw(2, width, "HIGHSCORES");
-        
+    
         const auto& scores = highscores.getScores();
         int row = 4;
-        
+    
         mvprintw(row++, 2, "%-20s %-10s %-10s", "Name", "Time", "Difficulty");
         mvprintw(row++, 2, "----------------------------------------");
-        
+    
         for (const auto& score : scores) {
-            mvprintw(row++, 2, "%-20s %-10d %-10s", 
+            // Convert seconds to minutes:seconds format
+            int minutes = score.time / 60;
+            int seconds = score.time % 60;
+            char timeStr[10];
+            snprintf(timeStr, sizeof(timeStr), "%02d:%02d", minutes, seconds);
+        
+            mvprintw(row++, 2, "%-20s %-10s %-10s", 
                     score.name.c_str(), 
-                    score.time,
+                    timeStr,
                     score.difficulty.c_str());
         }
-        
+    
         mvprintw(row + 2, 2, "Press any key to return");
     }
 
-void drawEnterName() {
-    clear();
-    refresh();  // Make sure screen is cleared
+    void drawEnterName() {
+        clear();
+        refresh();  // Make sure screen is cleared
     
-    // Print debug info to help diagnose positioning
-    mvprintw(0, 0, "Screen width: %d, Height: %d", width, height);
+        // Print debug info to help diagnose positioning
+        mvprintw(0, 0, "Screen width: %d, Height: %d", width, height);
     
-    // Use absolute positions instead of calculated ones for testing
-    mvprintw(2, 2, "MINESWEEPER");
-    mvprintw(4, 2, "NEW HIGH SCORE!");
-    mvprintw(6, 2, "Your time: %s", timer.getTimeString().c_str());
-    mvprintw(8, 2, "Enter your name: %s", playerName.c_str());
-    mvprintw(10, 2, "Press Enter when done (ESC to cancel)");
+        // Use absolute positions instead of calculated ones for testing
+        mvprintw(2, 2, "MINESWEEPER");
+        mvprintw(4, 2, "NEW HIGH SCORE!");
+        mvprintw(6, 2, "Your time: %s", timer.getTimeString().c_str());
+        mvprintw(8, 2, "Enter your name: %s", playerName.c_str());
+        mvprintw(10, 2, "Press Enter when done (ESC to cancel)");
     
-    refresh();  // Make sure everything is displayed
-}
+        refresh();  // Make sure everything is displayed
+    }
 
     void saveHighscore() {
         Score score;
