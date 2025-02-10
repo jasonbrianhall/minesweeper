@@ -529,10 +529,12 @@ public:
                 }
 
                 if (flagged[y][x]) {
-                    attron(COLOR_PAIR(9));
-                    addch('F');
-                    addch(' ');
-                    attroff(COLOR_PAIR(9));
+                    if (!firstMove) {
+                        attron(COLOR_PAIR(9));
+                        addch('F');
+                        addch(' ');
+                       attroff(COLOR_PAIR(9));
+                    }
                 } else if (!revealed[y][x]) {
                     addch('#');
                     addch(' ');
