@@ -7,12 +7,14 @@
 #include <string>
 #include <thread>
 #include <atomic>
+#include "highscores.h"
 
 enum class GameState {
     MENU,
     PLAYING,
     HELP,
-    GAME_OVER
+    GAME_OVER,
+    HIGHSCORES
 };
 
 enum class Difficulty {
@@ -89,6 +91,57 @@ private:
     int currentSeed=-1;
     std::string seedInput;
     bool enteringSeed = false;
+    Highscores highscores;
+    std::string playerName;
+
+    void drawHighscores() {
+        clear();
+        mvprintw(2, width, "HIGHSCORES");
+        
+        const auto& scores = highscores.getScores();
+        int row = 4;
+        
+        mvprintw(row++, 2, "%-20s %-10s %-10s", "Name", "Time", "Difficulty");
+        mvprintw(row++, 2, "----------------------------------------");
+        
+        for (const auto& score : scores) {
+            mvprintw(row++, 2, "%-20s %-10d %-10s", 
+                    score.name.c_str(), 
+                    score.time,
+                    score.difficulty.c_str());
+        }
+        
+        mvprintw(row + 2, 2, "Press any key to return");
+    }
+
+    void drawEnterName() {
+        clear();
+        mvprintw(height/2 - 2, width, "Congratulations!");
+        mvprintw(height/2 - 1, width, "Your time: %s", timer.getTimeString().c_str());
+        mvprintw(height/2, width, "Enter your name: %s", playerName.c_str());
+        mvprintw(height/2 + 1, width, "Press Enter when done");
+    }
+
+    void saveHighscore() {
+        Score score;
+        score.name = playerName;
+            
+        switch(difficulty) {
+            case Difficulty::EASY:
+                score.difficulty = "Easy";
+                break;
+            case Difficulty::MEDIUM:
+                score.difficulty = "Medium";
+                break;
+            case Difficulty::HARD:
+                score.difficulty = "Hard";
+                break;
+        }
+        
+        highscores.addScore(score);
+    }
+
+
     
     void animateTitle() {
         const std::string title = "MINESWEEPER";
@@ -112,6 +165,7 @@ private:
                     mvprintw(0, width * 2 + 5, "Time: %s", timer.getTimeString().c_str());
                 } else {
                     mvprintw(0, width * 2 + 5, "Time: %s - currentseed: %i - You win", timer.getTimeString().c_str(), currentSeed);
+                    timer.stop();
                 }
             
                 refresh();
