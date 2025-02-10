@@ -104,8 +104,8 @@ private:
                 attroff(COLOR_PAIR(10) | A_BOLD);
             
                 timer.update();
-                if (!firstMove) {
-                    mvprintw(0, width * 2 + 5, "Time: %s", timer.getTimeString().c_str());
+                if (!firstMove && !checkWin()) {
+                    mvprintw(0, width * 2 + 5, "Time: %s %i", timer.getTimeString().c_str(), checkWin());
                 }    
             
                 refresh();
