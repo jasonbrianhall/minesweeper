@@ -411,8 +411,7 @@ public:
             clear();
             return true;
         }
-        
-        
+                
         switch (ch) {
             case KEY_UP:
                 if (cursorY > 0) cursorY--;
@@ -443,7 +442,9 @@ public:
                         revealCell(cursorY, cursorX);
                         if (!won) {
                             won = checkWin();
-                            if (won) timer.stop();
+                            if (won) {
+                               timer.stop();
+                            }
                         }
                     }
                 }
