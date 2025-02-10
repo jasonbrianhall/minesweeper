@@ -270,7 +270,8 @@ private:
         mvprintw(6, 4, "Space: Reveal cell");
         mvprintw(7, 4, "F: Flag/unflag cell");
         mvprintw(8, 4, "H: Show/hide help");
-        mvprintw(9, 4, "Q: Quit game");
+        mvprintw(9, 4, "C: Clear Screen and get rid of any artifacts");
+        mvprintw(10, 4, "Q: Quit game");
         mvprintw(11, 2, "Tips:");
         mvprintw(12, 4, "- First click is always safe");
         mvprintw(13, 4, "- Numbers show adjacent mines");
@@ -382,19 +383,22 @@ public:
                 case '1':
                     setDifficulty(Difficulty::EASY);
                     state = GameState::PLAYING;
+                    clear();
                     break;
                 case '2':
                     setDifficulty(Difficulty::MEDIUM);
                     state = GameState::PLAYING;
+                    clear();
                     break;
                 case '3':
                     setDifficulty(Difficulty::HARD);
                     state = GameState::PLAYING;
+                    clear();    
                     break;
                 case 'h':
                 case 'H':
                     state = GameState::HELP;
-                    break;
+                    break;    
                 case 'q':
                 case 'Q':
                     return false;
@@ -403,11 +407,12 @@ public:
         }
 
         if (state == GameState::HELP) {
-            state = GameState::MENU;
+            state = GameState::PLAYING;
+            clear();
             return true;
         }
-
-        //drawTitle();
+        
+        
         switch (ch) {
             case KEY_UP:
                 if (cursorY > 0) cursorY--;
@@ -470,7 +475,6 @@ public:
         }
         return true;
     }
-
     bool isGameOver() const { return gameOver || won; }
 };
 
