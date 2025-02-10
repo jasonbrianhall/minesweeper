@@ -5,6 +5,8 @@
 #include <set>
 #include <chrono>
 #include <string>
+#include <thread>
+#include <atomic>
 
 enum class GameState {
     MENU,
@@ -71,6 +73,8 @@ public:
 
 class Minesweeper {
 private:
+    std::thread titleThread;
+    std::atomic<bool> running{true};
     int height, width, mines;
     std::vector<std::vector<bool>> minefield;
     std::vector<std::vector<bool>> revealed;
@@ -83,6 +87,38 @@ private:
     Difficulty difficulty = Difficulty::EASY;
     Timer timer;
 
+    
+    void animateTitle() {
+        const std::string title = "MINESWEEPER";
+        int direction = 1;
+        int pos = 0;
+        int maxPos = width - title.length();
+    
+        while (running) {
+            if (state == GameState::PLAYING) {
+                move(0, 0);
+                clrtoeol();
+            
+                attron(COLOR_PAIR(10) | A_BOLD);
+                mvprintw(0, 0, "%s", title.c_str());
+                attroff(COLOR_PAIR(10) | A_BOLD);
+            
+                timer.update();
+                if (!firstMove) {
+                    mvprintw(0, width * 2 + 5, "Time: %s", timer.getTimeString().c_str());
+                }    
+            
+                refresh();
+            
+                pos += direction;
+                if (pos >= maxPos || pos <= 0) {
+                    direction *= -1;
+                }
+            }
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        }
+    }
+        
     void setupColors() {
         start_color();
         init_pair(1, COLOR_BLUE, COLOR_BLACK);      // 1
@@ -247,6 +283,14 @@ public:
     Minesweeper() {
         setupColors();
         setDifficulty(Difficulty::EASY);
+        titleThread = std::thread(&Minesweeper::animateTitle, this);
+    }
+
+    ~Minesweeper() {
+        running = false;
+        if (titleThread.joinable()) {
+            titleThread.join();
+        }
     }
 
     void setDifficulty(Difficulty diff) {
@@ -267,6 +311,7 @@ public:
         cursorY = 0;
         cursorX = 0;
         timer = Timer();
+        clear();
     }
 
     void draw() {
@@ -278,9 +323,6 @@ public:
             drawHelp();
             return;
         }
-
-        clear();
-        drawTitle();
 
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
@@ -365,8 +407,7 @@ public:
             return true;
         }
 
-        timer.update();
-
+        //drawTitle();
         switch (ch) {
             case KEY_UP:
                 if (cursorY > 0) cursorY--;
@@ -418,6 +459,10 @@ public:
                     reset();
                     state = GameState::MENU;
                 }
+                break;
+            case 'c':
+            case 'C':
+                clear();
                 break;
             case 'q':
             case 'Q':
