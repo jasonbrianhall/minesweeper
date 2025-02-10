@@ -71,7 +71,6 @@ Requirements:
 - Active gameplay
 - High score entry
 - High score display
-- Win/lose conditions with stats
 
 ## 🎥 Preview
 
@@ -85,6 +84,6 @@ MINESWEEPER                  Time: 01:23
 
 ## 📝 License
 
-Licensed under MIT; see LICENSE.md.
+Licensed under MIT; see LICENSE.md./
 
 Created by Jason Brian Hall (jasonbrianhall@gmail.com)
