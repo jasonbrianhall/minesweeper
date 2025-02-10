@@ -87,7 +87,8 @@ private:
     Difficulty difficulty = Difficulty::EASY;
     Timer timer;
     int currentSeed=-1;
-
+    std::string seedInput;
+    bool enteringSeed = false;
     
     void animateTitle() {
         const std::string title = "MINESWEEPER";
@@ -269,8 +270,9 @@ private:
         mvprintw(height/2 + 1, width, "1. Easy (9x9, 10 mines)");
         mvprintw(height/2 + 2, width, "2. Medium (16x16, 40 mines)");
         mvprintw(height/2 + 3, width, "3. Hard (16x30, 99 mines)");
-        mvprintw(height/2 + 5, width, "Press 1-3 to start");
-        mvprintw(height/2 + 6, width, "Press H for help");
+        mvprintw(height/2 + 4, width, "S. Enter seed: %s", enteringSeed ? seedInput.c_str() : "Random");
+        mvprintw(height/2 + 6, width, "Press 1-3 to start, S for seed");
+        mvprintw(height/2 + 7, width, "Press H for help");
     }
 
     void drawHelp() {
@@ -325,6 +327,8 @@ public:
         cursorX = 0;
         timer = Timer();
         clear();
+        seedInput.clear();
+        enteringSeed = false;
     }
 
     void draw() {
@@ -390,8 +394,33 @@ public:
     }
 
     bool handleInput(int ch) {
-        if (state == GameState::MENU) {
-            switch (ch) {
+       if (state == GameState::MENU) {
+           if (enteringSeed) {
+               if (ch == '\n' || ch == '\r' || ch == KEY_ENTER) {
+                   enteringSeed = false;
+                   try {
+                       currentSeed = std::stoi(seedInput);
+                   } catch (...) {
+                       currentSeed = -1;
+                   }
+                   return true;
+               } else if (ch == 27) { // ESC
+                   enteringSeed = false;
+                   seedInput.clear();
+               } else if (ch == KEY_BACKSPACE || ch == 127) {
+                   if (!seedInput.empty()) seedInput.pop_back();    
+               } else if (isdigit(ch)) {
+                   seedInput += ch;
+               }
+               return true;
+           }
+       
+           switch (ch) {
+               case 's':
+               case 'S':
+                   enteringSeed = true;
+                   seedInput.clear();
+                   break;
                 case '1':
                     setDifficulty(Difficulty::EASY);
                     state = GameState::PLAYING;
@@ -439,7 +468,7 @@ public:
                 break;
             case ' ':
                 if (firstMove) {
-                    initializeMinefield(cursorY, cursorX);
+                    initializeMinefield(cursorY, cursorX, currentSeed);
                     firstMove = false;
                     timer.start();
                 }
