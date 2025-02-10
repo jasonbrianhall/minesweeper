@@ -59,10 +59,9 @@ Requirements:
 - Bold, colored numbers (1-8)
 - High contrast mine and flag symbols
 - Reverse highlighting for cursor position
-- Animated title banner
 - Clean, intuitive UI with status messages
 - Game timer display in MM:SS format
-- Current seed display (for sharing/replaying)
+- Current seed display (for sharing/replaying); first move would have to be the same or an empty block to get the same game
 - High score tables with player names and times
 
 ## 🔄 Game States
@@ -86,6 +85,6 @@ MINESWEEPER                  Time: 01:23
 
 ## 📝 License
 
-Licensed under MIT.
+Licensed under MIT; see LICENSE.md.
 
 Created by Jason Brian Hall (jasonbrianhall@gmail.com)
