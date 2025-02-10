@@ -157,39 +157,22 @@ private:
         mvprintw(row + 2, 2, "Press any key to return");
     }
 
-    void drawEnterName() {
-        clear();
+void drawEnterName() {
+    clear();
+    refresh();  // Make sure screen is cleared
     
-        // Calculate center position for better layout
-        int centerX = (width * 2) / 2;
+    // Print debug info to help diagnose positioning
+    mvprintw(0, 0, "Screen width: %d, Height: %d", width, height);
     
-        // Draw header with the game title
-        attron(COLOR_PAIR(10) | A_BOLD);
-        mvprintw(2, centerX - 5, "MINESWEEPER");
-        attroff(COLOR_PAIR(10) | A_BOLD);
+    // Use absolute positions instead of calculated ones for testing
+    mvprintw(2, 2, "MINESWEEPER");
+    mvprintw(4, 2, "NEW HIGH SCORE!");
+    mvprintw(6, 2, "Your time: %s", timer.getTimeString().c_str());
+    mvprintw(8, 2, "Enter your name: %s", playerName.c_str());
+    mvprintw(10, 2, "Press Enter when done (ESC to cancel)");
     
-        // Show high score achievement
-        attron(A_BOLD);
-        mvprintw(5, centerX - 14, "*** NEW HIGH SCORE! ***");
-        attroff(A_BOLD);
-    
-        // Show game stats
-        mvprintw(7, centerX - 10, "Difficulty: %s", 
-        difficulty == Difficulty::EASY ? "Easy" :
-        difficulty == Difficulty::MEDIUM ? "Medium" : "Hard");
-        mvprintw(8, centerX - 10, "Your time: %s", timer.getTimeString().c_str());
-    
-        // Show name entry prompt
-        mvprintw(10, centerX - 10, "Enter your name:");
-        attron(A_REVERSE);
-        mvprintw(11, centerX - 10, "%-20s", playerName.c_str());
-        attroff(A_REVERSE);
-    
-        // Show instructions
-        mvprintw(13, centerX - 15, "Press Enter when done (max 20 chars)");
-    
-        refresh();
-    }
+    refresh();  // Make sure everything is displayed
+}
 
     void saveHighscore() {
         Score score;
@@ -507,6 +490,13 @@ public:
     }
 
     void draw() {
+       if (state == GameState::ENTER_NAME) {
+           drawEnterName();
+           //state = GameState::MENU;
+           return;
+       }
+
+
         if (state == GameState::HIGHSCORES) {
             drawHighscores();
             state = GameState::MENU;
@@ -574,11 +564,11 @@ public:
     }
 
     bool handleInput(int ch) {
-       if (state == GameState::ENTER_NAME) {
-           handleNameEntry(ch);
-           return true;
-       }
-       if (state == GameState::MENU) {
+        if (state == GameState::ENTER_NAME) {
+            handleNameEntry(ch);
+            return true;
+        }
+        if (state == GameState::MENU) {
            if (enteringSeed) {
                if (ch == '\n' || ch == '\r' || ch == KEY_ENTER) {
                    enteringSeed = false;
