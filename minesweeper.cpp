@@ -103,10 +103,12 @@ private:
                 mvprintw(0, 0, "%s", title.c_str());
                 attroff(COLOR_PAIR(10) | A_BOLD);
             
-                timer.update();
                 if (!firstMove && !checkWin()) {
-                    mvprintw(0, width * 2 + 5, "Time: %s %i", timer.getTimeString().c_str(), checkWin());
-                }    
+                    timer.update();
+                    mvprintw(0, width * 2 + 5, "Time: %s", timer.getTimeString().c_str());
+                } else {
+                    mvprintw(0, width * 2 + 5, "Time: %s - You win", timer.getTimeString().c_str());
+                }
             
                 refresh();
             
