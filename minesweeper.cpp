@@ -264,13 +264,22 @@ private:
     }
 
     void drawMenu() {
+        std::string seedText;
+
         clear();
         mvprintw(height/2 - 2, width, "MINESWEEPER");
         mvprintw(height/2, width, "Select Difficulty:");
         mvprintw(height/2 + 1, width, "1. Easy (9x9, 10 mines)");
         mvprintw(height/2 + 2, width, "2. Medium (16x16, 40 mines)");
         mvprintw(height/2 + 3, width, "3. Hard (16x30, 99 mines)");
-        mvprintw(height/2 + 4, width, "S. Enter seed: %s", enteringSeed ? seedInput.c_str() : "Random");
+        if (enteringSeed) {
+           seedText = seedInput;
+        } else if (currentSeed == -1) {
+           seedText = "Random";
+        } else {
+           seedText = std::to_string(currentSeed);
+        }
+        mvprintw(height/2 + 4, width, "S. Enter seed: %s", seedText.c_str());
         mvprintw(height/2 + 6, width, "Press 1-3 to start, S for seed");
         mvprintw(height/2 + 7, width, "Press H for help");
     }
@@ -400,6 +409,7 @@ public:
                    enteringSeed = false;
                    try {
                        currentSeed = std::stoi(seedInput);
+                       printf("Current Seed %i\n", currentSeed);
                    } catch (...) {
                        currentSeed = -1;
                    }
