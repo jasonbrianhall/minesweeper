@@ -86,6 +86,7 @@ private:
     GameState state = GameState::MENU;
     Difficulty difficulty = Difficulty::EASY;
     Timer timer;
+    int currentSeed=-1;
 
     
     void animateTitle() {
@@ -105,6 +106,8 @@ private:
             
                 if (!firstMove && !checkWin()) {
                     timer.update();
+                    mvprintw(0, width * 2 + 5, "Time: %s", timer.getTimeString().c_str());
+                } else if (firstMove) {
                     mvprintw(0, width * 2 + 5, "Time: %s", timer.getTimeString().c_str());
                 } else {
                     mvprintw(0, width * 2 + 5, "Time: %s - You win", timer.getTimeString().c_str());
@@ -135,18 +138,24 @@ private:
         init_pair(10, COLOR_WHITE, COLOR_BLUE);     // title
     }
 
-    void initializeMinefield(int firstY, int firstX) {
+    void initializeMinefield(int firstY, int firstX, int seed = -1) {
         minefield = std::vector<std::vector<bool>>(height, std::vector<bool>(width, false));
-        std::random_device rd;
-        std::mt19937 gen(rd());
+        
+        if (seed == -1) {
+            std::random_device rd;
+            currentSeed = rd();
+        } else {
+            currentSeed = seed;
+        }
+        
+        std::mt19937 gen(currentSeed);
         std::uniform_int_distribution<> disH(0, height - 1);
         std::uniform_int_distribution<> disW(0, width - 1);
-
+        
         int placedMines = 0;
         while (placedMines < mines) {
             int y = disH(gen);
             int x = disW(gen);
-            // Avoid placing mine at first click or adjacent to it
             if (!minefield[y][x] && 
                 (abs(y - firstY) > 1 || abs(x - firstX) > 1)) {
                 minefield[y][x] = true;
@@ -154,7 +163,7 @@ private:
             }
         }
     }
-
+    
     int countAdjacentMines(int y, int x) {
         int count = 0;
         for (int dy = -1; dy <= 1; dy++) {
@@ -273,13 +282,14 @@ private:
         mvprintw(7, 4, "F: Flag/unflag cell");
         mvprintw(8, 4, "H: Show/hide help");
         mvprintw(9, 4, "C: Clear Screen and get rid of any artifacts");
-        mvprintw(10, 4, "Q: Quit game");
-        mvprintw(11, 2, "Tips:");
-        mvprintw(12, 4, "- First click is always safe");
-        mvprintw(13, 4, "- Numbers show adjacent mines");
-        mvprintw(14, 4, "- Flag suspected mines with F");
-        mvprintw(15, 4, "- Press space on revealed numbers to clear adjacent cells");
-        mvprintw(17, 2, "Press any key to return");
+        mvprintw(10, 4, "N: New Game");
+        mvprintw(11, 4, "Q: Quit game");
+        mvprintw(13, 2, "Tips:");
+        mvprintw(14, 4, "- First click is always safe");
+        mvprintw(15, 4, "- Numbers show adjacent mines");
+        mvprintw(16, 4, "- Flag suspected mines with F");
+        mvprintw(17, 4, "- Press space on revealed numbers to clear adjacent cells");
+        mvprintw(18, 2, "Press any key to return");
     }
 
 public:
@@ -461,12 +471,9 @@ public:
             case 'H':
                 state = GameState::HELP;
                 break;
-            case 'r':
-            case 'R':
-                if (gameOver || won) {
-                    reset();
-                    state = GameState::MENU;
-                }
+            case 'n':
+            case 'N':
+                reset();
                 break;
             case 'c':
             case 'C':
