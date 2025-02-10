@@ -196,19 +196,22 @@ private:
     }
 
     bool checkWin() {
+        int revealedCount = 0;
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                if (!minefield[y][x] && !revealed[y][x]) return false;
+                if (revealed[y][x] && !minefield[y][x]) revealedCount++;
             }
         }
-        return true;
+        return revealedCount == (height * width - mines);
     }
 
     void drawTitle() {
         attron(COLOR_PAIR(10) | A_BOLD);
         mvprintw(0, 0, "MINESWEEPER");
         attroff(COLOR_PAIR(10) | A_BOLD);
-        mvprintw(0, width * 2 - 10, "Time: %s", timer.getTimeString().c_str());
+        if (!firstMove) {
+            mvprintw(0, width * 2 + 5, "Time: %s", timer.getTimeString().c_str());
+        }
     }
 
     void drawMenu() {
@@ -444,3 +447,4 @@ int main() {
     endwin();
     return 0;
 }
+
