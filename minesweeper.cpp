@@ -167,9 +167,6 @@ private:
         clear();
         refresh();  // Make sure screen is cleared
     
-        // Print debug info to help diagnose positioning
-        mvprintw(0, 0, "Screen width: %d, Height: %d", width, height);
-    
         // Use absolute positions instead of calculated ones for testing
         mvprintw(2, 2, "MINESWEEPER");
         mvprintw(4, 2, "NEW HIGH SCORE!");
@@ -224,6 +221,13 @@ private:
                 } else {
                     mvprintw(0, width * 2 + 5, "Time: %s - currentseed: %i - You win", timer.getTimeString().c_str(), currentSeed);
                     timer.stop();
+                    if (isHighScore(timer.getElapsedSeconds())) {
+                        state = GameState::ENTER_NAME;
+                        playerName = "";
+                    } else {
+                        // Just show the high scores without name entry
+                        state = GameState::HIGHSCORES;
+                    }
                 }
             
                 refresh();
@@ -708,9 +712,14 @@ public:
                 break;
             case 'k':
             case 'K':
-                state = GameState::ENTER_NAME;
+                if (isHighScore(timer.getElapsedSeconds())) {
+                    state = GameState::ENTER_NAME;
+                    playerName = "";
+                } else {
+                    // Just show the high scores without name entry
+                    state = GameState::HIGHSCORES;
+                }
                 break;
-
             case 'q':
             case 'Q':
                 return false;
