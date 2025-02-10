@@ -280,7 +280,7 @@ private:
         } else {
            seedText = std::to_string(currentSeed);
         }
-        mvprintw(height/2 + 4, width, "S. Enter seed: %s", seedText.c_str());
+        mvprintw(height/2 + 4, width, "S. Enter seed (escape for random): %s", seedText.c_str());
         mvprintw(height/2 + 6, width, "Press 1-3 to start, S for seed");
         mvprintw(height/2 + 7, width, "Press H for help");
     }
@@ -295,13 +295,14 @@ private:
         mvprintw(8, 4, "H: Show/hide help");
         mvprintw(9, 4, "C: Clear Screen and get rid of any artifacts");
         mvprintw(10, 4, "N: New Game");
-        mvprintw(11, 4, "Q: Quit game");
-        mvprintw(13, 2, "Tips:");
-        mvprintw(14, 4, "- First click is always safe");
-        mvprintw(15, 4, "- Numbers show adjacent mines");
-        mvprintw(16, 4, "- Flag suspected mines with F");
-        mvprintw(17, 4, "- Press space on revealed numbers to clear adjacent cells");
-        mvprintw(18, 2, "Press any key to return");
+        mvprintw(11, 4, "R: Reset");
+        mvprintw(12, 4, "Q: Quit game");
+        mvprintw(14, 2, "Tips:");
+        mvprintw(15, 4, "- First click is always safe");
+        mvprintw(16, 4, "- Numbers show adjacent mines");
+        mvprintw(17, 4, "- Flag suspected mines with F");
+        mvprintw(18, 4, "- Press space on revealed numbers to clear adjacent cells");
+        mvprintw(19, 2, "Press any key to return");
     }
 
 public:
@@ -417,6 +418,7 @@ public:
                    return true;
                } else if (ch == 27) { // ESC
                    enteringSeed = false;
+                   currentSeed = -1;
                    seedInput.clear();
                } else if (ch == KEY_BACKSPACE || ch == 127) {
                    if (!seedInput.empty()) seedInput.pop_back();    
@@ -511,9 +513,14 @@ public:
             case 'H':
                 state = GameState::HELP;
                 break;
+            case 'r':
+            case 'R':
+                reset();
+                break;
             case 'n':
             case 'N':
-                reset();
+                state = GameState::MENU;
+                currentSeed = -1;
                 break;
             case 'c':
             case 'C':
