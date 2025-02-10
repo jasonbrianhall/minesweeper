@@ -143,6 +143,9 @@ private:
         if (seed == -1) {
             std::random_device rd;
             currentSeed = rd();
+            if (currentSeed<0) {
+                currentSeed*=-1;
+            }    
         } else {
             currentSeed = seed;
         }
