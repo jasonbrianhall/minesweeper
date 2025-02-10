@@ -9,12 +9,15 @@
 #include <atomic>
 #include "highscores.h"
 
+#define MAX_SCORES 10
+
 enum class GameState {
     MENU,
     PLAYING,
     HELP,
     GAME_OVER,
-    HIGHSCORES
+    HIGHSCORES,
+    ENTER_NAME
 };
 
 enum class Difficulty {
@@ -41,6 +44,7 @@ private:
     bool running;
     int elapsedSeconds;
 
+
 public:
     Timer() : running(false), elapsedSeconds(0) {}
 
@@ -54,6 +58,10 @@ public:
             update();
             running = false;
         }
+    }
+
+    int getElapsedSeconds() const {
+        return elapsedSeconds;
     }
 
     void update() {
@@ -93,7 +101,42 @@ private:
     bool enteringSeed = false;
     Highscores highscores;
     std::string playerName;
+    bool enteringName = false;
 
+    bool isHighScore(int time) {
+        const auto& scores = highscores.getScores();
+        std::string currentDifficulty;
+        
+        switch(difficulty) {
+            case Difficulty::EASY:
+                currentDifficulty = "Easy";
+                break;
+            case Difficulty::MEDIUM:
+                currentDifficulty = "Medium";
+                break;
+            case Difficulty::HARD:
+                currentDifficulty = "Hard";
+                break;
+        }
+        
+        // Count scores for current difficulty
+        int difficultyScores = 0;
+        bool worseThanCurrent = false;
+        
+        for (const auto& score : scores) {
+            if (score.difficulty == currentDifficulty) {
+                difficultyScores++;
+                if (score.time > time) {
+                    worseThanCurrent = true;
+                }
+            }
+        }
+        
+        // If we have less than MAX_SCORES for this difficulty, it's automatically a high score
+        // Or if we found a worse score in the current list
+        return difficultyScores < MAX_SCORES || worseThanCurrent;
+    }
+    
     void drawHighscores() {
         clear();
         mvprintw(2, width, "HIGHSCORES");
@@ -358,6 +401,37 @@ private:
         mvprintw(18, 4, "- Press space on revealed numbers to clear adjacent cells");
         mvprintw(19, 2, "Press any key to return");
     }
+    
+    void handleNameEntry(int ch) {
+        if (ch == '\n' || ch == KEY_ENTER || ch == '\r') {
+            Score score;
+            score.name = playerName;
+            score.time = timer.getElapsedSeconds();
+            
+            switch(difficulty) {
+                case Difficulty::EASY:
+                    score.difficulty = "Easy";
+                    break;
+                case Difficulty::MEDIUM:
+                    score.difficulty = "Medium";
+                    break;
+                case Difficulty::HARD:
+                    score.difficulty = "Hard";
+                    break;
+            }
+            
+            highscores.addScore(score);
+            state = GameState::HIGHSCORES;
+            enteringName = false;
+        } else if (ch == KEY_BACKSPACE || ch == 127 || ch == '\b') {
+            if (!playerName.empty()) {
+                playerName.pop_back();
+            }
+        } else if (isprint(ch) && playerName.length() < 20) {
+            playerName += ch;
+        }
+    }
+
 
 public:
     Minesweeper() {
@@ -459,6 +533,10 @@ public:
     }
 
     bool handleInput(int ch) {
+       if (state == GameState::ENTER_NAME) {
+           handleNameEntry(ch);
+           return true;
+       }
        if (state == GameState::MENU) {
            if (enteringSeed) {
                if (ch == '\n' || ch == '\r' || ch == KEY_ENTER) {
@@ -552,6 +630,13 @@ public:
                             won = checkWin();
                             if (won) {
                                timer.stop();
+                               if (isHighScore(timer.getElapsedSeconds())) {
+                                   state = GameState::ENTER_NAME;
+                                   playerName = "";
+                               } else {
+                                   // Just show the high scores without name entry
+                                   state = GameState::HIGHSCORES;
+                               }
                             }
                         }
                     }
