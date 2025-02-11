@@ -56,10 +56,10 @@ public:
     
     void RevealAdjacent(int row, int col) {
         if (!nativeMinesweeper->revealed[row][col]) return;
-        
+    
         int mineCount = GetAdjacentMines(row, col);
         int flagCount = GetAdjacentFlags(row, col);
-        
+    
         if (mineCount == flagCount) {
             for (int dy = -1; dy <= 1; dy++) {
                 for (int dx = -1; dx <= 1; dx++) {
@@ -79,6 +79,11 @@ public:
                         }
                     }
                 }
+            }
+            // Check win condition after revealing adjacent cells
+            if (CheckWin()) {
+                nativeMinesweeper->won = true;
+                nativeMinesweeper->timer.stop();
             }
         }
     }    
@@ -126,7 +131,7 @@ public:
             nativeMinesweeper->firstMove = false;
             nativeMinesweeper->timer.start();
         }
-        
+    
         if (!nativeMinesweeper->flagged[row][col]) {
             if (nativeMinesweeper->minefield[row][col]) {
                 nativeMinesweeper->gameOver = true;
@@ -134,7 +139,8 @@ public:
                 nativeMinesweeper->timer.stop();
             } else {
                 nativeMinesweeper->revealCell(row, col);
-                if (nativeMinesweeper->checkWin()) {
+                // Check win condition after revealing cell
+                if (CheckWin()) {
                     nativeMinesweeper->won = true;
                     nativeMinesweeper->timer.stop();
                 }
@@ -186,6 +192,19 @@ public:
 
     int GetHeight() {
         return nativeMinesweeper->height;
+    }
+ 
+    bool CheckWin() {
+        // Win condition: all non-mine cells are revealed
+        for (int i = 0; i < nativeMinesweeper->height; i++) {
+            for (int j = 0; j < nativeMinesweeper->width; j++) {
+                // If a cell is not a mine and not revealed, game is not won
+                if (!nativeMinesweeper->minefield[i][j] && !nativeMinesweeper->revealed[i][j]) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 };
 
@@ -340,7 +359,7 @@ private:
         this->Controls->Add(gridPanel);
 
         grid = gcnew array<Button^, 2>(height, width);
-        buttonFont = gcnew System::Drawing::Font(L"Arial", cellSize / 3, FontStyle::Bold);
+        buttonFont = gcnew System::Drawing::Font(L"Lucida Console", cellSize / 3, FontStyle::Bold);
 
         for (int i = 0; i < height; i++) {
             for (int j = 0; j < width; j++) {
