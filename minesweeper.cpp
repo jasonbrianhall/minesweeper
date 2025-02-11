@@ -712,7 +712,7 @@ public:
             case 'C':
                 clear();
                 break;
-            case 'k':
+            /*case 'k':
             case 'K':
                 if (isHighScore(timer.getElapsedSeconds())) {
                     state = GameState::ENTER_NAME;
@@ -721,7 +721,7 @@ public:
                     // Just show the high scores without name entry
                     state = GameState::HIGHSCORES;
                 }
-                break;
+                break;*/
             case 'q':
             case 'Q':
                 return false;
