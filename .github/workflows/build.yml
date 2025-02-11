@@ -88,7 +88,6 @@ jobs:
         files: |
           Minesweeper.msi
           x64/Release/minesweeper.exe
-          icon.ico
         tag_name: v${{ github.run_number }}
         name: Release ${{ github.run_number }}
         draft: false
@@ -107,7 +106,6 @@ jobs:
         files: |
           Minesweeper.msi
           x64/Release/minesweeper.exe
-          icon.ico
         tag_name: bleedingedge-v${{ github.run_number }}
         name: Dev Build ${{ github.run_number }}
         draft: false
