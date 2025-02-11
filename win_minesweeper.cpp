@@ -275,7 +275,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
             gcnew EventHandler(this, &MainForm::Exit_Click)));
 
         ToolStripMenuItem^ gameMenu = gcnew ToolStripMenuItem("Game");
-        GameMenu->DropDownItems->Add(gcnew ToolStripMenuItem(
+        gameMenu->DropDownItems->Add(gcnew ToolStripMenuItem(
             "Enter Seed...", nullptr,
             gcnew EventHandler(this, &MainForm::EnterSeed_Click)));
         gameMenu->DropDownItems->Add(gcnew ToolStripMenuItem("High Scores (H)", nullptr,
