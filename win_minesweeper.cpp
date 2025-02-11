@@ -504,9 +504,16 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
     }
 
     void UpdateCell(int row, int col) {
+        // Reset everything first
+        grid[row, col]->Text = "";
+        grid[row, col]->Image = nullptr;
+        grid[row, col]->BackColor = SystemColors::Control;  // Default for unrevealed
+
         if (minesweeper->IsRevealed(row, col)) {
+            // Always set background to AliceBlue for revealed cells first
+            grid[row, col]->BackColor = Color::AliceBlue;
+        
             if (minesweeper->IsMine(row, col)) {
-                grid[row, col]->Text = "";
                 grid[row, col]->BackColor = Color::Red;
                 if (bombImage) {
                     grid[row, col]->Image = bombImage;
@@ -516,7 +523,6 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
                 int count = minesweeper->GetAdjacentMines(row, col);
                 if (count > 0) {
                     grid[row, col]->Text = count.ToString();
-                    grid[row, col]->Image = nullptr;
                     switch (count) {
                         case 1: grid[row, col]->ForeColor = Color::Blue; break;
                         case 2: grid[row, col]->ForeColor = Color::Green; break;
@@ -525,25 +531,18 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
                         case 5: grid[row, col]->ForeColor = Color::DarkRed; break;
                         default: grid[row, col]->ForeColor = Color::DarkGray; break;
                     }
-                } else {
-                    grid[row, col]->Text = "";
-                    grid[row, col]->Image = nullptr;
                 }
-                grid[row, col]->BackColor = Color::LightBlue;
             }
         } else if (minesweeper->IsFlagged(row, col)) {
-            grid[row, col]->Text = "";
             if (flagImage) {
                 grid[row, col]->Image = flagImage;
                 grid[row, col]->ImageAlign = ContentAlignment::MiddleCenter;
             }
-        } else {
-            grid[row, col]->Text = "";
-            grid[row, col]->Image = nullptr;
-            grid[row, col]->BackColor = SystemColors::Control;
         }
     }
     
+    
+        
     void UpdateAllCells() {
         int height = minesweeper->GetHeight();
         int width = minesweeper->GetWidth();
