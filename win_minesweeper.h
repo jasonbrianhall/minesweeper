@@ -1,17 +1,33 @@
 #pragma once
-
 #include <string>
 #include <vector>
+#include <chrono>
 #include "highscores.h"
 
-// Native C++ classes
 enum class Difficulty {
-    EASY,
-    MEDIUM,
-    HARD
+    EASY,    // 9x9, 10 mines
+    MEDIUM,  // 16x16, 40 mines
+    HARD     // 16x30, 99 mines
+};
+
+struct DifficultySettings {
+    int height;
+    int width;
+    int mines;
+};
+
+const DifficultySettings DIFFICULTY_SETTINGS[] = {
+    {9, 9, 10},    // EASY
+    {16, 16, 40},  // MEDIUM
+    {16, 30, 99}   // HARD
 };
 
 class GameTimer {
+private:
+    std::chrono::steady_clock::time_point startTime;
+    bool running;
+    int elapsedSeconds;
+
 public:
     void start();
     void stop();
@@ -20,11 +36,10 @@ public:
 
 class Minesweeper {
 public:
+    int height, width, mines;
     bool firstMove;
     bool gameOver;
     bool won;
-    int width;
-    int height;
     std::string playerName;
     GameTimer timer;
     Highscores highscores;
@@ -44,7 +59,6 @@ public:
     void saveHighscore();
 };
 
-// Forward declarations for managed classes
 namespace MinesweeperGame {
     ref class MinesweeperWrapper;
     ref class MainForm;
