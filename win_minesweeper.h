@@ -36,14 +36,14 @@ const DifficultySettings DIFFICULTY_SETTINGS[] = {
     {16, 30, 99}   // HARD
 };
 
-class Timer {
+class GameTimer {  // Renamed from Timer to avoid conflict with Windows::Forms::Timer
 private:
     std::chrono::steady_clock::time_point startTime;
     bool running;
     int elapsedSeconds;
 
 public:
-    Timer();
+    GameTimer();
     void start();
     void stop();
     int getElapsedSeconds() const;
@@ -60,7 +60,7 @@ public:
     bool gameOver;
     bool won;
     bool firstMove;
-    Timer timer;
+    GameTimer timer;
     int currentSeed;
     std::string playerName;
     Highscores highscores;
@@ -77,4 +77,4 @@ public:
     void saveHighscore();
 };
 
-#endif // MINESWEEPER_H
+#endif 
