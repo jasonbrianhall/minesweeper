@@ -600,31 +600,57 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
     void ShowHighScores() {
         highScoreForm = gcnew Form();
         highScoreForm->Text = "High Scores";
-        highScoreForm->Size = Drawing::Size(400, 300);
+        highScoreForm->MinimumSize = Drawing::Size(400, 300);
         highScoreForm->StartPosition = FormStartPosition::CenterParent;
+        highScoreForm->MaximizeBox = true;
+        highScoreForm->Anchor = static_cast<AnchorStyles>(AnchorStyles::Top | AnchorStyles::Bottom | AnchorStyles::Left | AnchorStyles::Right);
 
         highScoreList = gcnew ListView();
         highScoreList->View = View::Details;
-        highScoreList->Size = Drawing::Size(360, 200);
-        highScoreList->Location = Point(20, 20);
+        highScoreList->Dock = DockStyle::Fill;
+        highScoreList->Margin = Padding(20);
+        highScoreList->FullRowSelect = true;
+        highScoreList->GridLines = true;
         highScoreList->Columns->Add("Name", 150);
         highScoreList->Columns->Add("Time", 100);
         highScoreList->Columns->Add("Difficulty", 100);
 
         List<String^>^ scores = minesweeper->GetHighScores();
         for each (String^ score in scores) {
-            array<String^>^ parts = score->Split();
-            ListViewItem^ item = gcnew ListViewItem(parts);
-            highScoreList->Items->Add(item);
+            array<String^>^ parts = score->Split('|');
+            if (parts->Length >= 3) {
+                // Convert time from seconds to MM:SS format
+                int seconds = Int32::Parse(parts[1]);
+                String^ timeStr = String::Format("{0:D2}:{1:D2}", seconds / 60, seconds % 60);
+                
+                ListViewItem^ item = gcnew ListViewItem(gcnew array<String^> {
+                    parts[0],    // Name
+                    timeStr,     // Time in MM:SS
+                    parts[2]     // Difficulty
+                });
+                highScoreList->Items->Add(item);
+            }
         }
 
-        highScoreForm->Controls->Add(highScoreList);
+        Panel^ mainPanel = gcnew Panel();
+        mainPanel->Dock = DockStyle::Fill;
+        mainPanel->Padding = Padding(20);
+
+        Panel^ buttonPanel = gcnew Panel();
+        buttonPanel->Height = 50;
+        buttonPanel->Dock = DockStyle::Bottom;
 
         Button^ closeButton = gcnew Button();
         closeButton->Text = "Close";
-        closeButton->Location = Point(150, 230);
+        closeButton->AutoSize = true;
+        closeButton->Anchor = static_cast<AnchorStyles>(AnchorStyles::None);
+        closeButton->Location = Point((buttonPanel->Width - closeButton->Width) / 2, (buttonPanel->Height - closeButton->Height) / 2);
         closeButton->Click += gcnew EventHandler(this, &MainForm::CloseHighScores);
-        highScoreForm->Controls->Add(closeButton);
+
+        buttonPanel->Controls->Add(closeButton);
+        mainPanel->Controls->Add(highScoreList);
+        mainPanel->Controls->Add(buttonPanel);
+        highScoreForm->Controls->Add(mainPanel);
 
         highScoreForm->ShowDialog();
     }
