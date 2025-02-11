@@ -251,9 +251,6 @@ private:
             "About", nullptr,
             gcnew EventHandler(this, &MainForm::ShowAbout_Click)));
             
-        menuStrip->Items->Add(helpMenu);
-
-
         difficultyMenu->DropDownItems->Add(gcnew ToolStripMenuItem(
             "Easy (9x9) F1", nullptr,
             gcnew EventHandler(this, &MainForm::SetEasy_Click)));
@@ -265,7 +262,10 @@ private:
             gcnew EventHandler(this, &MainForm::SetHard_Click)));
 
         menuStrip->Items->Add(fileMenu);
+        menuStrip->Items->Add(editMenu);
         menuStrip->Items->Add(difficultyMenu);
+        menuStrip->Items->Add(helpMenu);
+
         this->MainMenuStrip = menuStrip;
         this->Controls->Add(menuStrip);
 
@@ -363,7 +363,7 @@ private:
             L"Left click: Reveal cell\n"
             L"Right click: Flag/unflag cell\n"
             L"Click on revealed number: Reveal adjacent cells if correct number of flags\n\n"
-            L"Based on Minecraft's implementation.",
+            L"Written by Jason Hall (2025)",
             L"About Minesweeper",
             MessageBoxButtons::OK,
             MessageBoxIcon::Information);
