@@ -462,7 +462,7 @@ private:
     void UpdateCell(int row, int col) {
         if (minesweeper->IsRevealed(row, col)) {
             if (minesweeper->IsMine(row, col)) {
-                grid[row, col]->Text = "💣";
+                grid[row, col]->Text = L"💣";
                 grid[row, col]->BackColor = Color::Red;
             } else {
                 int count = minesweeper->GetAdjacentMines(row, col);
@@ -482,9 +482,9 @@ private:
                 grid[row, col]->BackColor = Color::LightGray;
             }
         } else if (minesweeper->IsFlagged(row, col)) {
-            grid[row, col]->Text = "🚩";
+            grid[row, col]->Text = L"🚩";
         } else {
-            grid[row, col]->Text = "";
+            grid[row, col]->Text = L"";
             grid[row, col]->BackColor = SystemColors::Control;
         }
     }
