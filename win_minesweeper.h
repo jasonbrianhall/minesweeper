@@ -1,80 +1,118 @@
-#ifndef MINESWEEPER_H
-#define MINESWEEPER_H
+#pragma once
 
-#include <vector>
-#include <random>
-#include <chrono>
+#include <Windows.h>
 #include <string>
-#include <thread>
-#include <atomic>
 #include "highscores.h"
 
-enum class GameState {
-    MENU,
-    PLAYING,
-    HELP,
-    GAME_OVER,
-    HIGHSCORES,
-    ENTER_NAME
-};
+using namespace System;
+using namespace System::Windows::Forms;
+using namespace System::Drawing;
 
 enum class Difficulty {
-    EASY,    // 9x9, 10 mines
-    MEDIUM,  // 16x16, 40 mines
-    HARD     // 16x30, 99 mines
+    EASY,
+    MEDIUM,
+    HARD
 };
 
-struct DifficultySettings {
-    int height;
-    int width;
-    int mines;
-};
-
-const DifficultySettings DIFFICULTY_SETTINGS[] = {
-    {9, 9, 10},    // EASY
-    {16, 16, 40},  // MEDIUM
-    {16, 30, 99}   // HARD
-};
-
-class GameTimer {  // Renamed from Timer to avoid conflict with Windows::Forms::Timer
-private:
-    std::chrono::steady_clock::time_point startTime;
-    bool running;
-    int elapsedSeconds;
-
+class GameTimer {
 public:
-    GameTimer();
     void start();
     void stop();
-    int getElapsedSeconds() const;
-    void update();
     std::string getTimeString() const;
 };
 
 class Minesweeper {
 public:
-    int height, width, mines;
+    Minesweeper();
+    bool firstMove;
+    bool gameOver;
+    bool won;
+    int width;
+    int height;
+    std::string playerName;
+    GameTimer timer;
+    Highscores highscores;
     std::vector<std::vector<bool>> minefield;
     std::vector<std::vector<bool>> revealed;
     std::vector<std::vector<bool>> flagged;
-    bool gameOver;
-    bool won;
-    bool firstMove;
-    GameTimer timer;
-    int currentSeed;
-    std::string playerName;
-    Highscores highscores;
 
-    Minesweeper();
     void setDifficulty(Difficulty diff);
     void reset();
-    void initializeMinefield(int firstY, int firstX, int seed = -1);
-    int countAdjacentMines(int y, int x);
-    void revealCell(int y, int x);
+    void initializeMinefield(int row, int col);
+    int countAdjacentMines(int row, int col);
+    void revealCell(int row, int col);
     void revealAllMines();
     bool checkWin();
     bool isHighScore(int time);
     void saveHighscore();
 };
 
-#endif 
+namespace MinesweeperGame {
+    public ref class MinesweeperWrapper {
+    private:
+        Minesweeper* nativeMinesweeper;
+
+    public:
+        MinesweeperWrapper();
+        ~MinesweeperWrapper();
+
+        property Minesweeper* NativeMinesweeper {
+            Minesweeper* get();
+        }
+
+        void SetDifficulty(int difficulty);
+        bool IsHighScore(int time);
+        void SaveHighScore(String^ name);
+        System::Collections::Generic::List<String^>^ GetHighScores();
+        void RevealCell(int row, int col);
+        void ToggleFlag(int row, int col);
+        bool IsRevealed(int row, int col);
+        bool IsFlagged(int row, int col);
+        bool IsMine(int row, int col);
+        int GetAdjacentMines(int row, int col);
+        bool IsGameOver();
+        bool HasWon();
+        String^ GetTime();
+        void Reset();
+        int GetWidth();
+        int GetHeight();
+    };
+
+    public ref class MainForm : public System::Windows::Forms::Form {
+    private:
+        MinesweeperWrapper^ minesweeper;
+        array<Button^, 2>^ grid;
+        MenuStrip^ menuStrip;
+        ToolStrip^ toolStrip;
+        StatusStrip^ statusStrip;
+        ToolStripStatusLabel^ statusLabel;
+        ToolStripStatusLabel^ timeLabel;
+        TextBox^ instructionsBox;
+        System::Drawing::Font^ buttonFont;
+        System::Windows::Forms::Timer^ gameTimer;
+        Form^ highScoreForm;
+        TextBox^ nameEntryBox;
+        ListView^ highScoreList;
+
+        void InitializeComponent();
+        void UpdateTimer(Object^ sender, EventArgs^ e);
+        void MainForm_KeyDown(Object^ sender, KeyEventArgs^ e);
+        void InitializeGrid();
+        void UpdateCell(int row, int col);
+        void UpdateAllCells();
+        void Cell_MouseUp(Object^ sender, MouseEventArgs^ e);
+        void ShowHighScoreEntry();
+        void SubmitHighScore(Object^ sender, EventArgs^ e);
+        void ShowHighScores();
+        void CloseHighScores(Object^ sender, EventArgs^ e);
+        void NewGame_Click(Object^ sender, EventArgs^ e);
+        void Exit_Click(Object^ sender, EventArgs^ e);
+        void SetEasy_Click(Object^ sender, EventArgs^ e);
+        void SetMedium_Click(Object^ sender, EventArgs^ e);
+        void SetHard_Click(Object^ sender, EventArgs^ e);
+        void UpdateStatus(String^ message);
+
+    public:
+        MainForm();
+    };
+}
