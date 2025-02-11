@@ -652,9 +652,10 @@ public:
         minesweeper = gcnew MinesweeperWrapper();
         InitializeComponent();
         this->Resize += gcnew EventHandler(this, &MainForm::MainForm_Resize);
-    }};
+    }
+}; 
 
-} // namespace MinesweeperGame
+} // End of namespace MinesweeperGame
 
 [STAThread]
 int main(array<String^>^ args) {
