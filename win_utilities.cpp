@@ -51,7 +51,7 @@ void Minesweeper::reset() {
     timer.stop();
 }
 
-void Minesweeper::initializeMinefield(int firstY, int firstX, int seed = -1) {
+void Minesweeper::initializeMinefield(int firstY, int firstX, int seed) {
     std::mt19937 gen;
     if (seed < 0) {
         std::random_device rd;
