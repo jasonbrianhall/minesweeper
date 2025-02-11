@@ -224,7 +224,9 @@ private:
     ListView^ highScoreList;
     int minCellSize;
     TextBox^ seedInput;
+    static const char* FLAG_BASE64 = "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgBAMAAACBVGfHAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAdnJLH8AAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAACFQTFRFAAAA/2ZmAAAA////mTMzzMzMzGZmZjMzmWYzMwAA/8xmaoi8KgAAAAF0Uk5TAEDm2GYAAABdSURBVCjPY2DABpQU0AS6GggJKCkooepSVkkUTJnEwMAEE1VWFBQUFHOf7oIiAAIDLaDmXu6GIqAEdPaUREERuACYgeRBZfQAGqwCSmixwhQaGhqEIgBUocSAEwAAjwQWTza+izoAAAAASUVORK5CYII="
 
+    static const char* BOMB_BASE64 ="iVBORw0KGgoAAAANSUhEUgAAACAAAAAgBAMAAACBVGfHAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAdnJLH8AAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAACFQTFRFAAAAgwMTcwoRqBIlgTE0yyk14kFE21NWqnN1z5ye////XulGdQAAAAF0Uk5TAEDm2GYAAADbSURBVCjPbdK9DoIwEAfwQ/lYKeEBsOEFTF10qm9AQqpxc7GzizAbN1cmeALCU0rLtUVClza/XPMvdwCsrNocfK63UBYIJNdb5YBmukA+Ec40/4cdpRMI2DK2B49ogDq8RKJkjHgEY6AQGjg3+dEExL4sQLAVL4TYwAMhNSAQkiW4iu/QsOPQO+hGOA29u3JrS3Zo3+k8tpvHavjMQKUMzQLasSIDJ+odqftYUJD6WFFVoghGiEmy4VMLrxCMLYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII="
 
     void InitializeComponent() {
         this->Size = System::Drawing::Size(800, 600);
@@ -462,8 +464,13 @@ private:
     void UpdateCell(int row, int col) {
         if (minesweeper->IsRevealed(row, col)) {
             if (minesweeper->IsMine(row, col)) {
+                if (minesweeper->IsMine(row, col)) {
+                grid[row, col]->Text = "";
                 grid[row, col]->BackColor = Color::Red;
-                grid[row, col]->Text = L"\u2620";  // Skull and bones
+                if (bombImage) {
+                    grid[row, col]->Image = bombImage;
+                    grid[row, col]->ImageAlign = ContentAlignment::MiddleCenter;
+                }
             } else {
                 int count = minesweeper->GetAdjacentMines(row, col);
                 if (count > 0) {
@@ -482,9 +489,11 @@ private:
                 grid[row, col]->BackColor = Color::LightGray;
             }
         } else if (minesweeper->IsFlagged(row, col)) {
-            // Flag
-            grid[row, col]->Text = L"\u2691";
-            //grid[row, col]->Text = L"🚩";
+            grid[row, col]->Text = "";
+            if (flagImage) {
+                grid[row, col]->Image = flagImage;
+                grid[row, col]->ImageAlign = ContentAlignment::MiddleCenter;
+            }
         } else {
             grid[row, col]->Text = L"";
             grid[row, col]->BackColor = SystemColors::Control;
@@ -614,9 +623,27 @@ private:
         UpdateAllCells();
     }
 
+    void LoadBase64Images() {
+        try {
+            // Convert base64 to image for flag
+            array<Byte>^ flagBytes = Convert::FromBase64String(gcnew String(FLAG_BASE64));
+            System::IO::MemoryStream^ flagStream = gcnew System::IO::MemoryStream(flagBytes);
+            flagImage = Image::FromStream(flagStream);
+    
+            // Convert base64 to image for bomb
+            array<Byte>^ bombBytes = Convert::FromBase64String(gcnew String(BOMB_BASE64));
+            System::IO::MemoryStream^ bombStream = gcnew System::IO::MemoryStream(bombBytes);
+            bombImage = Image::FromStream(bombStream);
+        }
+        catch (Exception^ ex) {
+            MessageBox::Show("Error loading images: " + ex->Message);
+        }
+    }
+
 public:
     MainForm() {
         minCellSize = 30;  // Initialize minCellSize
+        LoadBase64Images();
         minesweeper = gcnew MinesweeperWrapper();
         InitializeComponent();
         this->Resize += gcnew EventHandler(this, &MainForm::MainForm_Resize);
