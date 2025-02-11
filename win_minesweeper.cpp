@@ -464,7 +464,6 @@ private:
     void UpdateCell(int row, int col) {
         if (minesweeper->IsRevealed(row, col)) {
             if (minesweeper->IsMine(row, col)) {
-                if (minesweeper->IsMine(row, col)) {
                 grid[row, col]->Text = "";
                 grid[row, col]->BackColor = Color::Red;
                 if (bombImage) {
@@ -475,6 +474,7 @@ private:
                 int count = minesweeper->GetAdjacentMines(row, col);
                 if (count > 0) {
                     grid[row, col]->Text = count.ToString();
+                    grid[row, col]->Image = nullptr;
                     switch (count) {
                         case 1: grid[row, col]->ForeColor = Color::Blue; break;
                         case 2: grid[row, col]->ForeColor = Color::Green; break;
@@ -485,6 +485,7 @@ private:
                     }
                 } else {
                     grid[row, col]->Text = "";
+                    grid[row, col]->Image = nullptr;
                 }
                 grid[row, col]->BackColor = Color::LightGray;
             }
@@ -495,11 +496,12 @@ private:
                 grid[row, col]->ImageAlign = ContentAlignment::MiddleCenter;
             }
         } else {
-            grid[row, col]->Text = L"";
+            grid[row, col]->Text = "";
+            grid[row, col]->Image = nullptr;
             grid[row, col]->BackColor = SystemColors::Control;
         }
     }
-
+    
     void UpdateAllCells() {
         int height = minesweeper->GetHeight();
         int width = minesweeper->GetWidth();
