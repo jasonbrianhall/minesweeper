@@ -1,28 +1,49 @@
-# 🎮 Terminal Minesweeper
+# 🎮 Minesweeper
 
-A modern, feature-rich implementation of the classic Minesweeper game for terminal environments, built with ncurses.
+A modern, feature-rich implementation of the classic Minesweeper game, available in both Windows Forms and Terminal versions.
 
-## ✨ Features
+## 📦 Versions
 
+### Windows Forms Version
+A polished, graphical implementation built with Windows Forms and C++/CLI, featuring a modern user interface.
+
+### Terminal Version
+A classic, ncurses-based implementation perfect for terminal environments and systems without graphical interfaces.
+
+## ✨ Common Features
+
+Both versions include:
 - Three difficulty levels:
   - Easy (9x9 grid, 10 mines)
   - Medium (16x16 grid, 40 mines)
   - Hard (16x30 grid, 99 mines)
 - High score system with persistent storage
   - Separate leaderboards for each difficulty
-  - Scores saved in ~/.minesweeper/scores.txt
   - Top 10 times per difficulty level
+  - Scores saved in platform-appropriate location:
+    - Windows: %APPDATA%\.minesweeper\scores.txt
+    - Unix: ~/.minesweeper/scores.txt
 - Color-coded numbers for adjacent mine counts
 - Game timer with MM:SS format display
-- Animated title banner
-- Flag placement system
-- Cursor-based navigation
 - First-click protection (never hit a mine on first move)
-- Seed support for reproducible games
 - Quick-reveal for completed number tiles
 
 ## 🎯 Controls
 
+### Windows Forms Version
+Mouse Controls:
+- **Left Click**: Reveal cell
+- **Right Click**: Flag/unflag cell
+- **Left Click on Number**: Quick-reveal adjacent cells (if correct number of flags placed)
+
+Keyboard Shortcuts:
+- **N**: Start new game
+- **F1**: Switch to Easy difficulty
+- **F2**: Switch to Medium difficulty
+- **F3**: Switch to Hard difficulty
+- **Ctrl+H**: View high scores
+
+### Terminal Version
 - **Arrow Keys**: Move cursor
 - **Space**: Reveal cell
 - **F**: Flag/unflag cell
@@ -33,14 +54,47 @@ A modern, feature-rich implementation of the classic Minesweeper game for termin
 - **C**: Clear screen (removes artifacts)
 - **Q**: Quit game
 
+## 🎨 Display Features
+
+### Windows Forms Version
+- Clean, modern Windows Forms interface
+- Status bar showing game state and timer
+- Intuitive menu system
+- Custom icons for mines and flags
+- Responsive grid that adjusts to window size
+- Color-coded numbers:
+  - Blue for 1
+  - Green for 2
+  - Red for 3
+  - Dark Blue for 4
+  - Dark Red for 5
+  - Dark Gray for higher numbers
+
+### Terminal Version
+- Bold, colored numbers (1-8)
+- High contrast mine and flag symbols
+- Reverse highlighting for cursor position
+- Clean, intuitive UI with status messages
+- Animated title banner
+- Current seed display (for sharing/replaying)
+
 ## 🛠️ Building
 
+### Windows Forms Version
+Requirements:
+- Windows operating system
+- .NET Framework 4.5 or higher
+- 64-bit processor
+- Minimum 2GB RAM
+- Screen resolution: 800x600 or higher
+
+### Terminal Version
 Requirements:
 - C++ compiler with C++11 support
 - ncurses library
 
 ```bash
-# Compile and run
+# Compile and run Terminal version
 ./compile.sh
 ./minesweeper
 ```
@@ -49,30 +103,24 @@ Requirements:
 
 1. The first click is always safe - use it strategically!
 2. Numbers indicate how many mines are in the adjacent cells
-3. Flag suspected mines with F to keep track
-4. Click revealed numbers to quickly uncover adjacent cells if you've flagged all nearby mines
-5. Use seeds to challenge friends with the same mine layout
-6. Try to beat your best times - they're saved per difficulty level
-
-## 🎨 Display Features
-
-- Bold, colored numbers (1-8)
-- High contrast mine and flag symbols
-- Reverse highlighting for cursor position
-- Clean, intuitive UI with status messages
-- Game timer display in MM:SS format
-- Current seed display (for sharing/replaying); first move would have to be the same or an empty block to get the same game
-- High score tables with player names and times
+3. Flag suspected mines to keep track
+4. Use quick-reveal on numbers when you've flagged all nearby mines
+5. Try to beat your best times - they're saved per difficulty level
 
 ## 🔄 Game States
 
-- Menu (difficulty selection)
-- Help screen
+Both versions support:
 - Active gameplay
+- Game over (mine revealed)
+- Victory (all non-mine cells revealed)
 - High score entry
 - High score display
 
-## 🎥 Preview
+The Terminal version also includes:
+- Menu (difficulty selection)
+- Help screen
+
+## 🎥 Terminal Version Preview
 
 ```
 MINESWEEPER                  Time: 01:23
@@ -84,6 +132,6 @@ MINESWEEPER                  Time: 01:23
 
 ## 📝 License
 
-Licensed under MIT; see LICENSE.md./
+Both versions are licensed under MIT; see LICENSE.md.
 
 Created by Jason Brian Hall (jasonbrianhall@gmail.com)
