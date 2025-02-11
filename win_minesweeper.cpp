@@ -1,0 +1,476 @@
+#define NOMINMAX
+#include <msclr/marshal_cppstd.h>
+#include "win_minesweeper.h"
+#include "highscores.h"
+
+using namespace System;
+using namespace System::ComponentModel;
+using namespace System::Collections;
+using namespace System::Windows::Forms;
+using namespace System::Collections::Generic;
+using namespace System::Data;
+using namespace System::Drawing;
+
+namespace MinesweeperGame {
+
+public ref class MinesweeperWrapper {
+private:
+    Minesweeper* nativeMinesweeper;
+
+public:
+    MinesweeperWrapper() { 
+        nativeMinesweeper = new Minesweeper(); 
+    }
+
+    ~MinesweeperWrapper() {
+        if (nativeMinesweeper) {
+            delete nativeMinesweeper;
+            nativeMinesweeper = nullptr;
+        }
+    }
+
+    property Minesweeper* NativeMinesweeper {
+        Minesweeper* get() { return nativeMinesweeper; }
+    }
+
+    void SetDifficulty(int difficulty) {
+        switch(difficulty) {
+            case 0: // Easy
+                nativeMinesweeper->setDifficulty(Difficulty::EASY);
+                break;
+            case 1: // Medium
+                nativeMinesweeper->setDifficulty(Difficulty::MEDIUM);
+                break;
+            case 2: // Hard
+                nativeMinesweeper->setDifficulty(Difficulty::HARD);
+                break;
+        }
+    }
+
+    bool IsHighScore(int time) {
+        return nativeMinesweeper->isHighScore(time);
+    }
+
+    void SaveHighScore(String^ name) {
+        std::string stdName = msclr::interop::marshal_as<std::string>(name);
+        nativeMinesweeper->playerName = stdName;
+        nativeMinesweeper->saveHighscore();
+    }
+
+    List<String^>^ GetHighScores() {
+        List<String^>^ scores = gcnew List<String^>();
+        const auto& nativeScores = nativeMinesweeper->highscores.getScores();
+        for (const auto& score : nativeScores) {
+            String^ scoreStr = String::Format("{0,-20} {1,-10} {2,-10}",
+                gcnew String(score.name.c_str()),
+                (score.time / 60).ToString("D2") + ":" + (score.time % 60).ToString("D2"),
+                gcnew String(score.difficulty.c_str()));
+            scores->Add(scoreStr);
+        }
+        return scores;
+    }
+
+    void RevealCell(int row, int col) {
+        if (nativeMinesweeper->firstMove) {
+            nativeMinesweeper->initializeMinefield(row, col);
+            nativeMinesweeper->firstMove = false;
+            nativeMinesweeper->timer.start();
+        }
+        
+        if (!nativeMinesweeper->flagged[row][col]) {
+            if (nativeMinesweeper->minefield[row][col]) {
+                nativeMinesweeper->gameOver = true;
+                nativeMinesweeper->revealAllMines();
+                nativeMinesweeper->timer.stop();
+            } else {
+                nativeMinesweeper->revealCell(row, col);
+                if (nativeMinesweeper->checkWin()) {
+                    nativeMinesweeper->won = true;
+                    nativeMinesweeper->timer.stop();
+                }
+            }
+        }
+    }
+
+    void ToggleFlag(int row, int col) {
+        if (!nativeMinesweeper->revealed[row][col]) {
+            nativeMinesweeper->flagged[row][col] = !nativeMinesweeper->flagged[row][col];
+        }
+    }
+
+    bool IsRevealed(int row, int col) {
+        return nativeMinesweeper->revealed[row][col];
+    }
+
+    bool IsFlagged(int row, int col) {
+        return nativeMinesweeper->flagged[row][col];
+    }
+
+    bool IsMine(int row, int col) {
+        return nativeMinesweeper->minefield[row][col];
+    }
+
+    int GetAdjacentMines(int row, int col) {
+        return nativeMinesweeper->countAdjacentMines(row, col);
+    }
+
+    bool IsGameOver() {
+        return nativeMinesweeper->gameOver;
+    }
+
+    bool HasWon() {
+        return nativeMinesweeper->won;
+    }
+
+    String^ GetTime() {
+        return gcnew String(nativeMinesweeper->timer.getTimeString().c_str());
+    }
+
+    void Reset() {
+        nativeMinesweeper->reset();
+    }
+
+    int GetWidth() {
+        return nativeMinesweeper->width;
+    }
+
+    int GetHeight() {
+        return nativeMinesweeper->height;
+    }
+};
+
+public ref class MainForm : public System::Windows::Forms::Form {
+private:
+    MinesweeperWrapper^ minesweeper;
+    array<Button^, 2>^ grid;
+    MenuStrip^ menuStrip;
+    ToolStrip^ toolStrip;
+    StatusStrip^ statusStrip;
+    ToolStripStatusLabel^ statusLabel;
+    ToolStripStatusLabel^ timeLabel;
+    TextBox^ instructionsBox;
+    System::Drawing::Font^ buttonFont;
+    System::Windows::Forms::Timer^ gameTimer;    Form^ highScoreForm;
+    TextBox^ nameEntryBox;
+    ListView^ highScoreList;
+
+    void InitializeComponent() {
+        this->Size = System::Drawing::Size(800, 600);
+        this->Text = L"Minesweeper";
+        this->StartPosition = FormStartPosition::CenterScreen;
+
+        // Initialize StatusStrip with both status and time
+        statusStrip = gcnew StatusStrip();
+        statusLabel = gcnew ToolStripStatusLabel("Ready");
+        timeLabel = gcnew ToolStripStatusLabel("Time: 00:00");
+        statusStrip->Items->Add(statusLabel);
+        statusStrip->Items->Add(timeLabel);
+        this->Controls->Add(statusStrip);
+
+        // Initialize game timer
+        gameTimer = gcnew Timer();
+        gameTimer->Interval = 100; // Update every 100ms
+        gameTimer->Tick += gcnew EventHandler(this, &MainForm::UpdateTimer);
+        gameTimer->Start();
+
+        // Initialize MenuStrip
+        menuStrip = gcnew MenuStrip();
+        ToolStripMenuItem^ fileMenu = gcnew ToolStripMenuItem("File");
+        ToolStripMenuItem^ difficultyMenu = gcnew ToolStripMenuItem("Difficulty");
+
+        fileMenu->DropDownItems->Add(gcnew ToolStripMenuItem(
+            "New Game (N)", nullptr, 
+            gcnew EventHandler(this, &MainForm::NewGame_Click)));
+        fileMenu->DropDownItems->Add(gcnew ToolStripMenuItem(
+            "Exit", nullptr,
+            gcnew EventHandler(this, &MainForm::Exit_Click)));
+
+        difficultyMenu->DropDownItems->Add(gcnew ToolStripMenuItem(
+            "Easy (9x9) F1", nullptr,
+            gcnew EventHandler(this, &MainForm::SetEasy_Click)));
+        difficultyMenu->DropDownItems->Add(gcnew ToolStripMenuItem(
+            "Medium (16x16) F2", nullptr,
+            gcnew EventHandler(this, &MainForm::SetMedium_Click)));
+        difficultyMenu->DropDownItems->Add(gcnew ToolStripMenuItem(
+            "Hard (30x16) F3", nullptr,
+            gcnew EventHandler(this, &MainForm::SetHard_Click)));
+
+        menuStrip->Items->Add(fileMenu);
+        menuStrip->Items->Add(difficultyMenu);
+        this->MainMenuStrip = menuStrip;
+        this->Controls->Add(menuStrip);
+
+        instructionsBox = gcnew TextBox();
+        instructionsBox->Multiline = true;
+        instructionsBox->ReadOnly = true;
+        instructionsBox->BackColor = System::Drawing::Color::LightBlue;
+        instructionsBox->BorderStyle = BorderStyle::FixedSingle;
+        instructionsBox->Location = Point(50, menuStrip->Height + 5);
+        instructionsBox->Size = System::Drawing::Size(700, 80);
+        instructionsBox->Text = L"Instructions:\r\n"
+            L"  - Left click to reveal a cell\r\n"
+            L"  - Right click to flag/unflag a cell\r\n"
+            L"  - Press F1-F3 to change difficulty\r\n"
+            L"  - Press N for new game";
+        instructionsBox->Font = gcnew System::Drawing::Font(L"Lucida Console", 9);
+        this->Controls->Add(instructionsBox);
+
+        // Handle keyboard shortcuts
+        this->KeyPreview = true;
+        this->KeyDown += gcnew KeyEventHandler(this, &MainForm::MainForm_KeyDown);
+
+        InitializeGrid();
+    }
+
+    void UpdateTimer(Object^ sender, EventArgs^ e) {
+        timeLabel->Text = "Time: " + minesweeper->GetTime();
+    }
+
+    void MainForm_KeyDown(Object^ sender, KeyEventArgs^ e) {
+        switch (e->KeyCode) {
+            case Keys::F1:
+                SetEasy_Click(nullptr, nullptr);
+                break;
+            case Keys::F2:
+                SetMedium_Click(nullptr, nullptr);
+                break;
+            case Keys::F3:
+                SetHard_Click(nullptr, nullptr);
+                break;
+            case Keys::N:
+                NewGame_Click(nullptr, nullptr);
+                break;
+        }
+    }
+
+    void InitializeGrid() {
+        // Remove existing grid if any
+        for each (Control^ control in this->Controls) {
+            if (dynamic_cast<Panel^>(control) != nullptr) {
+                this->Controls->Remove(control);
+                break;
+            }
+        }
+
+        int height = minesweeper->GetHeight();
+        int width = minesweeper->GetWidth();
+        
+        int maxCellSize = 30;
+        int cellSize = maxCellSize;
+        
+        Panel^ gridPanel = gcnew Panel();
+        int gridTop = menuStrip->Height + instructionsBox->Height + 25;
+        gridPanel->Location = Point(50, gridTop);
+        gridPanel->Size = System::Drawing::Size(width * cellSize + 1, height * cellSize + 1);
+        gridPanel->BackColor = Color::Gray;
+        this->Controls->Add(gridPanel);
+
+        grid = gcnew array<Button^, 2>(height, width);
+        buttonFont = gcnew System::Drawing::Font(L"Arial", 12, FontStyle::Bold);
+
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
+                grid[i, j] = gcnew Button();
+                grid[i, j]->Size = System::Drawing::Size(cellSize - 1, cellSize - 1);
+                grid[i, j]->Location = Point(j * cellSize, i * cellSize);
+                grid[i, j]->Font = buttonFont;
+                grid[i, j]->UseVisualStyleBackColor = true;
+                grid[i, j]->Tag = gcnew array<int>{i, j};
+                grid[i, j]->MouseUp += gcnew MouseEventHandler(this, &MainForm::Cell_MouseUp);
+                gridPanel->Controls->Add(grid[i, j]);
+            }
+        }
+    }
+
+    void UpdateCell(int row, int col) {
+        if (minesweeper->IsRevealed(row, col)) {
+            if (minesweeper->IsMine(row, col)) {
+                grid[row, col]->Text = "💣";
+                grid[row, col]->BackColor = Color::Red;
+            } else {
+                int count = minesweeper->GetAdjacentMines(row, col);
+                if (count > 0) {
+                    grid[row, col]->Text = count.ToString();
+                    switch (count) {
+                        case 1: grid[row, col]->ForeColor = Color::Blue; break;
+                        case 2: grid[row, col]->ForeColor = Color::Green; break;
+                        case 3: grid[row, col]->ForeColor = Color::Red; break;
+                        case 4: grid[row, col]->ForeColor = Color::DarkBlue; break;
+                        case 5: grid[row, col]->ForeColor = Color::DarkRed; break;
+                        default: grid[row, col]->ForeColor = Color::DarkGray; break;
+                    }
+                } else {
+                    grid[row, col]->Text = "";
+                }
+                grid[row, col]->BackColor = Color::LightGray;
+            }
+        } else if (minesweeper->IsFlagged(row, col)) {
+            grid[row, col]->Text = "🚩";
+        } else {
+            grid[row, col]->Text = "";
+            grid[row, col]->BackColor = SystemColors::Control;
+        }
+    }
+
+    void UpdateAllCells() {
+        int height = minesweeper->GetHeight();
+        int width = minesweeper->GetWidth();
+        
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
+                UpdateCell(i, j);
+            }
+        }
+    }
+
+    void Cell_MouseUp(Object^ sender, MouseEventArgs^ e) {
+        Button^ button = safe_cast<Button^>(sender);
+        array<int>^ position = safe_cast<array<int>^>(button->Tag);
+        int row = position[0];
+        int col = position[1];
+
+        if (e->Button == System::Windows::Forms::MouseButtons::Left) {
+            minesweeper->RevealCell(row, col);
+            UpdateAllCells();
+
+            if (minesweeper->IsGameOver()) {
+                UpdateStatus("Game Over!");
+            } else if (minesweeper->HasWon()) {
+                UpdateStatus("Congratulations! You've won!");
+                if (minesweeper->IsHighScore(int::Parse(minesweeper->GetTime()->Split(':')[0]) * 60 + 
+                    int::Parse(minesweeper->GetTime()->Split(':')[1]))) {
+                    ShowHighScoreEntry();
+                } else {
+                    ShowHighScores();
+                }
+            }
+        }
+        else if (e->Button == System::Windows::Forms::MouseButtons::Right) {
+            minesweeper->ToggleFlag(row, col);
+            UpdateCell(row, col);
+        }
+    }
+
+    void ShowHighScoreEntry() {
+        highScoreForm = gcnew Form();
+        highScoreForm->Text = "New High Score!";
+        highScoreForm->Size = Drawing::Size(300, 150);
+        highScoreForm->StartPosition = FormStartPosition::CenterParent;
+        highScoreForm->FormBorderStyle = Windows::Forms::FormBorderStyle::FixedDialog;
+        highScoreForm->MaximizeBox = false;
+        highScoreForm->MinimizeBox = false;
+
+        Label^ timeLabel = gcnew Label();
+        timeLabel->Text = "Your time: " + minesweeper->GetTime();
+        timeLabel->Location = Point(20, 20);
+        timeLabel->AutoSize = true;
+        highScoreForm->Controls->Add(timeLabel);
+
+        nameEntryBox = gcnew TextBox();
+        nameEntryBox->Location = Point(20, 50);
+        nameEntryBox->Size = Drawing::Size(200, 20);
+        nameEntryBox->MaxLength = 20;
+        highScoreForm->Controls->Add(nameEntryBox);
+
+        Button^ submitButton = gcnew Button();
+        submitButton->Text = "Submit";
+        submitButton->Location = Point(20, 80);
+        submitButton->Click += gcnew EventHandler(this, &MainForm::SubmitHighScore);
+        highScoreForm->Controls->Add(submitButton);
+
+        highScoreForm->ShowDialog();
+    }
+
+    void SubmitHighScore(Object^ sender, EventArgs^ e) {
+        if (!String::IsNullOrWhiteSpace(nameEntryBox->Text)) {
+            minesweeper->SaveHighScore(nameEntryBox->Text);
+            highScoreForm->Close();
+            ShowHighScores();
+        }
+    }
+
+    void ShowHighScores() {
+        highScoreForm = gcnew Form();
+        highScoreForm->Text = "High Scores";
+        highScoreForm->Size = Drawing::Size(400, 300);
+        highScoreForm->StartPosition = FormStartPosition::CenterParent;
+
+        highScoreList = gcnew ListView();
+        highScoreList->View = View::Details;
+        highScoreList->Size = Drawing::Size(360, 200);
+        highScoreList->Location = Point(20, 20);
+        highScoreList->Columns->Add("Name", 150);
+        highScoreList->Columns->Add("Time", 100);
+        highScoreList->Columns->Add("Difficulty", 100);
+
+        List<String^>^ scores = minesweeper->GetHighScores();
+        for each (String^ score in scores) {
+            array<String^>^ parts = score->Split();
+            ListViewItem^ item = gcnew ListViewItem(parts);
+            highScoreList->Items->Add(item);
+        }
+
+        highScoreForm->Controls->Add(highScoreList);
+
+        Button^ closeButton = gcnew Button();
+        closeButton->Text = "Close";
+        closeButton->Location = Point(150, 230);
+        closeButton->Click += gcnew EventHandler(this, &MainForm::CloseHighScores);
+        highScoreForm->Controls->Add(closeButton);
+
+        highScoreForm->ShowDialog();
+    }
+
+    void CloseHighScores(Object^ sender, EventArgs^ e) {
+        highScoreForm->Close();
+    }
+
+    void NewGame_Click(Object^ sender, EventArgs^ e) {
+        minesweeper->Reset();
+        UpdateAllCells();
+        UpdateStatus("New game started");
+    }
+
+    void Exit_Click(Object^ sender, EventArgs^ e) {
+        Application::Exit();
+    }
+
+    void SetEasy_Click(Object^ sender, EventArgs^ e) {
+        minesweeper->SetDifficulty(0);
+        InitializeGrid();
+        UpdateStatus("Difficulty set to Easy");
+    }
+
+    void SetMedium_Click(Object^ sender, EventArgs^ e) {
+        minesweeper->SetDifficulty(1);
+        InitializeGrid();
+        UpdateStatus("Difficulty set to Medium");
+    }
+
+    void SetHard_Click(Object^ sender, EventArgs^ e) {
+        minesweeper->SetDifficulty(2);
+        InitializeGrid();
+        UpdateStatus("Difficulty set to Hard");
+    }
+
+    void UpdateStatus(String^ message) {
+        statusLabel->Text = message;
+        statusStrip->Refresh();
+    }
+
+public:
+    MainForm() {
+        minesweeper = gcnew MinesweeperWrapper();
+        InitializeComponent();
+    }
+};
+
+} // namespace MinesweeperGame
+
+[STAThread]
+int main(array<String^>^ args) {
+    Application::EnableVisualStyles();
+    Application::SetCompatibleTextRenderingDefault(false);
+    Application::Run(gcnew MinesweeperGame::MainForm());
+    return 0;
+}

@@ -2,23 +2,37 @@
 #include <fstream>
 #include <algorithm>
 #include <cstdlib>
-#include <sys/stat.h>
-#include <sys/types.h>
+
+#ifdef _WIN32
+    #include <direct.h>
+    #define MKDIR(dir) _mkdir(dir)
+    #define PATH_SEP "\\"
+#else
+    #include <sys/stat.h>
+    #include <sys/types.h>
+    #define MKDIR(dir) mkdir(dir, 0700)
+    #define PATH_SEP "/"
+#endif
 
 Highscores::Highscores() {
-    const char* home = getenv("HOME");
+    #ifdef _WIN32
+        const char* home = getenv("APPDATA");
+    #else
+        const char* home = getenv("HOME");
+    #endif
+
     if (!home) {
         home = ".";
     }
 
     // Create the .minesweeper directory path
-    std::string dirPath = std::string(home) + "/.minesweeper";
+    std::string dirPath = std::string(home) + PATH_SEP + ".minesweeper";
     
-    // Create directory with rwx------ permissions (0700 in octal)
-    mkdir(dirPath.c_str(), 0700);
+    // Create directory using appropriate API
+    MKDIR(dirPath.c_str());
     
     // Set the scores file path inside the .minesweeper directory
-    scorePath = dirPath + "/scores.txt";
+    scorePath = dirPath + PATH_SEP + "scores.txt";
     loadScores();
 }
 
