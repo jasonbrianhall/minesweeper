@@ -21,7 +21,6 @@ private:
     int currentSeed;
 
 public:
-    Minesweeper() : currentSeed(-1) { /* existing initialization */ }
     void setSeed(int seed) { currentSeed = seed; }
     int getSeed() const { return currentSeed; }
 
