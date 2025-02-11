@@ -469,7 +469,18 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         int col = position[1];
 
         if (minesweeper->IsGameOver() || minesweeper->HasWon()) {
-            return;
+            if (minesweeper->IsGameOver()) {
+                UpdateStatus("Game Over!");
+            } else if (minesweeper->HasWon()) {
+                UpdateStatus("Congratulations! You've won!");
+                if (minesweeper->IsHighScore(int::Parse(minesweeper->GetTime()->Split(':')[0]) * 60 + 
+                    int::Parse(minesweeper->GetTime()->Split(':')[1]))) {
+                    ShowHighScoreEntry();
+                } else {
+                    ShowHighScores();
+                }
+            }
+            return;  
         }
 
         if (e->Button == System::Windows::Forms::MouseButtons::Left) {
@@ -485,17 +496,6 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
                 UpdateAllCells();
             }
 
-            if (minesweeper->IsGameOver()) {
-                UpdateStatus("Game Over!");
-            } else if (minesweeper->HasWon()) {
-                UpdateStatus("Congratulations! You've won!");
-                if (minesweeper->IsHighScore(int::Parse(minesweeper->GetTime()->Split(':')[0]) * 60 + 
-                    int::Parse(minesweeper->GetTime()->Split(':')[1]))) {
-                    ShowHighScoreEntry();
-                } else {
-                    ShowHighScores();
-                }
-            }
         }
         else if (e->Button == System::Windows::Forms::MouseButtons::Right) {
             minesweeper->ToggleFlag(row, col);
