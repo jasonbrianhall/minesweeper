@@ -51,7 +51,7 @@ public:
     Minesweeper();
     void setDifficulty(Difficulty diff);
     void reset();
-    void initializeMinefield(int row, int col);
+    void initializeMinefield(int row, int col, int seed = -1);
     int countAdjacentMines(int row, int col);
     void revealCell(int row, int col);
     void revealAllMines();
