@@ -18,8 +18,13 @@ private:
     Minesweeper* nativeMinesweeper;
     int minCellSize = 30;  // Minimum cell size
     TextBox^ seedInput;
+    int currentSeed;
 
 public:
+    Minesweeper() : currentSeed(-1) { /* existing initialization */ }
+    void setSeed(int seed) { currentSeed = seed; }
+    int getSeed() const { return currentSeed; }
+
     MinesweeperWrapper() { 
         nativeMinesweeper = new Minesweeper(); 
     }
@@ -203,6 +208,9 @@ private:
     System::Windows::Forms::Timer^ gameTimer;    Form^ highScoreForm;
     TextBox^ nameEntryBox;
     ListView^ highScoreList;
+    int minCellSize;
+    TextBox^ seedInput;
+
 
     void InitializeComponent() {
         this->Size = System::Drawing::Size(800, 600);
@@ -478,34 +486,6 @@ private:
         }
     }
 
-    void Cell_MouseUp(Object^ sender, MouseEventArgs^ e) {
-        Button^ button = safe_cast<Button^>(sender);
-        array<int>^ position = safe_cast<array<int>^>(button->Tag);
-        int row = position[0];
-        int col = position[1];
-
-        if (e->Button == System::Windows::Forms::MouseButtons::Left) {
-            minesweeper->RevealCell(row, col);
-            UpdateAllCells();
-
-            if (minesweeper->IsGameOver()) {
-                UpdateStatus("Game Over!");
-            } else if (minesweeper->HasWon()) {
-                UpdateStatus("Congratulations! You've won!");
-                if (minesweeper->IsHighScore(int::Parse(minesweeper->GetTime()->Split(':')[0]) * 60 + 
-                    int::Parse(minesweeper->GetTime()->Split(':')[1]))) {
-                    ShowHighScoreEntry();
-                } else {
-                    ShowHighScores();
-                }
-            }
-        }
-        else if (e->Button == System::Windows::Forms::MouseButtons::Right) {
-            minesweeper->ToggleFlag(row, col);
-            UpdateCell(row, col);
-        }
-    }
-
     void ShowHighScoreEntry() {
         highScoreForm = gcnew Form();
         highScoreForm->Text = "New High Score!";
@@ -620,10 +600,11 @@ private:
 
 public:
     MainForm() {
+        minCellSize = 30;  // Initialize minCellSize
         minesweeper = gcnew MinesweeperWrapper();
         InitializeComponent();
-    }
-};
+        this->Resize += gcnew EventHandler(this, &MainForm::MainForm_Resize);
+    }};
 
 } // namespace MinesweeperGame
 
