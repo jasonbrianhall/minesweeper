@@ -300,7 +300,7 @@ private:
             L"  - Right click to flag/unflag a cell\r\n"
             L"  - Press F1-F3 to change difficulty\r\n"
             L"  - Press N for new game";
-        instructionsBox->Font = gcnew System::Drawing::Font(L"Lucida Console", 9);
+        instructionsBox->Font = gcnew System::Drawing::Font(L"Segoe UI Emoji", 9);
         this->Controls->Add(instructionsBox);
 
         // Handle keyboard shortcuts
@@ -359,7 +359,7 @@ private:
         this->Controls->Add(gridPanel);
 
         grid = gcnew array<Button^, 2>(height, width);
-        buttonFont = gcnew System::Drawing::Font(L"Lucida Console", cellSize / 3, FontStyle::Bold);
+        buttonFont = gcnew System::Drawing::Font(L"Segoe UI Emoji", cellSize / 3, FontStyle::Bold);
 
         for (int i = 0; i < height; i++) {
             for (int j = 0; j < width; j++) {
@@ -462,7 +462,6 @@ private:
     void UpdateCell(int row, int col) {
         if (minesweeper->IsRevealed(row, col)) {
             if (minesweeper->IsMine(row, col)) {
-                grid[row, col]->Text = L"💣";
                 grid[row, col]->BackColor = Color::Red;
             } else {
                 int count = minesweeper->GetAdjacentMines(row, col);
@@ -482,7 +481,9 @@ private:
                 grid[row, col]->BackColor = Color::LightGray;
             }
         } else if (minesweeper->IsFlagged(row, col)) {
-            grid[row, col]->Text = L"🚩";
+            // Flag
+            grid[row, col]->Text = String::FromUtf32(0x1F6A9);
+            //grid[row, col]->Text = L"🚩";
         } else {
             grid[row, col]->Text = L"";
             grid[row, col]->BackColor = SystemColors::Control;
