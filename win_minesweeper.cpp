@@ -687,7 +687,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
             // Convert base64 to image for revealed
             array<Byte>^ revealedBytes = Convert::FromBase64String(gcnew String(REVEALED_BASE64));
             System::IO::MemoryStream^ revealedStream = gcnew System::IO::MemoryStream(revealedBytes);
-            revealedImage = Image::FromStream(bombStream);
+            revealedImage = Image::FromStream(revealedStream);
         }
         catch (Exception^ ex) {
             MessageBox::Show("Error loading images: " + ex->Message);
