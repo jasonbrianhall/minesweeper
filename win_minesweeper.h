@@ -32,7 +32,7 @@ public:
     void start();
     void stop();
     std::string getTimeString() const;
-    int getElapsedSeconds() const { return elapsedSeconds; }
+    int getElapsedSeconds() const;
 };
 
 class Minesweeper {

@@ -18,9 +18,19 @@ void GameTimer::stop() {
     }
 }
 
+int GameTimer::getElapsedSeconds() const {
+    if (running) {
+        auto now = std::chrono::steady_clock::now();
+        return std::chrono::duration_cast<std::chrono::seconds>(
+            now - startTime).count();
+    }
+    return elapsedSeconds;
+}
+
 std::string GameTimer::getTimeString() const {
-    int minutes = elapsedSeconds / 60;
-    int seconds = elapsedSeconds % 60;
+    int totalSeconds = getElapsedSeconds();
+    int minutes = totalSeconds / 60;
+    int seconds = totalSeconds % 60;
     std::stringstream ss;
     ss << std::setfill('0') << std::setw(2) << minutes 
        << ":" << std::setfill('0') << std::setw(2) << seconds;
