@@ -84,6 +84,7 @@
   <ItemGroup>
     <ClCompile Include="win_minesweeper.cpp" />
     <ClCompile Include="highscores.cpp" />
+    <ClCompile Include="win_utilities.cpp" />
   </ItemGroup>
 
   <ItemGroup>
