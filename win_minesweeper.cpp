@@ -274,15 +274,32 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
             "Exit", nullptr,
             gcnew EventHandler(this, &MainForm::Exit_Click)));
 
-        ToolStripMenuItem^ gameMenu = gcnew ToolStripMenuItem("Game");
-        gameMenu->DropDownItems->Add(gcnew ToolStripMenuItem(
-            "Enter Seed...", nullptr,
-            gcnew EventHandler(this, &MainForm::EnterSeed_Click)));
-        gameMenu->DropDownItems->Add(gcnew ToolStripMenuItem("High Scores (H)", nullptr,
-        gcnew EventHandler(this, &MainForm::ViewHighScores_Click)));
+        // Create the game menu
+        ToolStripMenuItem^ gameMenu = gcnew ToolStripMenuItem("&Game");
 
-        menuStrip->Items->Add(gameMenu);
-            
+        // Create menu items with proper shortcuts
+        ToolStripMenuItem^ seedMenuItem = gcnew ToolStripMenuItem(
+            "&Enter Seed...",
+            nullptr,
+            gcnew EventHandler(this, &MainForm::EnterSeed_Click));
+        seedMenuItem->ShortcutKeys = Keys::Control | Keys::S;
+        seedMenuItem->ShowShortcutKeys = true;
+
+        ToolStripMenuItem^ highScoresMenuItem = gcnew ToolStripMenuItem(
+            "&High Scores",
+            nullptr,
+            gcnew EventHandler(this, &MainForm::ViewHighScores_Click));
+        highScoresMenuItem->ShortcutKeys = Keys::Control | Keys::H;
+        highScoresMenuItem->ShowShortcutKeys = true;
+
+        // Add menu items to game menu
+        gameMenu->DropDownItems->Add(seedMenuItem);
+        gameMenu->DropDownItems->Add(gcnew ToolStripSeparator());  // Add separator
+        gameMenu->DropDownItems->Add(highScoresMenuItem);
+
+        // Add game menu to menu strip
+        menuStrip->Items->Add(gameMenu);            
+
         // Add About menu
         ToolStripMenuItem^ helpMenu = gcnew ToolStripMenuItem("Help");
         helpMenu->DropDownItems->Add(gcnew ToolStripMenuItem(
