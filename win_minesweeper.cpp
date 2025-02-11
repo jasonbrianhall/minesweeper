@@ -321,7 +321,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
             gcnew EventHandler(this, &MainForm::SetHard_Click)));
 
         menuStrip->Items->Add(fileMenu);
-        menuStrip->Items->Add(editMenu);
+        menuStrip->Items->Add(gameMenu);
         menuStrip->Items->Add(difficultyMenu);
         menuStrip->Items->Add(helpMenu);
 
