@@ -274,12 +274,14 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
             "Exit", nullptr,
             gcnew EventHandler(this, &MainForm::Exit_Click)));
 
-        ToolStripMenuItem^ editMenu = gcnew ToolStripMenuItem("Edit");
-        editMenu->DropDownItems->Add(gcnew ToolStripMenuItem(
+        ToolStripMenuItem^ gameMenu = gcnew ToolStripMenuItem("Game");
+        GameMenu->DropDownItems->Add(gcnew ToolStripMenuItem(
             "Enter Seed...", nullptr,
             gcnew EventHandler(this, &MainForm::EnterSeed_Click)));
+        gameMenu->DropDownItems->Add(gcnew ToolStripMenuItem("High Scores (H)", nullptr,
+        gcnew EventHandler(this, &MainForm::ViewHighScores_Click)));
 
-        menuStrip->Items->Add(editMenu);
+        menuStrip->Items->Add(gameMenu);
             
         // Add About menu
         ToolStripMenuItem^ helpMenu = gcnew ToolStripMenuItem("Help");
@@ -444,6 +446,10 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         array<int>^ position = safe_cast<array<int>^>(button->Tag);
         int row = position[0];
         int col = position[1];
+
+        if (minesweeper->IsGameOver() || minesweeper->HasWon()) {
+            return;
+        }
 
         if (e->Button == System::Windows::Forms::MouseButtons::Left) {
             // If clicking on a revealed number, check for auto-reveal
