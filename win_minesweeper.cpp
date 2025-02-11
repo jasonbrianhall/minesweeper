@@ -504,42 +504,42 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
     }
 
     void UpdateCell(int row, int col) {
-        // Reset everything first
-        grid[row, col]->Text = "";
-        grid[row, col]->Image = nullptr;
-        grid[row, col]->BackColor = SystemColors::Control;  // Default for unrevealed
+        Button^ cell = grid[row, col];
+        cell->Text = "";
+        cell->Image = nullptr;
         cell->FlatStyle = FlatStyle::Standard;  // Reset the style
-        cell->UseVisualStyleBackColor = false;  // CRITICAL: Disable visual styles to force our colors        
-        
+        cell->UseVisualStyleBackColor = false;  // CRITICAL: Disable visual styles to force our colors
+    
         if (minesweeper->IsRevealed(row, col)) {
-            // Always set background to AliceBlue for revealed cells first
-            grid[row, col]->BackColor = Color::AliceBlue;
-        
             if (minesweeper->IsMine(row, col)) {
-                grid[row, col]->BackColor = Color::Red;
+                cell->BackColor = Color::Red;
                 if (bombImage) {
-                    grid[row, col]->Image = bombImage;
-                    grid[row, col]->ImageAlign = ContentAlignment::MiddleCenter;
+                    cell->Image = bombImage;
+                    cell->ImageAlign = ContentAlignment::MiddleCenter;
                 }
             } else {
+                cell->BackColor = Color::AliceBlue;
                 int count = minesweeper->GetAdjacentMines(row, col);
                 if (count > 0) {
-                    grid[row, col]->Text = count.ToString();
+                    cell->Text = count.ToString();
                     switch (count) {
-                        case 1: grid[row, col]->ForeColor = Color::Blue; break;
-                        case 2: grid[row, col]->ForeColor = Color::Green; break;
-                        case 3: grid[row, col]->ForeColor = Color::Red; break;
-                        case 4: grid[row, col]->ForeColor = Color::DarkBlue; break;
-                        case 5: grid[row, col]->ForeColor = Color::DarkRed; break;
-                        default: grid[row, col]->ForeColor = Color::DarkGray; break;
+                        case 1: cell->ForeColor = Color::Blue; break;
+                        case 2: cell->ForeColor = Color::Green; break;
+                        case 3: cell->ForeColor = Color::Red; break;
+                        case 4: cell->ForeColor = Color::DarkBlue; break;
+                        case 5: cell->ForeColor = Color::DarkRed; break;
+                        default: cell->ForeColor = Color::DarkGray; break;
                     }
                 }
             }
         } else if (minesweeper->IsFlagged(row, col)) {
+            cell->BackColor = SystemColors::Control;
             if (flagImage) {
-                grid[row, col]->Image = flagImage;
-                grid[row, col]->ImageAlign = ContentAlignment::MiddleCenter;
+                cell->Image = flagImage;
+                cell->ImageAlign = ContentAlignment::MiddleCenter;
             }
+        } else {
+            cell->BackColor = SystemColors::Control;
         }
     }
     
