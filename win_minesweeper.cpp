@@ -150,8 +150,7 @@ private:
     ToolStripStatusLabel^ timeLabel;
     TextBox^ instructionsBox;
     System::Drawing::Font^ buttonFont;
-    GameTimer^ gameTimer;
-    Form^ highScoreForm;
+    System::Windows::Forms::Timer^ gameTimer;    Form^ highScoreForm;
     TextBox^ nameEntryBox;
     ListView^ highScoreList;
 
