@@ -753,9 +753,9 @@ void ShowHighScores() {
 
 public:
     MainForm() {
-        minCellSize = 30;
+        minCellSize = 30;  // Initialize minCellSize
         LoadBase64Images();
-        SetApplicationIcon();  // Add this line
+        SetApplicationIcon();
         minesweeper = gcnew MinesweeperWrapper();
         InitializeComponent();
         this->Resize += gcnew EventHandler(this, &MainForm::MainForm_Resize);
