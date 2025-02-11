@@ -508,7 +508,9 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         grid[row, col]->Text = "";
         grid[row, col]->Image = nullptr;
         grid[row, col]->BackColor = SystemColors::Control;  // Default for unrevealed
-
+        cell->FlatStyle = FlatStyle::Standard;  // Reset the style
+        cell->UseVisualStyleBackColor = false;  // CRITICAL: Disable visual styles to force our colors        
+        
         if (minesweeper->IsRevealed(row, col)) {
             // Always set background to AliceBlue for revealed cells first
             grid[row, col]->BackColor = Color::AliceBlue;
