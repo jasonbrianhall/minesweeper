@@ -228,6 +228,7 @@ private:
     ListView^ highScoreList;
     int minCellSize;
     TextBox^ seedInput;
+    bool gameEndHandled = false;
 
     Image^ flagImage;
     Image^ bombImage;
@@ -357,7 +358,28 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
 
     void UpdateTimer(Object^ sender, EventArgs^ e) {
         timeLabel->Text = "Time: " + minesweeper->GetTime();
+        if (minesweeper->IsGameOver() || minesweeper->HasWon()) {
+            HandleGameEnd();
+        }
     }
+
+    void HandleGameEnd() {
+        if (gameEndHandled) return;
+        gameEndHandled = true;
+        
+        if (minesweeper->IsGameOver()) {
+            UpdateStatus("Game Over!");
+        } else if (minesweeper->HasWon()) {
+            UpdateStatus("Congratulations! You've won!");
+            if (minesweeper->IsHighScore(int::Parse(minesweeper->GetTime()->Split(':')[0]) * 60 + 
+                int::Parse(minesweeper->GetTime()->Split(':')[1]))) {
+                ShowHighScoreEntry();
+            } else {
+                ShowHighScores();
+            }
+        }
+    }
+
 
     void MainForm_KeyDown(Object^ sender, KeyEventArgs^ e) {
         switch (e->KeyCode) {
@@ -474,17 +496,6 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         int col = position[1];
 
         if (minesweeper->IsGameOver() || minesweeper->HasWon()) {
-            if (minesweeper->IsGameOver()) {
-                UpdateStatus("Game Over!");
-            } else if (minesweeper->HasWon()) {
-                UpdateStatus("Congratulations! You've won!");
-                if (minesweeper->IsHighScore(int::Parse(minesweeper->GetTime()->Split(':')[0]) * 60 + 
-                    int::Parse(minesweeper->GetTime()->Split(':')[1]))) {
-                    ShowHighScoreEntry();
-                } else {
-                    ShowHighScores();
-                }
-            }
             return;  
         }
 
@@ -665,6 +676,7 @@ void ShowHighScores() {
     void NewGame_Click(Object^ sender, EventArgs^ e) {
         minesweeper->setSeed(-1);
         minesweeper->Reset();
+        gameEndHandled = false;
         UpdateAllCells();
         UpdateStatus("New game started");
     }
@@ -677,18 +689,21 @@ void ShowHighScores() {
         minesweeper->SetDifficulty(0);
         InitializeGrid();
         UpdateStatus("Difficulty set to Easy");
+        gameEndHandled = false;
     }
 
     void SetMedium_Click(Object^ sender, EventArgs^ e) {
         minesweeper->SetDifficulty(1);
         InitializeGrid();
         UpdateStatus("Difficulty set to Medium");
+        gameEndHandled = false;
     }
 
     void SetHard_Click(Object^ sender, EventArgs^ e) {
         minesweeper->SetDifficulty(2);
         InitializeGrid();
         UpdateStatus("Difficulty set to Hard");
+        gameEndHandled = false;
     }
 
     void UpdateStatus(String^ message) {
