@@ -300,7 +300,7 @@ private:
             L"  - Right click to flag/unflag a cell\r\n"
             L"  - Press F1-F3 to change difficulty\r\n"
             L"  - Press N for new game";
-        instructionsBox->Font = gcnew System::Drawing::Font(L"Segoe UI Emoji", 9);
+        instructionsBox->Font = gcnew System::Drawing::Font(L"Lucida Console", 9);
         this->Controls->Add(instructionsBox);
 
         // Handle keyboard shortcuts
@@ -359,7 +359,7 @@ private:
         this->Controls->Add(gridPanel);
 
         grid = gcnew array<Button^, 2>(height, width);
-        buttonFont = gcnew System::Drawing::Font(L"Segoe UI Emoji", cellSize / 3, FontStyle::Bold);
+        buttonFont = gcnew System::Drawing::Font(L"Lucida Console", cellSize / 3, FontStyle::Bold);
 
         for (int i = 0; i < height; i++) {
             for (int j = 0; j < width; j++) {
@@ -463,6 +463,7 @@ private:
         if (minesweeper->IsRevealed(row, col)) {
             if (minesweeper->IsMine(row, col)) {
                 grid[row, col]->BackColor = Color::Red;
+                grid[row, col]->Text = L"\u2620";  // Skull and bones
             } else {
                 int count = minesweeper->GetAdjacentMines(row, col);
                 if (count > 0) {
