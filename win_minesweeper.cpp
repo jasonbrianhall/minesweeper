@@ -22,7 +22,7 @@ private:
 
 public:
     void setSeed(int seed) { currentSeed = seed; }
-    int getSeed() const { return currentSeed; }
+    int getSeed() { return currentSeed; }
 
     MinesweeperWrapper() { 
         nativeMinesweeper = new Minesweeper(); 
@@ -37,10 +37,6 @@ public:
 
     property Minesweeper* NativeMinesweeper {
         Minesweeper* get() { return nativeMinesweeper; }
-    }
-
-    void SetSeed(int seed) {
-        nativeMinesweeper->currentSeed = seed;
     }
     
     int GetAdjacentFlags(int row, int col) {
