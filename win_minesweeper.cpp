@@ -18,7 +18,7 @@ private:
     Minesweeper* nativeMinesweeper;
     int minCellSize = 30;  // Minimum cell size
     TextBox^ seedInput;
-    int currentSeed;
+    int currentSeed=-1;
 
 public:
     void setSeed(int seed) { currentSeed = seed; }
@@ -127,7 +127,7 @@ public:
 
     void RevealCell(int row, int col) {
         if (nativeMinesweeper->firstMove) {
-            nativeMinesweeper->initializeMinefield(row, col);
+            nativeMinesweeper->initializeMinefield(row, col, getSeed());
             nativeMinesweeper->firstMove = false;
             nativeMinesweeper->timer.start();
         }
@@ -609,6 +609,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
     }
 
     void NewGame_Click(Object^ sender, EventArgs^ e) {
+        setSeed(-1);
         minesweeper->Reset();
         UpdateAllCells();
         UpdateStatus("New game started");
