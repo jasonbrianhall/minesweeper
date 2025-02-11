@@ -243,6 +243,10 @@ JNdb5YBmukA+Ec40/4cdpRMI2DK2B49ogDq8RKJkjHgEY6AQGjg3+dEExL4sQLAVL4TYwAMhNSAQkiW4
 iu/QsOPQO+hGOA29u3JrS3Zo3+k8tpvHavjMQKUMzQLasSIDJ+odqftYUJD6WFFVoghGiEmy4VMLrxCM
 LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
 
+    void ViewHighScores_Click(Object^ sender, EventArgs^ e) {
+        ShowHighScores();
+    }
+
     void InitializeComponent() {
         this->Size = System::Drawing::Size(800, 600);
         this->Text = L"Minesweeper";
