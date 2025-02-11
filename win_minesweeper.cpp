@@ -393,7 +393,7 @@ private:
             try {
                 int seed = Int32::Parse(seedInput->Text);
                 // Update the wrapper to handle seed
-                minesweeper->SetSeed(seed);
+                minesweeper->setSeed(seed);
                 NewGame_Click(nullptr, nullptr);
             }
             catch (...) {
