@@ -249,6 +249,8 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
 
     static const char* REVEALED_BASE64 = R"(iVBORw0KGgoAAAANSUhEUgAAACAAAAAgAQMAAABJtOi3AAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAdnJLH8AAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAAAZQTFRFAAAAIx8gaVhvIAAAAAF0Uk5TAEDm2GYAAABWSURBVAjXY2DADRpghEITkDBoAxICLDBJ/g9AwoIPSCQcBin72MDAyPDDgYGJ44cCAwv/DwMGNhDBzP8jgYGx/cMBBobjD4FmFbQDFcvZAAn2BwxEAADI2BObaHDmJQAAAABJRU5ErkJggg==)";
 
+    static const char* ICON_BASE64 = R"(iVBORw0KGgoAAAANSUhEUgAAACAAAAAgBAMAAACBVGfHAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAdnJLH8AAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAAB5QTFRFpTVKRV2GdWBOPJbkvHuN4HJ134AfjKKxzrBp3OjtsPRwLAAAAWNJREFUKM9l0cFPwjAUBvBigMTbGmbmUbkMj1ATOWqyRI41ARNvjEPHkc4tr7uNhW3lLLH2v/UVOBjsafllX/u1j9iLRf6DgT+rQFBat9aawtosiuYIutRJYSSkkC963BKjtU4AKKzbvBuRgphyXzrY7Mt8fuAO1iIBSUEkOeHuD9EXsaR0eAc5Jw7ehXijCBQ8cgQsA7MhvOidyaJnBBOCqq4KqXVNF27Tn1WbVg+STnTNfRdRIlQVVmWj+tpuXEQs0y1W/7qtX8HB93CpWrzX57TugIeA3yp0MClPPQKAdIvAHstTD/bEphUbD9hNK6VEKIxN9YCx8awNgLpTcA9dDZivzwAW1EyT7nzXUnkEkEEGWQFpGJgz+JzzRojkFJFAvY8DaVbCPRxCqisv6vFm1MTWumNVI7zegjSNiDHtIv2Oh51xj/gYsdSnDgQCYwwBH5jiJe4Iuac0cMO+nO3F9H8B6M7JKU9YozUAAAAASUVORK5CYII=)"
+
     void ViewHighScores_Click(Object^ sender, EventArgs^ e) {
         ShowHighScores();
     }
@@ -737,11 +739,23 @@ void ShowHighScores() {
             MessageBox::Show("Error loading images: " + ex->Message);
         }
     }
+    
+    void SetApplicationIcon() {
+        try {
+            array<Byte>^ iconBytes = Convert::FromBase64String(gcnew String(ICON_BASE64));
+            System::IO::MemoryStream^ iconStream = gcnew System::IO::MemoryStream(iconBytes);
+            this->Icon = gcnew Drawing::Icon(iconStream);
+        }
+        catch (Exception^ ex) {
+            MessageBox::Show("Error loading application icon: " + ex->Message);
+        }
+    }
 
 public:
     MainForm() {
-        minCellSize = 30;  // Initialize minCellSize
+        minCellSize = 30;
         LoadBase64Images();
+        SetApplicationIcon();  // Add this line
         minesweeper = gcnew MinesweeperWrapper();
         InitializeComponent();
         this->Resize += gcnew EventHandler(this, &MainForm::MainForm_Resize);
