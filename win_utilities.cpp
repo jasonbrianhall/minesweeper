@@ -150,7 +150,8 @@ void Minesweeper::saveHighscore() {
     
     Score score;
     score.name = playerName;
-    score.time = timer.elapsedSeconds;
+    score.time = timer.getElapsedSeconds();
     score.difficulty = difficultyStr;
     highscores.addScore(score);
 }
+
