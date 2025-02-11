@@ -28,13 +28,67 @@ jobs:
       run: |
         msbuild /p:Configuration=Release /p:Platform=x64 minesweeper.vcxproj
 
+    - name: Install WiX Toolset
+      run: |
+        mkdir wix
+        cd wix
+        Invoke-WebRequest -Uri "https://github.com/wixtoolset/wix3/releases/download/wix3112rtm/wix311-binaries.zip" -OutFile "wix311-binaries.zip"
+        Expand-Archive wix311-binaries.zip -DestinationPath .
+        echo "$pwd" | Out-File -FilePath $env:GITHUB_PATH -Append
+
+    - name: Create MSI Installer
+      run: |
+        echo '<?xml version="1.0" encoding="UTF-8"?>
+        <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+          <Product Id="*" Name="Minesweeper" Language="1033" Version="1.0.0" Manufacturer="Your Name" UpgradeCode="A4F3B891-9D23-41DA-8E35-F94721E8F123">
+            <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+            <MajorUpgrade DowngradeErrorMessage="A newer version is already installed." />
+            <MediaTemplate EmbedCab="yes" />
+            <Directory Id="TARGETDIR" Name="SourceDir">
+              <Directory Id="ProgramFilesFolder">
+                <Directory Id="INSTALLFOLDER" Name="Minesweeper">
+                  <Component Id="MainExecutable" Guid="67CD3A92-4F45-4E67-AC89-2A5D6F981D45">
+                    <File Id="MainEXE" Name="minesweeper.exe" Source="x64/Release/minesweeper.exe" KeyPath="yes"/>
+                    <File Id="IconFile" Name="icon.ico" Source="icon.ico"/>
+                    <File Id="README" Name="README.md" Source="README.md"/>
+                    <File Id="LICENSE" Name="LICENSE.md" Source="LICENSE.md"/>
+                  </Component>
+                </Directory>
+              </Directory>
+              <Directory Id="ProgramMenuFolder">
+                <Directory Id="ApplicationProgramsFolder" Name="Minesweeper">
+                  <Component Id="ApplicationShortcuts" Guid="B71F9E23-8A78-4B12-8C34-6789ABCD8901">
+                    <Shortcut Id="ApplicationStartMenu" 
+                             Name="Minesweeper" 
+                             Target="[INSTALLFOLDER]minesweeper.exe" 
+                             WorkingDirectory="INSTALLFOLDER"
+                             Icon="MinesweeperIcon"/>
+                    <RemoveFolder Id="ApplicationProgramsFolder" On="uninstall"/>
+                    <RegistryValue Root="HKCU" Key="Software\Minesweeper" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
+                  </Component>
+                </Directory>
+              </Directory>
+            </Directory>
+            <Feature Id="ProductFeature" Title="Minesweeper" Level="1">
+              <ComponentRef Id="MainExecutable" />
+              <ComponentRef Id="ApplicationShortcuts" />
+            </Feature>
+            <Icon Id="MinesweeperIcon" SourceFile="icon.ico"/>
+          </Product>
+        </Wix>' > installer.wxs
+
+        candle installer.wxs
+        light installer.wixobj -out Minesweeper.msi
+
     - name: Create Release
       if: github.event_name == 'push' && github.ref == 'refs/heads/main'
       id: create_release
       uses: softprops/action-gh-release@v1
       with:
         files: |
+          Minesweeper.msi
           x64/Release/minesweeper.exe
+          icon.ico
         tag_name: v${{ github.run_number }}
         name: Release ${{ github.run_number }}
         draft: false
@@ -45,14 +99,15 @@ jobs:
           Commit: ${{ github.sha }}
           Build number: ${{ github.run_number }}
 
-
     - name: Create Dev Build
       if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
       id: create_dev_build
       uses: softprops/action-gh-release@v1
       with:
         files: |
+          Minesweeper.msi
           x64/Release/minesweeper.exe
+          icon.ico
         tag_name: bleedingedge-v${{ github.run_number }}
         name: Dev Build ${{ github.run_number }}
         draft: false
