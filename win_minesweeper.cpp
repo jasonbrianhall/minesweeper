@@ -529,7 +529,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
                     grid[row, col]->Text = "";
                     grid[row, col]->Image = nullptr;
                 }
-                grid[row, col]->BackColor = Color::LightGray;
+                grid[row, col]->BackColor = Color::LightBlue;
             }
         } else if (minesweeper->IsFlagged(row, col)) {
             grid[row, col]->Text = "";
