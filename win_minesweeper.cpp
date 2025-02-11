@@ -24,6 +24,10 @@ public:
     void setSeed(int seed) { currentSeed = seed; }
     int getSeed() { return currentSeed; }
 
+    const std::vector<Score>& GetNativeHighscores() {
+        return nativeMinesweeper->highscores.getScores(); // use nativeMinesweeper pointer
+    }
+    
     MinesweeperWrapper() { 
         nativeMinesweeper = new Minesweeper(); 
     }
@@ -615,22 +619,20 @@ void ShowHighScores() {
     highScoreList->Columns->Add("Time", 100);
     highScoreList->Columns->Add("Difficulty", 100);
 
-    // Get scores using the wrapper's method
-    List<String^>^ scores = minesweeper->GetHighScores();
-    for each (String^ scoreStr in scores) {
-        array<String^>^ parts = scoreStr->Split('|');
-        if (parts->Length >= 3) {
-            // Convert time from seconds to MM:SS format
-            int seconds = Int32::Parse(parts[1]);
-            String^ timeStr = String::Format("{0:D2}:{1:D2}", seconds / 60, seconds % 60);
-            
-            ListViewItem^ item = gcnew ListViewItem(gcnew array<String^> {
-                parts[0],    // Name
-                timeStr,     // Time in MM:SS
-                parts[2]     // Difficulty
-            });
-            highScoreList->Items->Add(item);
-        }
+    // Get the actual scores from the native Highscores class
+    const std::vector<Score>& nativeScores = minesweeper->GetNativeHighscores();
+    
+    for (const auto& score : nativeScores) {
+        int minutes = score.time / 60;
+        int seconds = score.time % 60;
+        String^ timeStr = String::Format("{0:D2}:{1:D2}", minutes, seconds);
+        
+        ListViewItem^ item = gcnew ListViewItem(gcnew array<String^> {
+            gcnew String(score.name.c_str()),
+            timeStr,
+            gcnew String(score.difficulty.c_str())
+        });
+        highScoreList->Items->Add(item);
     }
 
     Panel^ mainPanel = gcnew Panel();
