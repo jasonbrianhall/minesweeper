@@ -507,10 +507,11 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         Button^ cell = grid[row, col];
         cell->Text = "";
         cell->Image = nullptr;
-        cell->FlatStyle = FlatStyle::Standard;  // Reset the style
-        cell->UseVisualStyleBackColor = false;  // CRITICAL: Disable visual styles to force our colors
+        cell->UseVisualStyleBackColor = false;
     
         if (minesweeper->IsRevealed(row, col)) {
+            cell->BackColor = SystemColors::Control;
+        
             if (minesweeper->IsMine(row, col)) {
                 cell->BackColor = Color::Red;
                 if (bombImage) {
@@ -518,10 +519,12 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
                     cell->ImageAlign = ContentAlignment::MiddleCenter;
                 }
             } else {
-                cell->BackColor = Color::AliceBlue;
                 int count = minesweeper->GetAdjacentMines(row, col);
-                if (count > 0) {
-                    cell->Text = count.ToString();
+                // Always show a number now - 0 for no adjacent mines
+                cell->Text = count.ToString();
+                if (count == 0) {
+                    cell->ForeColor = Color::Black;    
+                } else {
                     switch (count) {
                         case 1: cell->ForeColor = Color::Blue; break;
                         case 2: cell->ForeColor = Color::Green; break;
@@ -533,13 +536,13 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
                 }
             }
         } else if (minesweeper->IsFlagged(row, col)) {
-            cell->BackColor = SystemColors::Control;
+            cell->BackColor = Color::LightGray;
             if (flagImage) {
                 cell->Image = flagImage;
                 cell->ImageAlign = ContentAlignment::MiddleCenter;
             }
         } else {
-            cell->BackColor = SystemColors::Control;
+            cell->BackColor = Color::LightGray;
         }
     }
     
