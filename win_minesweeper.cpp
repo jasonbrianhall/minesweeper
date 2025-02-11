@@ -227,13 +227,12 @@ private:
 
     Image^ flagImage;
     Image^ bombImage;
+    Image^ revealedImage;
     static const char* FLAG_BASE64 = R"(iVBORw0KGgoAAAANSUhEUgAAACAAAAAgBAMAAACBVGfHAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAdn
 JLH8AAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAACFQTFRFAAAA/2Z
 mAAAA////mTMzzMzMzGZmZjMzmWYzMwAA/8xmaoi8KgAAAAF0Uk5TAEDm2GYAAABdSURBVCjPY2DABpQ
 U0AS6GggJKCkooepSVkkUTJnEwMAEE1VWFBQUFHOf7oIiAAIDLaDmXu6GIqAEdPaUREERuACYgeRBZfQ
 AGqwCSmixwhQaGhqEIgBUocSAEwAAjwQWTza+izoAAAAASUVORK5CYII=)";
-
-    //static const char* BOMB_BASE64 ='iVBORw0KGgoAAAANSUhEUgAAACAAAAAgBAMAAACBVGfHAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAdnJLH8AAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAACFQTFRFAAAAgwMTcwoRqBIlgTE0yyk14kFE21NWqnN1z5ye////XulGdQAAAAF0Uk5TAEDm2GYAAADbSURBVCjPbdK9DoIwEAfwQ/lYKeEBsOEFTF10qm9AQqpxc7GzizAbN1cmeALCU0rLtUVClza/XPMvdwCsrNocfK63UBYIJNdb5YBmukA+Ec40/4cdpRMI2DK2B49ogDq8RKJkjHgEY6AQGjg3+dEExL4sQLAVL4TYwAMhNSAQkiW4iu/QsOPQO+hGOA29u3JrS3Zo3+k8tpvHavjMQKUMzQLasSIDJ+odqftYUJD6WFFVoghGiEmy4VMLrxCMLYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=';
 
     static const char* BOMB_BASE64 = R"(iVBORw0KGgoAAAANSUhEUgAAACAAAAAgBAMAAACBVGfHAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAd
 nJLH8AAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAACFQTFRFAAAA
@@ -242,6 +241,8 @@ DoIwEAfwQ/lYKeEBsOEFTF10qm9AQqpxc7GzizAbN1cmeALCU0rLtUVClza/XPMvdwCsrNocfK63UBYI
 JNdb5YBmukA+Ec40/4cdpRMI2DK2B49ogDq8RKJkjHgEY6AQGjg3+dEExL4sQLAVL4TYwAMhNSAQkiW4
 iu/QsOPQO+hGOA29u3JrS3Zo3+k8tpvHavjMQKUMzQLasSIDJ+odqftYUJD6WFFVoghGiEmy4VMLrxCM
 LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
+
+    static const char* REVEALED_BASE64 = R"(iVBORw0KGgoAAAANSUhEUgAAACAAAAAgAQMAAABJtOi3AAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAdnJLH8AAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAAAZQTFRFAAAAIx8gaVhvIAAAAAF0Uk5TAEDm2GYAAABWSURBVAjXY2DADRpghEITkDBoAxICLDBJ/g9AwoIPSCQcBin72MDAyPDDgYGJ44cCAwv/DwMGNhDBzP8jgYGx/cMBBobjD4FmFbQDFcvZAAn2BwxEAADI2BObaHDmJQAAAABJRU5ErkJggg==
 
     void ViewHighScores_Click(Object^ sender, EventArgs^ e) {
         ShowHighScores();
@@ -520,18 +521,18 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
                 }
             } else {
                 int count = minesweeper->GetAdjacentMines(row, col);
-                // Always show a number now - 0 for no adjacent mines
-                cell->Text = count.ToString();
-                if (count == 0) {
-                    cell->ForeColor = Color::Black;    
-                } else {
+                if (count == 0 && revealedImage != nullptr) {  // Check if eyeImage exists
+                    cell->Image = revealedImage;
+                    cell->ImageAlign = ContentAlignment::MiddleCenter;
+                } else if (count > 0) {
+                    cell->Text = count.ToString();
                     switch (count) {
                         case 1: cell->ForeColor = Color::Blue; break;
                         case 2: cell->ForeColor = Color::Green; break;
                         case 3: cell->ForeColor = Color::Red; break;
                         case 4: cell->ForeColor = Color::DarkBlue; break;
                         case 5: cell->ForeColor = Color::DarkRed; break;
-                        default: cell->ForeColor = Color::DarkGray; break;
+                    default: cell->ForeColor = Color::DarkGray; break;    
                     }
                 }
             }
@@ -544,8 +545,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         } else {
             cell->BackColor = Color::LightGray;
         }
-    }
-    
+    }    
     
         
     void UpdateAllCells() {
@@ -683,6 +683,11 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
             array<Byte>^ bombBytes = Convert::FromBase64String(gcnew String(BOMB_BASE64));
             System::IO::MemoryStream^ bombStream = gcnew System::IO::MemoryStream(bombBytes);
             bombImage = Image::FromStream(bombStream);
+
+            // Convert base64 to image for revealed
+            array<Byte>^ releavedBytes = Convert::FromBase64String(gcnew String(REVEALED_BASE64));
+            System::IO::MemoryStream^ revealedStream = gcnew System::IO::MemoryStream(revealedBytes);
+            revealedImage = Image::FromStream(bombStream);
         }
         catch (Exception^ ex) {
             MessageBox::Show("Error loading images: " + ex->Message);
