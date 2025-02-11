@@ -1,5 +1,6 @@
 #define NOMINMAX
 #include <msclr/marshal_cppstd.h>
+#include "win_minesweeper.h"
 #include "highscores.h"
 
 using namespace System;

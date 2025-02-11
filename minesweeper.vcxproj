@@ -88,7 +88,8 @@
 
   <ItemGroup>
     <ClInclude Include="highscores.h" />
-  </ItemGroup>
+    <ClInclude Include="win_minesweeper.h" />
+</ItemGroup>
 
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>
