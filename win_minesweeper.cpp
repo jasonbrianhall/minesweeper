@@ -482,7 +482,7 @@ private:
             }
         } else if (minesweeper->IsFlagged(row, col)) {
             // Flag
-            grid[row, col]->Text = String::FromUtf32(0x1F6A9);
+            grid[row, col]->Text = L"\u2691";
             //grid[row, col]->Text = L"🚩";
         } else {
             grid[row, col]->Text = L"";
