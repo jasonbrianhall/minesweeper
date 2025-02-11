@@ -270,7 +270,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
 
         // Initialize game timer
         gameTimer = gcnew Timer();
-        gameTimer->Interval = 100; // Update every 100ms
+        gameTimer->Interval = 100; // Update every 100ms for smoother display
         gameTimer->Tick += gcnew EventHandler(this, &MainForm::UpdateTimer);
         gameTimer->Start();
 
@@ -359,7 +359,14 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
     }
 
     void UpdateTimer(Object^ sender, EventArgs^ e) {
-        timeLabel->Text = "Time: " + minesweeper->GetTime();
+        // Only update the timer if the game is in progress
+        if (!minesweeper->IsGameOver() && !minesweeper->HasWon()) {
+            // Get and display the current time from the minesweeper timer
+            timeLabel->Text = "Time: " + minesweeper->GetTime();
+            statusStrip->Refresh(); // Force refresh of the status strip
+        }
+
+        // Check for game end conditions
         if (minesweeper->IsGameOver() || minesweeper->HasWon()) {
             HandleGameEnd();
         }
@@ -681,6 +688,9 @@ void ShowHighScores() {
         gameEndHandled = false;
         UpdateAllCells();
         UpdateStatus("New game started");
+        gameTimer->Start();
+        timeLabel->Text = "Time: 00:00";
+        statusStrip->Refresh();
     }
 
     void Exit_Click(Object^ sender, EventArgs^ e) {
