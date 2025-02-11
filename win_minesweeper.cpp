@@ -16,8 +16,14 @@ namespace MinesweeperGame {
 public ref class MinesweeperWrapper {
 private:
     Minesweeper* nativeMinesweeper;
+    int minCellSize = 30;  // Minimum cell size
+    TextBox^ seedInput;
+    int currentSeed;
 
 public:
+    void setSeed(int seed) { currentSeed = seed; }
+    int getSeed() { return currentSeed; }
+
     MinesweeperWrapper() { 
         nativeMinesweeper = new Minesweeper(); 
     }
@@ -32,7 +38,51 @@ public:
     property Minesweeper* NativeMinesweeper {
         Minesweeper* get() { return nativeMinesweeper; }
     }
-
+    
+    int GetAdjacentFlags(int row, int col) {
+        int count = 0;
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                int newY = row + dy;
+                int newX = col + dx;
+                if (newY >= 0 && newY < nativeMinesweeper->height && 
+                    newX >= 0 && newX < nativeMinesweeper->width) {
+                    if (nativeMinesweeper->flagged[newY][newX]) count++;
+                }
+            }
+        }
+        return count;
+    }
+    
+    void RevealAdjacent(int row, int col) {
+        if (!nativeMinesweeper->revealed[row][col]) return;
+        
+        int mineCount = GetAdjacentMines(row, col);
+        int flagCount = GetAdjacentFlags(row, col);
+        
+        if (mineCount == flagCount) {
+            for (int dy = -1; dy <= 1; dy++) {
+                for (int dx = -1; dx <= 1; dx++) {
+                    int newY = row + dy;
+                    int newX = col + dx;
+                    if (newY >= 0 && newY < nativeMinesweeper->height && 
+                        newX >= 0 && newX < nativeMinesweeper->width) {
+                        if (!nativeMinesweeper->flagged[newY][newX] && 
+                            !nativeMinesweeper->revealed[newY][newX]) {
+                            if (nativeMinesweeper->minefield[newY][newX]) {
+                                nativeMinesweeper->gameOver = true;
+                                nativeMinesweeper->revealAllMines();
+                                nativeMinesweeper->timer.stop();
+                                return;
+                            }
+                            nativeMinesweeper->revealCell(newY, newX);
+                        }
+                    }
+                }
+            }
+        }
+    }    
+    
     void SetDifficulty(int difficulty) {
         switch(difficulty) {
             case 0: // Easy
@@ -153,6 +203,9 @@ private:
     System::Windows::Forms::Timer^ gameTimer;    Form^ highScoreForm;
     TextBox^ nameEntryBox;
     ListView^ highScoreList;
+    int minCellSize;
+    TextBox^ seedInput;
+
 
     void InitializeComponent() {
         this->Size = System::Drawing::Size(800, 600);
@@ -185,6 +238,19 @@ private:
             "Exit", nullptr,
             gcnew EventHandler(this, &MainForm::Exit_Click)));
 
+        ToolStripMenuItem^ editMenu = gcnew ToolStripMenuItem("Edit");
+        editMenu->DropDownItems->Add(gcnew ToolStripMenuItem(
+            "Enter Seed...", nullptr,
+            gcnew EventHandler(this, &MainForm::EnterSeed_Click)));
+
+        menuStrip->Items->Add(editMenu);
+            
+        // Add About menu
+        ToolStripMenuItem^ helpMenu = gcnew ToolStripMenuItem("Help");
+        helpMenu->DropDownItems->Add(gcnew ToolStripMenuItem(
+            "About", nullptr,
+            gcnew EventHandler(this, &MainForm::ShowAbout_Click)));
+            
         difficultyMenu->DropDownItems->Add(gcnew ToolStripMenuItem(
             "Easy (9x9) F1", nullptr,
             gcnew EventHandler(this, &MainForm::SetEasy_Click)));
@@ -196,7 +262,10 @@ private:
             gcnew EventHandler(this, &MainForm::SetHard_Click)));
 
         menuStrip->Items->Add(fileMenu);
+        menuStrip->Items->Add(editMenu);
         menuStrip->Items->Add(difficultyMenu);
+        menuStrip->Items->Add(helpMenu);
+
         this->MainMenuStrip = menuStrip;
         this->Controls->Add(menuStrip);
 
@@ -255,8 +324,13 @@ private:
         int height = minesweeper->GetHeight();
         int width = minesweeper->GetWidth();
         
-        int maxCellSize = 30;
-        int cellSize = maxCellSize;
+        // Calculate cell size based on window size
+        int availableWidth = this->ClientSize.Width - 100;  // Account for margins
+        int availableHeight = this->ClientSize.Height - menuStrip->Height - instructionsBox->Height - 100;
+        
+        int cellSizeFromWidth = availableWidth / width;
+        int cellSizeFromHeight = availableHeight / height;
+        int cellSize = Math::Max(minCellSize, Math::Min(cellSizeFromWidth, cellSizeFromHeight));
         
         Panel^ gridPanel = gcnew Panel();
         int gridTop = menuStrip->Height + instructionsBox->Height + 25;
@@ -266,7 +340,7 @@ private:
         this->Controls->Add(gridPanel);
 
         grid = gcnew array<Button^, 2>(height, width);
-        buttonFont = gcnew System::Drawing::Font(L"Arial", 12, FontStyle::Bold);
+        buttonFont = gcnew System::Drawing::Font(L"Arial", cellSize / 3, FontStyle::Bold);
 
         for (int i = 0; i < height; i++) {
             for (int j = 0; j < width; j++) {
@@ -279,6 +353,90 @@ private:
                 grid[i, j]->MouseUp += gcnew MouseEventHandler(this, &MainForm::Cell_MouseUp);
                 gridPanel->Controls->Add(grid[i, j]);
             }
+        }
+    }
+    
+    void ShowAbout_Click(Object^ sender, EventArgs^ e) {
+        MessageBox::Show(
+            L"Minesweeper\n\n"
+            L"A classic game where you must avoid the mines and clear the field.\n\n"
+            L"Left click: Reveal cell\n"
+            L"Right click: Flag/unflag cell\n"
+            L"Click on revealed number: Reveal adjacent cells if correct number of flags\n\n"
+            L"Written by Jason Hall (2025)",
+            L"About Minesweeper",
+            MessageBoxButtons::OK,
+            MessageBoxIcon::Information);
+    }
+    
+    void EnterSeed_Click(Object^ sender, EventArgs^ e) {
+        Form^ seedForm = gcnew Form();
+        seedForm->Text = L"Enter Seed";
+        seedForm->Size = System::Drawing::Size(300, 150);
+        seedForm->StartPosition = FormStartPosition::CenterParent;
+        seedForm->FormBorderStyle = Windows::Forms::FormBorderStyle::FixedDialog;
+        
+        seedInput = gcnew TextBox();
+        seedInput->Location = Point(20, 20);
+        seedInput->Size = System::Drawing::Size(240, 20);
+        
+        Button^ okButton = gcnew Button();
+        okButton->Text = L"OK";
+        okButton->DialogResult = System::Windows::Forms::DialogResult::OK;
+        okButton->Location = Point(100, 60);
+        
+        seedForm->Controls->Add(seedInput);
+        seedForm->Controls->Add(okButton);
+        seedForm->AcceptButton = okButton;
+        
+        if (seedForm->ShowDialog() == System::Windows::Forms::DialogResult::OK) {
+            try {
+                int seed = Int32::Parse(seedInput->Text);
+                // Update the wrapper to handle seed
+                minesweeper->setSeed(seed);
+                NewGame_Click(nullptr, nullptr);
+            }
+            catch (...) {
+                MessageBox::Show(L"Invalid seed value", L"Error", 
+                    MessageBoxButtons::OK, MessageBoxIcon::Error);
+            }
+        }
+    }
+    
+    void Cell_MouseUp(Object^ sender, MouseEventArgs^ e) {
+        Button^ button = safe_cast<Button^>(sender);
+        array<int>^ position = safe_cast<array<int>^>(button->Tag);
+        int row = position[0];
+        int col = position[1];
+
+        if (e->Button == System::Windows::Forms::MouseButtons::Left) {
+            // If clicking on a revealed number, check for auto-reveal
+            if (minesweeper->IsRevealed(row, col) && !minesweeper->IsMine(row, col)) {
+                int adjacentMines = minesweeper->GetAdjacentMines(row, col);
+                if (adjacentMines > 0 && minesweeper->GetAdjacentFlags(row, col) == adjacentMines) {
+                    minesweeper->RevealAdjacent(row, col);
+                    UpdateAllCells();
+                }
+            } else {
+                minesweeper->RevealCell(row, col);
+                UpdateAllCells();
+            }
+
+            if (minesweeper->IsGameOver()) {
+                UpdateStatus("Game Over!");
+            } else if (minesweeper->HasWon()) {
+                UpdateStatus("Congratulations! You've won!");
+                if (minesweeper->IsHighScore(int::Parse(minesweeper->GetTime()->Split(':')[0]) * 60 + 
+                    int::Parse(minesweeper->GetTime()->Split(':')[1]))) {
+                    ShowHighScoreEntry();
+                } else {
+                    ShowHighScores();
+                }
+            }
+        }
+        else if (e->Button == System::Windows::Forms::MouseButtons::Right) {
+            minesweeper->ToggleFlag(row, col);
+            UpdateCell(row, col);
         }
     }
 
@@ -320,34 +478,6 @@ private:
             for (int j = 0; j < width; j++) {
                 UpdateCell(i, j);
             }
-        }
-    }
-
-    void Cell_MouseUp(Object^ sender, MouseEventArgs^ e) {
-        Button^ button = safe_cast<Button^>(sender);
-        array<int>^ position = safe_cast<array<int>^>(button->Tag);
-        int row = position[0];
-        int col = position[1];
-
-        if (e->Button == System::Windows::Forms::MouseButtons::Left) {
-            minesweeper->RevealCell(row, col);
-            UpdateAllCells();
-
-            if (minesweeper->IsGameOver()) {
-                UpdateStatus("Game Over!");
-            } else if (minesweeper->HasWon()) {
-                UpdateStatus("Congratulations! You've won!");
-                if (minesweeper->IsHighScore(int::Parse(minesweeper->GetTime()->Split(':')[0]) * 60 + 
-                    int::Parse(minesweeper->GetTime()->Split(':')[1]))) {
-                    ShowHighScoreEntry();
-                } else {
-                    ShowHighScores();
-                }
-            }
-        }
-        else if (e->Button == System::Windows::Forms::MouseButtons::Right) {
-            minesweeper->ToggleFlag(row, col);
-            UpdateCell(row, col);
         }
     }
 
@@ -458,12 +588,18 @@ private:
         statusStrip->Refresh();
     }
 
+    void MainForm_Resize(Object^ sender, EventArgs^ e) {
+        InitializeGrid();
+        UpdateAllCells();
+    }
+
 public:
     MainForm() {
+        minCellSize = 30;  // Initialize minCellSize
         minesweeper = gcnew MinesweeperWrapper();
         InitializeComponent();
-    }
-};
+        this->Resize += gcnew EventHandler(this, &MainForm::MainForm_Resize);
+    }};
 
 } // namespace MinesweeperGame
 
