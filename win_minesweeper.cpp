@@ -24,6 +24,10 @@ public:
     void setSeed(int seed) { currentSeed = seed; }
     int getSeed() { return currentSeed; }
 
+    const std::vector<Score>& GetNativeHighscores() {
+        return nativeMinesweeper->highscores.getScores(); // use nativeMinesweeper pointer
+    }
+    
     MinesweeperWrapper() { 
         nativeMinesweeper = new Minesweeper(); 
     }
@@ -224,6 +228,7 @@ private:
     ListView^ highScoreList;
     int minCellSize;
     TextBox^ seedInput;
+    bool gameEndHandled = false;
 
     Image^ flagImage;
     Image^ bombImage;
@@ -353,7 +358,28 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
 
     void UpdateTimer(Object^ sender, EventArgs^ e) {
         timeLabel->Text = "Time: " + minesweeper->GetTime();
+        if (minesweeper->IsGameOver() || minesweeper->HasWon()) {
+            HandleGameEnd();
+        }
     }
+
+    void HandleGameEnd() {
+        if (gameEndHandled) return;
+        gameEndHandled = true;
+        
+        if (minesweeper->IsGameOver()) {
+            UpdateStatus("Game Over!");
+        } else if (minesweeper->HasWon()) {
+            UpdateStatus("Congratulations! You've won!");
+            if (minesweeper->IsHighScore(int::Parse(minesweeper->GetTime()->Split(':')[0]) * 60 + 
+                int::Parse(minesweeper->GetTime()->Split(':')[1]))) {
+                ShowHighScoreEntry();
+            } else {
+                ShowHighScores();
+            }
+        }
+    }
+
 
     void MainForm_KeyDown(Object^ sender, KeyEventArgs^ e) {
         switch (e->KeyCode) {
@@ -470,17 +496,6 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         int col = position[1];
 
         if (minesweeper->IsGameOver() || minesweeper->HasWon()) {
-            if (minesweeper->IsGameOver()) {
-                UpdateStatus("Game Over!");
-            } else if (minesweeper->HasWon()) {
-                UpdateStatus("Congratulations! You've won!");
-                if (minesweeper->IsHighScore(int::Parse(minesweeper->GetTime()->Split(':')[0]) * 60 + 
-                    int::Parse(minesweeper->GetTime()->Split(':')[1]))) {
-                    ShowHighScoreEntry();
-                } else {
-                    ShowHighScores();
-                }
-            }
             return;  
         }
 
@@ -597,37 +612,62 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         }
     }
 
-    void ShowHighScores() {
-        highScoreForm = gcnew Form();
-        highScoreForm->Text = "High Scores";
-        highScoreForm->Size = Drawing::Size(400, 300);
-        highScoreForm->StartPosition = FormStartPosition::CenterParent;
+void ShowHighScores() {
+    highScoreForm = gcnew Form();
+    highScoreForm->Text = "High Scores";
+    highScoreForm->MinimumSize = Drawing::Size(400, 300);
+    highScoreForm->StartPosition = FormStartPosition::CenterParent;
+    highScoreForm->MaximizeBox = true;
+    highScoreForm->Anchor = static_cast<AnchorStyles>(AnchorStyles::Top | AnchorStyles::Bottom | AnchorStyles::Left | AnchorStyles::Right);
 
-        highScoreList = gcnew ListView();
-        highScoreList->View = View::Details;
-        highScoreList->Size = Drawing::Size(360, 200);
-        highScoreList->Location = Point(20, 20);
-        highScoreList->Columns->Add("Name", 150);
-        highScoreList->Columns->Add("Time", 100);
-        highScoreList->Columns->Add("Difficulty", 100);
+    highScoreList = gcnew ListView();
+    highScoreList->View = View::Details;
+    highScoreList->Dock = DockStyle::Fill;
+    highScoreList->Padding = System::Windows::Forms::Padding(20);
+    highScoreList->FullRowSelect = true;
+    highScoreList->GridLines = true;
+    highScoreList->Columns->Add("Name", 150);
+    highScoreList->Columns->Add("Time", 100);
+    highScoreList->Columns->Add("Difficulty", 100);
 
-        List<String^>^ scores = minesweeper->GetHighScores();
-        for each (String^ score in scores) {
-            array<String^>^ parts = score->Split();
-            ListViewItem^ item = gcnew ListViewItem(parts);
-            highScoreList->Items->Add(item);
-        }
-
-        highScoreForm->Controls->Add(highScoreList);
-
-        Button^ closeButton = gcnew Button();
-        closeButton->Text = "Close";
-        closeButton->Location = Point(150, 230);
-        closeButton->Click += gcnew EventHandler(this, &MainForm::CloseHighScores);
-        highScoreForm->Controls->Add(closeButton);
-
-        highScoreForm->ShowDialog();
+    // Get the actual scores from the native Highscores class
+    const std::vector<Score>& nativeScores = minesweeper->GetNativeHighscores();
+    
+    for (const auto& score : nativeScores) {
+        int minutes = score.time / 60;
+        int seconds = score.time % 60;
+        String^ timeStr = String::Format("{0:D2}:{1:D2}", minutes, seconds);
+        
+        ListViewItem^ item = gcnew ListViewItem(gcnew array<String^> {
+            gcnew String(score.name.c_str()),
+            timeStr,
+            gcnew String(score.difficulty.c_str())
+        });
+        highScoreList->Items->Add(item);
     }
+
+    Panel^ mainPanel = gcnew Panel();
+    mainPanel->Dock = DockStyle::Fill;
+    mainPanel->Padding = System::Windows::Forms::Padding(20);
+
+    Panel^ buttonPanel = gcnew Panel();
+    buttonPanel->Height = 50;
+    buttonPanel->Dock = DockStyle::Bottom;
+
+    Button^ closeButton = gcnew Button();
+    closeButton->Text = "Close";
+    closeButton->AutoSize = true;
+    closeButton->Anchor = static_cast<AnchorStyles>(AnchorStyles::None);
+    closeButton->Location = Point((buttonPanel->Width - closeButton->Width) / 2, (buttonPanel->Height - closeButton->Height) / 2);
+    closeButton->Click += gcnew EventHandler(this, &MainForm::CloseHighScores);
+
+    buttonPanel->Controls->Add(closeButton);
+    mainPanel->Controls->Add(highScoreList);
+    mainPanel->Controls->Add(buttonPanel);
+    highScoreForm->Controls->Add(mainPanel);
+
+    highScoreForm->ShowDialog();
+}
 
     void CloseHighScores(Object^ sender, EventArgs^ e) {
         highScoreForm->Close();
@@ -636,6 +676,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
     void NewGame_Click(Object^ sender, EventArgs^ e) {
         minesweeper->setSeed(-1);
         minesweeper->Reset();
+        gameEndHandled = false;
         UpdateAllCells();
         UpdateStatus("New game started");
     }
@@ -648,18 +689,21 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         minesweeper->SetDifficulty(0);
         InitializeGrid();
         UpdateStatus("Difficulty set to Easy");
+        gameEndHandled = false;
     }
 
     void SetMedium_Click(Object^ sender, EventArgs^ e) {
         minesweeper->SetDifficulty(1);
         InitializeGrid();
         UpdateStatus("Difficulty set to Medium");
+        gameEndHandled = false;
     }
 
     void SetHard_Click(Object^ sender, EventArgs^ e) {
         minesweeper->SetDifficulty(2);
         InitializeGrid();
         UpdateStatus("Difficulty set to Hard");
+        gameEndHandled = false;
     }
 
     void UpdateStatus(String^ message) {
