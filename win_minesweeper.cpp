@@ -18,7 +18,7 @@ private:
     Minesweeper* nativeMinesweeper;
     int minCellSize = 30;  // Minimum cell size
     TextBox^ seedInput;
-    int currentSeed;
+    int currentSeed=-1;
 
 public:
     void setSeed(int seed) { currentSeed = seed; }
@@ -56,10 +56,10 @@ public:
     
     void RevealAdjacent(int row, int col) {
         if (!nativeMinesweeper->revealed[row][col]) return;
-        
+    
         int mineCount = GetAdjacentMines(row, col);
         int flagCount = GetAdjacentFlags(row, col);
-        
+    
         if (mineCount == flagCount) {
             for (int dy = -1; dy <= 1; dy++) {
                 for (int dx = -1; dx <= 1; dx++) {
@@ -79,6 +79,11 @@ public:
                         }
                     }
                 }
+            }
+            // Check win condition after revealing adjacent cells
+            if (CheckWin()) {
+                nativeMinesweeper->won = true;
+                nativeMinesweeper->timer.stop();
             }
         }
     }    
@@ -122,11 +127,11 @@ public:
 
     void RevealCell(int row, int col) {
         if (nativeMinesweeper->firstMove) {
-            nativeMinesweeper->initializeMinefield(row, col);
+            nativeMinesweeper->initializeMinefield(row, col, getSeed());
             nativeMinesweeper->firstMove = false;
             nativeMinesweeper->timer.start();
         }
-        
+    
         if (!nativeMinesweeper->flagged[row][col]) {
             if (nativeMinesweeper->minefield[row][col]) {
                 nativeMinesweeper->gameOver = true;
@@ -134,7 +139,8 @@ public:
                 nativeMinesweeper->timer.stop();
             } else {
                 nativeMinesweeper->revealCell(row, col);
-                if (nativeMinesweeper->checkWin()) {
+                // Check win condition after revealing cell
+                if (CheckWin()) {
                     nativeMinesweeper->won = true;
                     nativeMinesweeper->timer.stop();
                 }
@@ -187,6 +193,19 @@ public:
     int GetHeight() {
         return nativeMinesweeper->height;
     }
+ 
+    bool CheckWin() {
+        // Win condition: all non-mine cells are revealed
+        for (int i = 0; i < nativeMinesweeper->height; i++) {
+            for (int j = 0; j < nativeMinesweeper->width; j++) {
+                // If a cell is not a mine and not revealed, game is not won
+                if (!nativeMinesweeper->minefield[i][j] && !nativeMinesweeper->revealed[i][j]) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
 };
 
 public ref class MainForm : public System::Windows::Forms::Form {
@@ -206,6 +225,28 @@ private:
     int minCellSize;
     TextBox^ seedInput;
 
+    Image^ flagImage;
+    Image^ bombImage;
+    Image^ revealedImage;
+    static const char* FLAG_BASE64 = R"(iVBORw0KGgoAAAANSUhEUgAAACAAAAAgBAMAAACBVGfHAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAdn
+JLH8AAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAACFQTFRFAAAA/2Z
+mAAAA////mTMzzMzMzGZmZjMzmWYzMwAA/8xmaoi8KgAAAAF0Uk5TAEDm2GYAAABdSURBVCjPY2DABpQ
+U0AS6GggJKCkooepSVkkUTJnEwMAEE1VWFBQUFHOf7oIiAAIDLaDmXu6GIqAEdPaUREERuACYgeRBZfQ
+AGqwCSmixwhQaGhqEIgBUocSAEwAAjwQWTza+izoAAAAASUVORK5CYII=)";
+
+    static const char* BOMB_BASE64 = R"(iVBORw0KGgoAAAANSUhEUgAAACAAAAAgBAMAAACBVGfHAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAd
+nJLH8AAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAACFQTFRFAAAA
+gwMTcwoRqBIlgTE0yyk14kFE21NWqnN1z5ye////XulGdQAAAAF0Uk5TAEDm2GYAAADbSURBVCjPbdK9
+DoIwEAfwQ/lYKeEBsOEFTF10qm9AQqpxc7GzizAbN1cmeALCU0rLtUVClza/XPMvdwCsrNocfK63UBYI
+JNdb5YBmukA+Ec40/4cdpRMI2DK2B49ogDq8RKJkjHgEY6AQGjg3+dEExL4sQLAVL4TYwAMhNSAQkiW4
+iu/QsOPQO+hGOA29u3JrS3Zo3+k8tpvHavjMQKUMzQLasSIDJ+odqftYUJD6WFFVoghGiEmy4VMLrxCM
+LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
+
+    static const char* REVEALED_BASE64 = R"(iVBORw0KGgoAAAANSUhEUgAAACAAAAAgAQMAAABJtOi3AAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAdnJLH8AAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAAAZQTFRFAAAAIx8gaVhvIAAAAAF0Uk5TAEDm2GYAAABWSURBVAjXY2DADRpghEITkDBoAxICLDBJ/g9AwoIPSCQcBin72MDAyPDDgYGJ44cCAwv/DwMGNhDBzP8jgYGx/cMBBobjD4FmFbQDFcvZAAn2BwxEAADI2BObaHDmJQAAAABJRU5ErkJggg==)";
+
+    void ViewHighScores_Click(Object^ sender, EventArgs^ e) {
+        ShowHighScores();
+    }
 
     void InitializeComponent() {
         this->Size = System::Drawing::Size(800, 600);
@@ -238,13 +279,32 @@ private:
             "Exit", nullptr,
             gcnew EventHandler(this, &MainForm::Exit_Click)));
 
-        ToolStripMenuItem^ editMenu = gcnew ToolStripMenuItem("Edit");
-        editMenu->DropDownItems->Add(gcnew ToolStripMenuItem(
-            "Enter Seed...", nullptr,
-            gcnew EventHandler(this, &MainForm::EnterSeed_Click)));
+        // Create the game menu
+        ToolStripMenuItem^ gameMenu = gcnew ToolStripMenuItem("&Game");
 
-        menuStrip->Items->Add(editMenu);
-            
+        // Create menu items with proper shortcuts
+        /* ToolStripMenuItem^ seedMenuItem = gcnew ToolStripMenuItem(
+            "&Enter Seed...",
+            nullptr,
+            gcnew EventHandler(this, &MainForm::EnterSeed_Click)); 
+        seedMenuItem->ShortcutKeys = Keys::Control | Keys::S;
+        seedMenuItem->ShowShortcutKeys = true; */
+
+        ToolStripMenuItem^ highScoresMenuItem = gcnew ToolStripMenuItem(
+            "&High Scores",
+            nullptr,
+            gcnew EventHandler(this, &MainForm::ViewHighScores_Click));
+        highScoresMenuItem->ShortcutKeys = Keys::Control | Keys::H;
+        highScoresMenuItem->ShowShortcutKeys = true;
+
+        // Add menu items to game menu
+        //gameMenu->DropDownItems->Add(seedMenuItem);
+        //gameMenu->DropDownItems->Add(gcnew ToolStripSeparator());  // Add separator
+        gameMenu->DropDownItems->Add(highScoresMenuItem);
+
+        // Add game menu to menu strip
+        menuStrip->Items->Add(gameMenu);            
+
         // Add About menu
         ToolStripMenuItem^ helpMenu = gcnew ToolStripMenuItem("Help");
         helpMenu->DropDownItems->Add(gcnew ToolStripMenuItem(
@@ -262,7 +322,7 @@ private:
             gcnew EventHandler(this, &MainForm::SetHard_Click)));
 
         menuStrip->Items->Add(fileMenu);
-        menuStrip->Items->Add(editMenu);
+        menuStrip->Items->Add(gameMenu);
         menuStrip->Items->Add(difficultyMenu);
         menuStrip->Items->Add(helpMenu);
 
@@ -340,7 +400,7 @@ private:
         this->Controls->Add(gridPanel);
 
         grid = gcnew array<Button^, 2>(height, width);
-        buttonFont = gcnew System::Drawing::Font(L"Arial", cellSize / 3, FontStyle::Bold);
+        buttonFont = gcnew System::Drawing::Font(L"Lucida Console", cellSize / 3, FontStyle::Bold);
 
         for (int i = 0; i < height; i++) {
             for (int j = 0; j < width; j++) {
@@ -409,6 +469,21 @@ private:
         int row = position[0];
         int col = position[1];
 
+        if (minesweeper->IsGameOver() || minesweeper->HasWon()) {
+            if (minesweeper->IsGameOver()) {
+                UpdateStatus("Game Over!");
+            } else if (minesweeper->HasWon()) {
+                UpdateStatus("Congratulations! You've won!");
+                if (minesweeper->IsHighScore(int::Parse(minesweeper->GetTime()->Split(':')[0]) * 60 + 
+                    int::Parse(minesweeper->GetTime()->Split(':')[1]))) {
+                    ShowHighScoreEntry();
+                } else {
+                    ShowHighScores();
+                }
+            }
+            return;  
+        }
+
         if (e->Button == System::Windows::Forms::MouseButtons::Left) {
             // If clicking on a revealed number, check for auto-reveal
             if (minesweeper->IsRevealed(row, col) && !minesweeper->IsMine(row, col)) {
@@ -422,17 +497,6 @@ private:
                 UpdateAllCells();
             }
 
-            if (minesweeper->IsGameOver()) {
-                UpdateStatus("Game Over!");
-            } else if (minesweeper->HasWon()) {
-                UpdateStatus("Congratulations! You've won!");
-                if (minesweeper->IsHighScore(int::Parse(minesweeper->GetTime()->Split(':')[0]) * 60 + 
-                    int::Parse(minesweeper->GetTime()->Split(':')[1]))) {
-                    ShowHighScoreEntry();
-                } else {
-                    ShowHighScores();
-                }
-            }
         }
         else if (e->Button == System::Windows::Forms::MouseButtons::Right) {
             minesweeper->ToggleFlag(row, col);
@@ -441,35 +505,49 @@ private:
     }
 
     void UpdateCell(int row, int col) {
+        Button^ cell = grid[row, col];
+        cell->Text = "";
+        cell->Image = nullptr;
+        cell->UseVisualStyleBackColor = false;
+    
         if (minesweeper->IsRevealed(row, col)) {
+            cell->BackColor = SystemColors::Control;
+        
             if (minesweeper->IsMine(row, col)) {
-                grid[row, col]->Text = "💣";
-                grid[row, col]->BackColor = Color::Red;
+                cell->BackColor = Color::Red;
+                if (bombImage) {
+                    cell->Image = bombImage;
+                    cell->ImageAlign = ContentAlignment::MiddleCenter;
+                }
             } else {
                 int count = minesweeper->GetAdjacentMines(row, col);
-                if (count > 0) {
-                    grid[row, col]->Text = count.ToString();
+                if (count == 0 && revealedImage != nullptr) {  // Check if eyeImage exists
+                    cell->Image = revealedImage;
+                    cell->ImageAlign = ContentAlignment::MiddleCenter;
+                } else if (count > 0) {
+                    cell->Text = count.ToString();
                     switch (count) {
-                        case 1: grid[row, col]->ForeColor = Color::Blue; break;
-                        case 2: grid[row, col]->ForeColor = Color::Green; break;
-                        case 3: grid[row, col]->ForeColor = Color::Red; break;
-                        case 4: grid[row, col]->ForeColor = Color::DarkBlue; break;
-                        case 5: grid[row, col]->ForeColor = Color::DarkRed; break;
-                        default: grid[row, col]->ForeColor = Color::DarkGray; break;
+                        case 1: cell->ForeColor = Color::Blue; break;
+                        case 2: cell->ForeColor = Color::Green; break;
+                        case 3: cell->ForeColor = Color::Red; break;
+                        case 4: cell->ForeColor = Color::DarkBlue; break;
+                        case 5: cell->ForeColor = Color::DarkRed; break;
+                    default: cell->ForeColor = Color::DarkGray; break;    
                     }
-                } else {
-                    grid[row, col]->Text = "";
                 }
-                grid[row, col]->BackColor = Color::LightGray;
             }
         } else if (minesweeper->IsFlagged(row, col)) {
-            grid[row, col]->Text = "🚩";
+            cell->BackColor = Color::LightGray;
+            if (flagImage) {
+                cell->Image = flagImage;
+                cell->ImageAlign = ContentAlignment::MiddleCenter;
+            }
         } else {
-            grid[row, col]->Text = "";
-            grid[row, col]->BackColor = SystemColors::Control;
+            cell->BackColor = Color::LightGray;
         }
-    }
-
+    }    
+    
+        
     void UpdateAllCells() {
         int height = minesweeper->GetHeight();
         int width = minesweeper->GetWidth();
@@ -556,6 +634,7 @@ private:
     }
 
     void NewGame_Click(Object^ sender, EventArgs^ e) {
+        minesweeper->setSeed(-1);
         minesweeper->Reset();
         UpdateAllCells();
         UpdateStatus("New game started");
@@ -593,15 +672,39 @@ private:
         UpdateAllCells();
     }
 
+    void LoadBase64Images() {
+        try {
+            // Convert base64 to image for flag
+            array<Byte>^ flagBytes = Convert::FromBase64String(gcnew String(FLAG_BASE64));
+            System::IO::MemoryStream^ flagStream = gcnew System::IO::MemoryStream(flagBytes);
+            flagImage = Image::FromStream(flagStream);
+    
+            // Convert base64 to image for bomb
+            array<Byte>^ bombBytes = Convert::FromBase64String(gcnew String(BOMB_BASE64));
+            System::IO::MemoryStream^ bombStream = gcnew System::IO::MemoryStream(bombBytes);
+            bombImage = Image::FromStream(bombStream);
+
+            // Convert base64 to image for revealed
+            array<Byte>^ revealedBytes = Convert::FromBase64String(gcnew String(REVEALED_BASE64));
+            System::IO::MemoryStream^ revealedStream = gcnew System::IO::MemoryStream(revealedBytes);
+            revealedImage = Image::FromStream(revealedStream);
+        }
+        catch (Exception^ ex) {
+            MessageBox::Show("Error loading images: " + ex->Message);
+        }
+    }
+
 public:
     MainForm() {
         minCellSize = 30;  // Initialize minCellSize
+        LoadBase64Images();
         minesweeper = gcnew MinesweeperWrapper();
         InitializeComponent();
         this->Resize += gcnew EventHandler(this, &MainForm::MainForm_Resize);
-    }};
+    }
+}; 
 
-} // namespace MinesweeperGame
+} // End of namespace MinesweeperGame
 
 [STAThread]
 int main(array<String^>^ args) {
