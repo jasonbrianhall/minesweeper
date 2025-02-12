@@ -319,7 +319,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         this->MainMenuStrip = menuStrip;
         this->Controls->Add(menuStrip);
 
-        instructionsBox = gcnew TextBox();
+        /*instructionsBox = gcnew TextBox();
         instructionsBox->Multiline = true;
         instructionsBox->ReadOnly = true;
         instructionsBox->BackColor = System::Drawing::Color::LightBlue;
@@ -332,7 +332,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
             L"  - Press F1-F3 to change difficulty\r\n"
             L"  - Press N for new game";
         instructionsBox->Font = gcnew System::Drawing::Font(L"Lucida Console", 9);
-        this->Controls->Add(instructionsBox);
+        this->Controls->Add(instructionsBox);*/
 
         // Add reset button
         resetButton = gcnew Button();
@@ -409,6 +409,7 @@ void UpdateTimer(Object^ sender, EventArgs^ e) {
     }
 
     void InitializeGrid() {
+        // Remove existing grid if any
         for each (Control^ control in this->Controls) {
             if (dynamic_cast<Panel^>(control) != nullptr) {
                 this->Controls->Remove(control);
@@ -419,6 +420,7 @@ void UpdateTimer(Object^ sender, EventArgs^ e) {
         int height = minesweeper->GetHeight();
         int width = minesweeper->GetWidth();
         
+        // Calculate cell size based on window size
         int availableWidth = this->ClientSize.Width - 100;
         int availableHeight = this->ClientSize.Height - menuStrip->Height - resetButton->Height - 80;
         
@@ -427,15 +429,16 @@ void UpdateTimer(Object^ sender, EventArgs^ e) {
         int cellSize = Math::Max(minCellSize, Math::Min(cellSizeFromWidth, cellSizeFromHeight));
         
         Panel^ gridPanel = gcnew Panel();
-        int gridTop = menuStrip->Height + resetButton->Height + 30;
+        int gridTop = menuStrip->Height + resetButton->Height + 10;
         gridPanel->Location = Point(50, gridTop);
         gridPanel->Size = System::Drawing::Size(width * cellSize + 1, height * cellSize + 1);
         gridPanel->BackColor = Color::Gray;
         this->Controls->Add(gridPanel);
 
+        // Center reset button above grid
         resetButton->Location = Point(
             50 + (width * cellSize - resetButton->Width) / 2,
-            menuStrip->Height + instructionsBox->Height + 5
+            menuStrip->Height + 5
         );
 
         grid = gcnew array<Button^, 2>(height, width);
