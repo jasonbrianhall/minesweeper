@@ -259,7 +259,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         this->Size = System::Drawing::Size(800, 600);
         this->Text = L"Minesweeper";
         this->StartPosition = FormStartPosition::CenterScreen;
-
+    
         // Initialize StatusStrip with both status and time
         statusStrip = gcnew StatusStrip();
         statusLabel = gcnew ToolStripStatusLabel("Ready");
@@ -267,61 +267,49 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         statusStrip->Items->Add(statusLabel);
         statusStrip->Items->Add(timeLabel);
         this->Controls->Add(statusStrip);
-
+    
         // Initialize game timer
         gameTimer = gcnew Timer();
         gameTimer->Interval = 100; // Update every 100ms for smoother display
         gameTimer->Tick += gcnew EventHandler(this, &MainForm::UpdateTimer);
         gameTimer->Start();
-
+    
         // Initialize MenuStrip
         menuStrip = gcnew MenuStrip();
         ToolStripMenuItem^ fileMenu = gcnew ToolStripMenuItem("File");
         ToolStripMenuItem^ difficultyMenu = gcnew ToolStripMenuItem("Difficulty");
-
+    
         fileMenu->DropDownItems->Add(gcnew ToolStripMenuItem(
             "New Game (N)", nullptr, 
             gcnew EventHandler(this, &MainForm::NewGame_Click)));
         fileMenu->DropDownItems->Add(gcnew ToolStripMenuItem(
             "Exit", nullptr,
             gcnew EventHandler(this, &MainForm::Exit_Click)));
-
+    
         // Create the game menu
         ToolStripMenuItem^ gameMenu = gcnew ToolStripMenuItem("&Game");
-
-        // Create menu items with proper shortcuts
-        /* ToolStripMenuItem^ seedMenuItem = gcnew ToolStripMenuItem(
-            "&Enter Seed...",
-            nullptr,
-            gcnew EventHandler(this, &MainForm::EnterSeed_Click)); 
-        seedMenuItem->ShortcutKeys = Keys::Control | Keys::S;
-        seedMenuItem->ShowShortcutKeys = true; */
-
+    
         ToolStripMenuItem^ highScoresMenuItem = gcnew ToolStripMenuItem(
             "&High Scores",
             nullptr,
             gcnew EventHandler(this, &MainForm::ViewHighScores_Click));
         highScoresMenuItem->ShortcutKeys = Keys::Control | Keys::H;
         highScoresMenuItem->ShowShortcutKeys = true;
-
-        // Add menu items to game menu
-        //gameMenu->DropDownItems->Add(seedMenuItem);
-        //gameMenu->DropDownItems->Add(gcnew ToolStripSeparator());  // Add separator
+    
         gameMenu->DropDownItems->Add(highScoresMenuItem);
-
-        // Add game menu to menu strip
+    
         menuStrip->Items->Add(gameMenu);            
-
+    
         // Add About menu
         ToolStripMenuItem^ helpMenu = gcnew ToolStripMenuItem("Help");
         helpMenu->DropDownItems->Add(gcnew ToolStripMenuItem(
             "How To Play", nullptr,
             gcnew EventHandler(this, &MainForm::ShowHowToPlay_Click)));
-
+    
         helpMenu->DropDownItems->Add(gcnew ToolStripMenuItem(
             "About", nullptr,
             gcnew EventHandler(this, &MainForm::ShowAbout_Click)));
-            
+                
         difficultyMenu->DropDownItems->Add(gcnew ToolStripMenuItem(
             "Easy (9x9) F1", nullptr,
             gcnew EventHandler(this, &MainForm::SetEasy_Click)));
@@ -331,34 +319,19 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         difficultyMenu->DropDownItems->Add(gcnew ToolStripMenuItem(
             "Hard (30x16) F3", nullptr,
             gcnew EventHandler(this, &MainForm::SetHard_Click)));
-
+    
         menuStrip->Items->Add(fileMenu);
         menuStrip->Items->Add(gameMenu);
         menuStrip->Items->Add(difficultyMenu);
         menuStrip->Items->Add(helpMenu);
-
+    
         this->MainMenuStrip = menuStrip;
         this->Controls->Add(menuStrip);
-
-        instructionsBox = gcnew TextBox();
-        instructionsBox->Multiline = true;
-        instructionsBox->ReadOnly = true;
-        instructionsBox->BackColor = System::Drawing::Color::LightBlue;
-        instructionsBox->BorderStyle = BorderStyle::FixedSingle;
-        instructionsBox->Location = Point(50, menuStrip->Height + 5);
-        instructionsBox->Size = System::Drawing::Size(700, 80);
-        instructionsBox->Text = L"Instructions:\r\n"
-            L"  - Left click to reveal a cell\r\n"
-            L"  - Right click to flag/unflag a cell\r\n"
-            L"  - Press F1-F3 to change difficulty\r\n"
-            L"  - Press N for new game";
-        instructionsBox->Font = gcnew System::Drawing::Font(L"Lucida Console", 9);
-        this->Controls->Add(instructionsBox);
-
+    
         // Handle keyboard shortcuts
         this->KeyPreview = true;
         this->KeyDown += gcnew KeyEventHandler(this, &MainForm::MainForm_KeyDown);
-
+    
         InitializeGrid();
     }
 
@@ -419,35 +392,35 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
                 break;
             }
         }
-
+    
         int height = minesweeper->GetHeight();
         int width = minesweeper->GetWidth();
         
         // Calculate cell size based on window size
         int availableWidth = this->ClientSize.Width - 100;  // Account for margins
-        int availableHeight = this->ClientSize.Height - menuStrip->Height - instructionsBox->Height - 100;
+        int availableHeight = this->ClientSize.Height - menuStrip->Height - 100;
         
         int cellSizeFromWidth = availableWidth / width;
         int cellSizeFromHeight = availableHeight / height;
         int cellSize = Math::Max(minCellSize, Math::Min(cellSizeFromWidth, cellSizeFromHeight));
         
         Panel^ gridPanel = gcnew Panel();
-        int gridTop = menuStrip->Height + instructionsBox->Height + 25;
+        int gridTop = menuStrip->Height + 25;  // Adjusted positioning without instructions box
         gridPanel->Location = Point(50, gridTop);
         gridPanel->Size = System::Drawing::Size(width * cellSize + 1, height * cellSize + 1);
         gridPanel->BackColor = Color::Gray;
         this->Controls->Add(gridPanel);
-
+    
         grid = gcnew array<Button^, 2>(height, width);
         buttonFont = gcnew System::Drawing::Font(L"Lucida Console", cellSize / 3, FontStyle::Bold);
-
+    
         for (int i = 0; i < height; i++) {
             for (int j = 0; j < width; j++) {
                 grid[i, j] = gcnew Button();
                 grid[i, j]->Size = System::Drawing::Size(cellSize - 1, cellSize - 1);
                 grid[i, j]->Location = Point(j * cellSize, i * cellSize);
                 grid[i, j]->Font = buttonFont;
-                grid[i, j]->UseVisualStyleBackColor = true;
+                grid[i, j]->FlatStyle = FlatStyle::Standard;  // Enable 3D effect
                 grid[i, j]->Tag = gcnew array<int>{i, j};
                 grid[i, j]->MouseUp += gcnew MouseEventHandler(this, &MainForm::Cell_MouseUp);
                 gridPanel->Controls->Add(grid[i, j]);
@@ -552,9 +525,9 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         Button^ cell = grid[row, col];
         cell->Text = "";
         cell->Image = nullptr;
-        cell->UseVisualStyleBackColor = false;
-    
+        
         if (minesweeper->IsRevealed(row, col)) {
+            cell->FlatStyle = FlatStyle::Flat;  // Flat appearance for revealed cells
             cell->BackColor = SystemColors::Control;
         
             if (minesweeper->IsMine(row, col)) {
@@ -565,7 +538,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
                 }
             } else {
                 int count = minesweeper->GetAdjacentMines(row, col);
-                if (count == 0 && revealedImage != nullptr) {  // Check if eyeImage exists
+                if (count == 0 && revealedImage != nullptr) {
                     cell->Image = revealedImage;
                     cell->ImageAlign = ContentAlignment::MiddleCenter;
                 } else if (count > 0) {
@@ -576,20 +549,19 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
                         case 3: cell->ForeColor = Color::Red; break;
                         case 4: cell->ForeColor = Color::DarkBlue; break;
                         case 5: cell->ForeColor = Color::DarkRed; break;
-                    default: cell->ForeColor = Color::DarkGray; break;    
+                        default: cell->ForeColor = Color::DarkGray; break;    
                     }
                 }
             }
-        } else if (minesweeper->IsFlagged(row, col)) {
+        } else {
+            cell->FlatStyle = FlatStyle::Standard;  // Raised appearance for unrevealed cells
             cell->BackColor = Color::LightGray;
-            if (flagImage) {
+            if (minesweeper->IsFlagged(row, col) && flagImage) {
                 cell->Image = flagImage;
                 cell->ImageAlign = ContentAlignment::MiddleCenter;
             }
-        } else {
-            cell->BackColor = Color::LightGray;
         }
-    }    
+    }
     
         
     void UpdateAllCells() {
