@@ -229,7 +229,7 @@ private:
     int minCellSize;
     TextBox^ seedInput;
     bool gameEndHandled = false;
-
+    Button^ resetButton; 
     Image^ flagImage;
     Image^ bombImage;
     Image^ revealedImage;
@@ -336,7 +336,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         this->MainMenuStrip = menuStrip;
         this->Controls->Add(menuStrip);
 
-        instructionsBox = gcnew TextBox();
+        /* instructionsBox = gcnew TextBox();
         instructionsBox->Multiline = true;
         instructionsBox->ReadOnly = true;
         instructionsBox->BackColor = System::Drawing::Color::LightBlue;
@@ -349,7 +349,16 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
             L"  - Press F1-F3 to change difficulty\r\n"
             L"  - Press N for new game";
         instructionsBox->Font = gcnew System::Drawing::Font(L"Lucida Console", 9);
-        this->Controls->Add(instructionsBox);
+        this->Controls->Add(instructionsBox); */
+
+        resetButton = gcnew Button();
+        resetButton->Text = "😊";  // Default happy face
+        resetButton->Font = gcnew System::Drawing::Font("Segoe UI Emoji", 16);
+        resetButton->Size = System::Drawing::Size(50, 50);
+        resetButton->Location = Point(50, menuStrip->Height + instructionsBox->Height + 5);
+        resetButton->Click += gcnew EventHandler(this, &MainForm::ResetButton_Click);
+        this->Controls->Add(resetButton);
+
 
         // Handle keyboard shortcuts
         this->KeyPreview = true;
