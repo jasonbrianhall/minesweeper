@@ -260,7 +260,6 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         this->Text = L"Minesweeper";
         this->StartPosition = FormStartPosition::CenterScreen;
 
-        // Initialize StatusStrip with both status and time
         statusStrip = gcnew StatusStrip();
         statusLabel = gcnew ToolStripStatusLabel("Ready");
         timeLabel = gcnew ToolStripStatusLabel("Time: 00:00");
@@ -268,13 +267,11 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         statusStrip->Items->Add(timeLabel);
         this->Controls->Add(statusStrip);
 
-        // Initialize game timer
         gameTimer = gcnew Timer();
-        gameTimer->Interval = 100; // Update every 100ms for smoother display
+        gameTimer->Interval = 100;
         gameTimer->Tick += gcnew EventHandler(this, &MainForm::UpdateTimer);
         gameTimer->Start();
 
-        // Initialize MenuStrip
         menuStrip = gcnew MenuStrip();
         ToolStripMenuItem^ fileMenu = gcnew ToolStripMenuItem("File");
         ToolStripMenuItem^ difficultyMenu = gcnew ToolStripMenuItem("Difficulty");
@@ -286,16 +283,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
             "Exit", nullptr,
             gcnew EventHandler(this, &MainForm::Exit_Click)));
 
-        // Create the game menu
         ToolStripMenuItem^ gameMenu = gcnew ToolStripMenuItem("&Game");
-
-        // Create menu items with proper shortcuts
-        /* ToolStripMenuItem^ seedMenuItem = gcnew ToolStripMenuItem(
-            "&Enter Seed...",
-            nullptr,
-            gcnew EventHandler(this, &MainForm::EnterSeed_Click)); 
-        seedMenuItem->ShortcutKeys = Keys::Control | Keys::S;
-        seedMenuItem->ShowShortcutKeys = true; */
 
         ToolStripMenuItem^ highScoresMenuItem = gcnew ToolStripMenuItem(
             "&High Scores",
@@ -304,15 +292,10 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         highScoresMenuItem->ShortcutKeys = Keys::Control | Keys::H;
         highScoresMenuItem->ShowShortcutKeys = true;
 
-        // Add menu items to game menu
-        //gameMenu->DropDownItems->Add(seedMenuItem);
-        //gameMenu->DropDownItems->Add(gcnew ToolStripSeparator());  // Add separator
         gameMenu->DropDownItems->Add(highScoresMenuItem);
 
-        // Add game menu to menu strip
         menuStrip->Items->Add(gameMenu);            
 
-        // Add About menu
         ToolStripMenuItem^ helpMenu = gcnew ToolStripMenuItem("Help");
         helpMenu->DropDownItems->Add(gcnew ToolStripMenuItem(
             "About", nullptr,
@@ -336,7 +319,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         this->MainMenuStrip = menuStrip;
         this->Controls->Add(menuStrip);
 
-        /* instructionsBox = gcnew TextBox();
+        instructionsBox = gcnew TextBox();
         instructionsBox->Multiline = true;
         instructionsBox->ReadOnly = true;
         instructionsBox->BackColor = System::Drawing::Color::LightBlue;
@@ -349,18 +332,17 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
             L"  - Press F1-F3 to change difficulty\r\n"
             L"  - Press N for new game";
         instructionsBox->Font = gcnew System::Drawing::Font(L"Lucida Console", 9);
-        this->Controls->Add(instructionsBox); */
+        this->Controls->Add(instructionsBox);
 
+        // Add reset button
         resetButton = gcnew Button();
         resetButton->Text = "😊";  // Default happy face
         resetButton->Font = gcnew System::Drawing::Font("Segoe UI Emoji", 16);
         resetButton->Size = System::Drawing::Size(50, 50);
-        resetButton->Location = Point(50, menuStrip->Height + instructionsBox->Height + 5);
+        resetButton->Location = Point(50, menuStrip->Height + 5);
         resetButton->Click += gcnew EventHandler(this, &MainForm::ResetButton_Click);
         this->Controls->Add(resetButton);
 
-
-        // Handle keyboard shortcuts
         this->KeyPreview = true;
         this->KeyDown += gcnew KeyEventHandler(this, &MainForm::MainForm_KeyDown);
 
@@ -428,14 +410,14 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         int width = minesweeper->GetWidth();
         
         int availableWidth = this->ClientSize.Width - 100;
-        int availableHeight = this->ClientSize.Height - menuStrip->Height - instructionsBox->Height - resetButton->Height - 120;
+        int availableHeight = this->ClientSize.Height - menuStrip->Height - resetButton->Height - 80;
         
         int cellSizeFromWidth = availableWidth / width;
         int cellSizeFromHeight = availableHeight / height;
         int cellSize = Math::Max(minCellSize, Math::Min(cellSizeFromWidth, cellSizeFromHeight));
         
         Panel^ gridPanel = gcnew Panel();
-        int gridTop = menuStrip->Height + instructionsBox->Height + resetButton->Height + 30;
+        int gridTop = menuStrip->Height + resetButton->Height + 30;
         gridPanel->Location = Point(50, gridTop);
         gridPanel->Size = System::Drawing::Size(width * cellSize + 1, height * cellSize + 1);
         gridPanel->BackColor = Color::Gray;
