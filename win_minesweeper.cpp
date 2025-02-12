@@ -349,19 +349,29 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         InitializeGrid();
     }
 
-    void UpdateTimer(Object^ sender, EventArgs^ e) {
-        // Only update the timer if the game is in progress
-        if (!minesweeper->IsGameOver() && !minesweeper->HasWon()) {
-            // Get and display the current time from the minesweeper timer
-            timeLabel->Text = "Time: " + minesweeper->GetTime();
-            statusStrip->Refresh(); // Force refresh of the status strip
-        }
-
-        // Check for game end conditions
-        if (minesweeper->IsGameOver() || minesweeper->HasWon()) {
-            HandleGameEnd();
+void UpdateTimer(Object^ sender, EventArgs^ e) {
+    // Only update the timer if the game is in progress
+    if (!minesweeper->IsGameOver() && !minesweeper->HasWon()) {
+        // Get and display the current time from the minesweeper timer
+        timeLabel->Text = "Time: " + minesweeper->GetTime();
+        statusStrip->Refresh(); // Force refresh of the status strip
+        
+        // Update reset button face during gameplay
+        if (resetButton->Text != "😊") {
+            resetButton->Text = "😊";  // Happy face during gameplay
         }
     }
+
+    // Check for game end conditions
+    if (minesweeper->IsGameOver() || minesweeper->HasWon()) {
+        if (minesweeper->IsGameOver() && resetButton->Text != "😭") {
+            resetButton->Text = "😭";  // Crying face for loss
+        } else if (minesweeper->HasWon() && resetButton->Text != "😎") {
+            resetButton->Text = "😎";  // Cool face for win
+        }
+        HandleGameEnd();
+    }
+}
 
     void HandleGameEnd() {
         if (gameEndHandled) return;
@@ -680,16 +690,17 @@ void ShowHighScores() {
         highScoreForm->Close();
     }
 
-    void NewGame_Click(Object^ sender, EventArgs^ e) {
-        minesweeper->setSeed(-1);
-        minesweeper->Reset();
-        gameEndHandled = false;
-        UpdateAllCells();
-        UpdateStatus("New game started");
-        gameTimer->Start();
-        timeLabel->Text = "Time: 00:00";
-        statusStrip->Refresh();
-    }
+void NewGame_Click(Object^ sender, EventArgs^ e) {
+    minesweeper->setSeed(-1);
+    minesweeper->Reset();
+    gameEndHandled = false;
+    UpdateAllCells();
+    UpdateStatus("New game started");
+    gameTimer->Start();
+    timeLabel->Text = "Time: 00:00";
+    resetButton->Text = "😊";  // Reset to happy face
+    statusStrip->Refresh();
+}
 
     void Exit_Click(Object^ sender, EventArgs^ e) {
         Application::Exit();
