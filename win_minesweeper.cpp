@@ -583,25 +583,28 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         highScoreForm->FormBorderStyle = Windows::Forms::FormBorderStyle::FixedDialog;
         highScoreForm->MaximizeBox = false;
         highScoreForm->MinimizeBox = false;
-
+    
         Label^ timeLabel = gcnew Label();
         timeLabel->Text = "Your time: " + minesweeper->GetTime();
         timeLabel->Location = Point(20, 20);
         timeLabel->AutoSize = true;
         highScoreForm->Controls->Add(timeLabel);
-
+    
         nameEntryBox = gcnew TextBox();
         nameEntryBox->Location = Point(20, 50);
         nameEntryBox->Size = Drawing::Size(200, 20);
         nameEntryBox->MaxLength = 20;
         highScoreForm->Controls->Add(nameEntryBox);
-
+    
         Button^ submitButton = gcnew Button();
         submitButton->Text = "Submit";
         submitButton->Location = Point(20, 80);
         submitButton->Click += gcnew EventHandler(this, &MainForm::SubmitHighScore);
         highScoreForm->Controls->Add(submitButton);
-
+    
+        // Set submitButton as the AcceptButton
+        highScoreForm->AcceptButton = submitButton;
+    
         highScoreForm->ShowDialog();
     }
 
@@ -613,63 +616,62 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         }
     }
 
-void ShowHighScores() {
-    highScoreForm = gcnew Form();
-    highScoreForm->Text = "High Scores";
-    highScoreForm->MinimumSize = Drawing::Size(400, 300);
-    highScoreForm->StartPosition = FormStartPosition::CenterParent;
-    highScoreForm->MaximizeBox = true;
-    highScoreForm->Anchor = static_cast<AnchorStyles>(AnchorStyles::Top | AnchorStyles::Bottom | AnchorStyles::Left | AnchorStyles::Right);
-
-    highScoreList = gcnew ListView();
-    highScoreList->View = View::Details;
-    highScoreList->Dock = DockStyle::Fill;
-    highScoreList->Padding = System::Windows::Forms::Padding(20);
-    highScoreList->FullRowSelect = true;
-    highScoreList->GridLines = true;
-    highScoreList->Columns->Add("Name", 150);
-    highScoreList->Columns->Add("Time", 100);
-    highScoreList->Columns->Add("Difficulty", 100);
-
-    // Get the actual scores from the native Highscores class
-    const std::vector<Score>& nativeScores = minesweeper->GetNativeHighscores();
+    void ShowHighScores() {
+        highScoreForm = gcnew Form();
+        highScoreForm->Text = "High Scores";
+        highScoreForm->MinimumSize = Drawing::Size(400, 300);
+        highScoreForm->StartPosition = FormStartPosition::CenterParent;
+        highScoreForm->MaximizeBox = true;
+        highScoreForm->Anchor = static_cast<AnchorStyles>(AnchorStyles::Top | AnchorStyles::Bottom | AnchorStyles::Left | AnchorStyles::Right);
     
-    for (const auto& score : nativeScores) {
-        int minutes = score.time / 60;
-        int seconds = score.time % 60;
-        String^ timeStr = String::Format("{0:D2}:{1:D2}", minutes, seconds);
+        highScoreList = gcnew ListView();
+        highScoreList->View = View::Details;
+        highScoreList->Dock = DockStyle::Fill;
+        highScoreList->Padding = System::Windows::Forms::Padding(20);
+        highScoreList->FullRowSelect = true;
+        highScoreList->GridLines = true;
+        highScoreList->Columns->Add("Name", 150);
+        highScoreList->Columns->Add("Time", 100);
+        highScoreList->Columns->Add("Difficulty", 100);
+    
+        // Get the actual scores from the native Highscores class
+        const std::vector<Score>& nativeScores = minesweeper->GetNativeHighscores();
         
-        ListViewItem^ item = gcnew ListViewItem(gcnew array<String^> {
-            gcnew String(score.name.c_str()),
-            timeStr,
-            gcnew String(score.difficulty.c_str())
-        });
-        highScoreList->Items->Add(item);
+        for (const auto& score : nativeScores) {
+            int minutes = score.time / 60;
+            int seconds = score.time % 60;
+            String^ timeStr = String::Format("{0:D2}:{1:D2}", minutes, seconds);
+            
+            ListViewItem^ item = gcnew ListViewItem(gcnew array<String^> {
+                gcnew String(score.name.c_str()),
+                timeStr,
+                gcnew String(score.difficulty.c_str())
+            });
+            highScoreList->Items->Add(item);
+        }
+    
+        Panel^ mainPanel = gcnew Panel();
+        mainPanel->Dock = DockStyle::Fill;
+        mainPanel->Padding = System::Windows::Forms::Padding(20);
+    
+        Panel^ buttonPanel = gcnew Panel();
+        buttonPanel->Height = 50;
+        buttonPanel->Dock = DockStyle::Bottom;
+    
+        Button^ closeButton = gcnew Button();
+        closeButton->Text = "Close";
+        closeButton->AutoSize = true;
+        closeButton->Anchor = static_cast<AnchorStyles>(AnchorStyles::None);
+        closeButton->Location = Point((buttonPanel->Width - closeButton->Width) / 2, (buttonPanel->Height - closeButton->Height) / 2);
+        closeButton->Click += gcnew EventHandler(this, &MainForm::CloseHighScores);
+    
+        buttonPanel->Controls->Add(closeButton);
+        mainPanel->Controls->Add(highScoreList);
+        mainPanel->Controls->Add(buttonPanel);
+        highScoreForm->Controls->Add(mainPanel);
+    
+        highScoreForm->ShowDialog();
     }
-
-    Panel^ mainPanel = gcnew Panel();
-    mainPanel->Dock = DockStyle::Fill;
-    mainPanel->Padding = System::Windows::Forms::Padding(20);
-
-    Panel^ buttonPanel = gcnew Panel();
-    buttonPanel->Height = 50;
-    buttonPanel->Dock = DockStyle::Bottom;
-
-    Button^ closeButton = gcnew Button();
-    closeButton->Text = "Close";
-    closeButton->AutoSize = true;
-    closeButton->Anchor = static_cast<AnchorStyles>(AnchorStyles::None);
-    closeButton->Location = Point((buttonPanel->Width - closeButton->Width) / 2, (buttonPanel->Height - closeButton->Height) / 2);
-    closeButton->Click += gcnew EventHandler(this, &MainForm::CloseHighScores);
-
-    buttonPanel->Controls->Add(closeButton);
-    mainPanel->Controls->Add(highScoreList);
-    mainPanel->Controls->Add(buttonPanel);
-    highScoreForm->Controls->Add(mainPanel);
-
-    highScoreForm->ShowDialog();
-}
-
     void CloseHighScores(Object^ sender, EventArgs^ e) {
         highScoreForm->Close();
     }
