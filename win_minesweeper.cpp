@@ -599,13 +599,17 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         Button^ submitButton = gcnew Button();
         submitButton->Text = "Submit";
         submitButton->Location = Point(20, 80);
-        submitButton->Click += gcnew EventHandler(this, &MainForm::SubmitHighScore);
+        submitButton->DialogResult = System::Windows::Forms::DialogResult::OK;
         highScoreForm->Controls->Add(submitButton);
     
-        // Set submitButton as the AcceptButton
         highScoreForm->AcceptButton = submitButton;
     
-        highScoreForm->ShowDialog();
+        if (highScoreForm->ShowDialog() == System::Windows::Forms::DialogResult::OK) {
+            if (!String::IsNullOrWhiteSpace(nameEntryBox->Text)) {
+                minesweeper->SaveHighScore(nameEntryBox->Text);
+                ShowHighScores();
+            }
+        }
     }
 
     void SubmitHighScore(Object^ sender, EventArgs^ e) {
