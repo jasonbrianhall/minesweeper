@@ -315,6 +315,10 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         // Add About menu
         ToolStripMenuItem^ helpMenu = gcnew ToolStripMenuItem("Help");
         helpMenu->DropDownItems->Add(gcnew ToolStripMenuItem(
+            "How To Play", nullptr,
+            gcnew EventHandler(this, &MainForm::ShowHowToPlay_Click)));
+
+        helpMenu->DropDownItems->Add(gcnew ToolStripMenuItem(
             "About", nullptr,
             gcnew EventHandler(this, &MainForm::ShowAbout_Click)));
             
@@ -451,6 +455,22 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         }
     }
     
+    void ShowHowToPlay_Click(Object^ sender, EventArgs^ e) {
+        MessageBox::Show(
+            L"How to Play Minesweeper:\n\n"
+            L"- Left click to reveal a cell\n"
+            L"- Right click to flag/unflag a cell\n"
+            L"- Click on revealed number to reveal adjacent cells\n"
+            L"  if correct number of flags are placed\n"
+            L"- Press F1-F3 to change difficulty\n"
+            L"- Press N for new game\n\n"
+            L"The goal is to reveal all non-mine cells\n"
+            L"without triggering any mines!",
+            L"How to Play",
+            MessageBoxButtons::OK,
+            MessageBoxIcon::Information);
+    }
+    
     void ShowAbout_Click(Object^ sender, EventArgs^ e) {
         MessageBox::Show(
             L"Minesweeper\n\n"
@@ -508,7 +528,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
             return;  
         }
 
-        if (e->Button == System::Windows::Forms::MouseButtons::Left) {
+        if (e->Button == System::Windows::Forms::MouseButtons::Left || (minesweeper->IsRevealed(row, col) && e->Button == System::Windows::Forms::MouseButtons::Right)) {
             // If clicking on a revealed number, check for auto-reveal
             if (minesweeper->IsRevealed(row, col) && !minesweeper->IsMine(row, col)) {
                 int adjacentMines = minesweeper->GetAdjacentMines(row, col);
