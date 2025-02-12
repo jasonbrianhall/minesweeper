@@ -321,9 +321,6 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         helpMenu->DropDownItems->Add(gcnew ToolStripMenuItem(
             "About", nullptr,
             gcnew EventHandler(this, &MainForm::ShowAbout_Click)));
-        helpMenu->DropDownItems->Add(gcnew ToolStripMenuItem(
-            "About", nullptr,
-            gcnew EventHandler(this, &MainForm::ShowAbout_Click)));
             
         difficultyMenu->DropDownItems->Add(gcnew ToolStripMenuItem(
             "Easy (9x9) F1", nullptr,
@@ -531,7 +528,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
             return;  
         }
 
-        if (e->Button == System::Windows::Forms::MouseButtons::Left) {
+        if (e->Button == System::Windows::Forms::MouseButtons::Left || (minesweeper->IsRevealed(row, col) && e->Button == System::Windows::Forms::MouseButtons::Right)) {
             // If clicking on a revealed number, check for auto-reveal
             if (minesweeper->IsRevealed(row, col) && !minesweeper->IsMine(row, col)) {
                 int adjacentMines = minesweeper->GetAdjacentMines(row, col);
