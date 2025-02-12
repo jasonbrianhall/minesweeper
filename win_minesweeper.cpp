@@ -417,7 +417,6 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
     }
 
     void InitializeGrid() {
-        // Remove existing grid if any
         for each (Control^ control in this->Controls) {
             if (dynamic_cast<Panel^>(control) != nullptr) {
                 this->Controls->Remove(control);
@@ -428,20 +427,24 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         int height = minesweeper->GetHeight();
         int width = minesweeper->GetWidth();
         
-        // Calculate cell size based on window size
-        int availableWidth = this->ClientSize.Width - 100;  // Account for margins
-        int availableHeight = this->ClientSize.Height - menuStrip->Height - instructionsBox->Height - 100;
+        int availableWidth = this->ClientSize.Width - 100;
+        int availableHeight = this->ClientSize.Height - menuStrip->Height - instructionsBox->Height - resetButton->Height - 120;
         
         int cellSizeFromWidth = availableWidth / width;
         int cellSizeFromHeight = availableHeight / height;
         int cellSize = Math::Max(minCellSize, Math::Min(cellSizeFromWidth, cellSizeFromHeight));
         
         Panel^ gridPanel = gcnew Panel();
-        int gridTop = menuStrip->Height + instructionsBox->Height + 25;
+        int gridTop = menuStrip->Height + instructionsBox->Height + resetButton->Height + 30;
         gridPanel->Location = Point(50, gridTop);
         gridPanel->Size = System::Drawing::Size(width * cellSize + 1, height * cellSize + 1);
         gridPanel->BackColor = Color::Gray;
         this->Controls->Add(gridPanel);
+
+        resetButton->Location = Point(
+            50 + (width * cellSize - resetButton->Width) / 2,
+            menuStrip->Height + instructionsBox->Height + 5
+        );
 
         grid = gcnew array<Button^, 2>(height, width);
         buttonFont = gcnew System::Drawing::Font(L"Lucida Console", cellSize / 3, FontStyle::Bold);
@@ -458,6 +461,10 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
                 gridPanel->Controls->Add(grid[i, j]);
             }
         }
+    }
+
+    void ResetButton_Click(Object^ sender, EventArgs^ e) {
+        NewGame_Click(nullptr, nullptr);
     }
     
     void ShowAbout_Click(Object^ sender, EventArgs^ e) {
