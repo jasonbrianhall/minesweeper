@@ -362,7 +362,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
 
 void FlagCounterBox_Click(Object^ sender, EventArgs^ e) {
     // Force timer to stop
-    nativeMinesweeper->timer.stop();
+    //gameTimer->stop();
     // Show high score entry dialog
     ShowHighScoreEntry();
 }
