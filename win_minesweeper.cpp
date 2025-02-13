@@ -413,27 +413,16 @@ void InitializeGrid() {
     int height = minesweeper->GetHeight();
     int width = minesweeper->GetWidth();
     
-    // First, calculate maximum available space in window
-    int maxWidth = this->ClientSize.Width - 140;  // Account for timer (120px) and margin
-    int maxHeight = this->ClientSize.Height - menuStrip->Height - 100;
+    // Calculate available width before timer
+    int availableWidth = this->ClientSize.Width - 140;  // Space before timer
+    int availableHeight = this->ClientSize.Height - menuStrip->Height - 100;
     
-    // Calculate cell size that will fit within these boundaries
-    int cellSizeFromWidth = maxWidth / width;
-    int cellSizeFromHeight = maxHeight / height;
-    
-    // Use the smaller of the two to ensure grid fits both dimensions
-    int cellSize = Math::Min(cellSizeFromWidth, cellSizeFromHeight);
-    
-    // Ensure minimum cell size
-    cellSize = Math::Max(minCellSize, cellSize);
+    // Calculate cell size so the entire board fits
+    int cellSize = Math::Min(availableWidth / width, availableHeight / height);
     
     Panel^ gridPanel = gcnew Panel();
     gridPanel->Location = Point(20, menuStrip->Height + 25);
-    
-    // Ensure total grid size doesn't exceed available space
-    int actualWidth = Math::Min(width * cellSize + 1, maxWidth);
-    int actualHeight = Math::Min(height * cellSize + 1, maxHeight);
-    gridPanel->Size = System::Drawing::Size(actualWidth, actualHeight);
+    gridPanel->Size = System::Drawing::Size(width * cellSize + 1, height * cellSize + 1);
     gridPanel->BackColor = Color::Gray;
     this->Controls->Add(gridPanel);
 
