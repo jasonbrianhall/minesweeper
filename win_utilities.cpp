@@ -152,8 +152,9 @@ void Minesweeper::saveHighscore() {
     std::string difficultyStr;
     switch (width) {
         case 9: difficultyStr = "Easy"; break;
-        case 16: difficultyStr = (height == 16) ? "Medium" : "Hard"; break;
-        default: return;
+        case 16: difficultyStr = "Medium"; break;
+        case 30: difficultyStr = "Hard"; break;
+        default: difficultyStr = "Unknown"; break;  // Handle custom board sizes (should never hit this)
     }
     
     Score score;
