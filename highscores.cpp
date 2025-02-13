@@ -82,6 +82,7 @@ bool Highscores::isHighScore(int time, const std::string& difficulty) const {
     return time < difficultyScores.back().time;  // Compare with worst time in top 10
 }
 
+
 void Highscores::loadScores() {
     std::ifstream file(scorePath);
     if (!file) return;

@@ -107,7 +107,14 @@ public:
     }
 
     bool IsHighScore(int time) {
-        return nativeMinesweeper->isHighScore(time);
+        std::string difficulty;
+        switch(nativeMinesweeper->width) {
+            case 9:  difficulty = "Easy"; break;
+            case 16: difficulty = "Medium"; break;
+            case 30: difficulty = "Expert"; break;  // Changed from "Hard" to "Expert"
+            default: difficulty = "Unknown"; break;
+        }
+        return nativeMinesweeper->isHighScore(time, difficulty);
     }
 
     void SaveHighScore(String^ name) {
