@@ -335,6 +335,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         timerBox->BackColor = Color::White;
         timerBox->Font = gcnew System::Drawing::Font(L"Consolas", 16, FontStyle::Bold);  // Changed to Consolas as it's more commonly available
         timerBox->Text = "00:00";  // Initialize the timer text
+        timerBox->Click += gcnew EventHandler(this, &MainForm::TimerBox_Click);
         this->Controls->Add(timerBox);
     
         this->MainMenuStrip = menuStrip;
@@ -349,9 +350,14 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
 
     void UpdateTimer(Object^ sender, EventArgs^ e) {
         if (!minesweeper->IsGameOver() && !minesweeper->HasWon()) {
-            String^ time = minesweeper->GetTime();
-            timerBox->Text = time;
-            timeLabel->Text = "Time: " + time;
+            if (!minesweeper->NativeMinesweeper->firstMove) {
+                String^ time = minesweeper->GetTime();
+                timerBox->Text = time;
+                timeLabel->Text = "Time: " + time;
+            } else {
+                timerBox->Text = "00:00";
+                timeLabel->Text = "Time: 00:00";
+            }
             statusStrip->Refresh();
         }
 
@@ -359,7 +365,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
             HandleGameEnd();
         }
     }
-
+    
     void HandleGameEnd() {
         if (gameEndHandled) return;
         gameEndHandled = true;
@@ -454,6 +460,11 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
             MessageBoxButtons::OK,
             MessageBoxIcon::Information);
     }
+    
+    void TimerBox_Click(Object^ sender, EventArgs^ e) {
+        NewGame_Click(nullptr, nullptr);  // Start new game when timer is clicked
+    }
+    
     
     void ShowAbout_Click(Object^ sender, EventArgs^ e) {
         MessageBox::Show(
