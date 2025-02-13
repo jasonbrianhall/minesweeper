@@ -413,16 +413,14 @@ void InitializeGrid() {
     int height = minesweeper->GetHeight();
     int width = minesweeper->GetWidth();
     
-    // Calculate available width before timer
-    int availableWidth = this->ClientSize.Width - 140;  // Space before timer
+    // First calculate based on window height
+    int availableHeight = this->ClientSize.Height - menuStrip->Height - 100;
+    int cellSize = availableHeight / height;
     
-    // Calculate cell size based primarily on width
-    int cellSize = availableWidth / width;
-    
-    // Only constrain by height if absolutely necessary
-    int maxHeight = this->ClientSize.Height - menuStrip->Height - 100;
-    if (height * cellSize > maxHeight) {
-        cellSize = maxHeight / height;
+    // If this would cause timer overlap, recalculate based on width
+    if ((width * cellSize + 40) > (this->ClientSize.Width - 120)) {
+        int availableWidth = this->ClientSize.Width - 140;
+        cellSize = availableWidth / width;
     }
     
     Panel^ gridPanel = gcnew Panel();
