@@ -15,7 +15,7 @@ public:
     void addScore(const Score& score);
     const std::vector<Score>& getScores() const;
     std::vector<Score> getScoresByDifficulty(const std::string& difficulty) const;
-    bool isHighScore(int time, const std::string& difficulty) const;
+    bool isHighScore(int time);
 
 private:
     void loadScores();
