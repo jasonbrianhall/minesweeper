@@ -228,7 +228,7 @@ private:
     int minCellSize;
     TextBox^ seedInput;
     bool gameEndHandled = false;
-
+    Label^ flagCounterBox;
     Label^ timerBox;
 
     Image^ flagImage;
@@ -337,6 +337,17 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         timerBox->Text = "00:00";  // Initialize the timer text
         timerBox->Click += gcnew EventHandler(this, &MainForm::TimerBox_Click);
         this->Controls->Add(timerBox);
+
+        flagCounterBox = gcnew Label();
+        flagCounterBox->AutoSize = false;
+        flagCounterBox->Size = System::Drawing::Size(100, 30);
+        flagCounterBox->Location = Point(this->ClientSize.Width - 120, menuStrip->Height + timerBox->Height + 10);
+        flagCounterBox->TextAlign = ContentAlignment::MiddleCenter;
+        flagCounterBox->BorderStyle = BorderStyle::FixedSingle;
+        flagCounterBox->BackColor = Color::White;
+        flagCounterBox->Font = gcnew System::Drawing::Font(L"Consolas", 16, FontStyle::Bold);
+        this->Controls->Add(flagCounterBox);
+
     
         this->MainMenuStrip = menuStrip;
         this->Controls->Add(menuStrip);
@@ -349,6 +360,27 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
     }
 
     void UpdateTimer(Object^ sender, EventArgs^ e) {
+        // Update flag counter
+        int totalBombs=0;
+        switch(minesweeper->GetWidth()) {
+            case 9:  totalBombs = 10; break;  // Easy
+            case 16: totalBombs = 40; break;  // Medium
+            case 30: totalBombs = 99; break;  // Hard
+        }
+        
+        int flagCount = 0;
+        for (int i = 0; i < minesweeper->GetHeight(); i++) {
+            for (int j = 0; j < minesweeper->GetWidth(); j++) {
+               if (minesweeper->IsFlagged(i, j)) flagCount++;
+            }
+        }
+        
+        if ((totalBombs - flagCount)>0) {
+            flagCounterBox->Text = (totalBombs - flagCount).ToString();
+        } else {
+            flagCounterBox->Text = "0";
+        }      
+
         if (!minesweeper->IsGameOver() && !minesweeper->HasWon()) {
             if (!minesweeper->NativeMinesweeper->firstMove) {
                 String^ time = minesweeper->GetTime();
@@ -357,13 +389,14 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
             } else {
                 timerBox->Text = "00:00";
                 timeLabel->Text = "Time: 00:00";
-            }
-            statusStrip->Refresh();
+            }       
         }
 
         if (minesweeper->IsGameOver() || minesweeper->HasWon()) {
             HandleGameEnd();
         }
+        statusStrip->Refresh();
+
     }
     
     void HandleGameEnd() {
@@ -401,49 +434,53 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         }
     }
 
-    void InitializeGrid() {
-        // Remove existing grid if any
-        for each (Control^ control in this->Controls) {
-            if (dynamic_cast<Panel^>(control) != nullptr) {
-                this->Controls->Remove(control);
-                break;
-            }
-        }
-    
-        int height = minesweeper->GetHeight();
-        int width = minesweeper->GetWidth();
-        
-        // Calculate cell size based on window size
-        int availableWidth = this->ClientSize.Width - 100;  // Account for margins
-        int availableHeight = this->ClientSize.Height - menuStrip->Height - 100;
-        
-        int cellSizeFromWidth = availableWidth / width;
-        int cellSizeFromHeight = availableHeight / height;
-        int cellSize = Math::Max(minCellSize, Math::Min(cellSizeFromWidth, cellSizeFromHeight));
-        
-        Panel^ gridPanel = gcnew Panel();
-        int gridTop = menuStrip->Height + 25;  // Adjusted positioning without instructions box
-        gridPanel->Location = Point(50, gridTop);
-        gridPanel->Size = System::Drawing::Size(width * cellSize + 1, height * cellSize + 1);
-        gridPanel->BackColor = Color::Gray;
-        this->Controls->Add(gridPanel);
-    
-        grid = gcnew array<Button^, 2>(height, width);
-        buttonFont = gcnew System::Drawing::Font(L"Lucida Console", cellSize / 3, FontStyle::Bold);
-    
-        for (int i = 0; i < height; i++) {
-            for (int j = 0; j < width; j++) {
-                grid[i, j] = gcnew Button();
-                grid[i, j]->Size = System::Drawing::Size(cellSize - 1, cellSize - 1);
-                grid[i, j]->Location = Point(j * cellSize, i * cellSize);
-                grid[i, j]->Font = buttonFont;
-                grid[i, j]->FlatStyle = FlatStyle::Standard;  // Enable 3D effect
-                grid[i, j]->Tag = gcnew array<int>{i, j};
-                grid[i, j]->MouseUp += gcnew MouseEventHandler(this, &MainForm::Cell_MouseUp);
-                gridPanel->Controls->Add(grid[i, j]);
-            }
+void InitializeGrid() {
+    // Remove existing grid if any
+    for each (Control^ control in this->Controls) {
+        if (dynamic_cast<Panel^>(control) != nullptr) {
+            this->Controls->Remove(control);
+            break;
         }
     }
+
+    int height = minesweeper->GetHeight();
+    int width = minesweeper->GetWidth();
+    
+    // Calculate cell size based on height
+    int availableHeight = this->ClientSize.Height - menuStrip->Height - 100;
+    int cellSize = availableHeight / height;
+    
+    // Only adjust for width if in expert mode (30x16)
+    if (width >= 30) {  // Expert mode width
+        int availableWidth = this->ClientSize.Width - 140;  // Space before timer
+        int widthBasedSize = availableWidth / width;
+        if (widthBasedSize < cellSize) {
+            cellSize = widthBasedSize;
+        }
+    }
+    
+    Panel^ gridPanel = gcnew Panel();
+    gridPanel->Location = Point(20, menuStrip->Height + 25);
+    gridPanel->Size = System::Drawing::Size(width * cellSize + 1, height * cellSize + 1);
+    gridPanel->BackColor = Color::Gray;
+    this->Controls->Add(gridPanel);
+
+    grid = gcnew array<Button^, 2>(height, width);
+    buttonFont = gcnew System::Drawing::Font(L"Lucida Console", cellSize / 3, FontStyle::Bold);
+
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            grid[i, j] = gcnew Button();
+            grid[i, j]->Size = System::Drawing::Size(cellSize - 1, cellSize - 1);
+            grid[i, j]->Location = Point(j * cellSize, i * cellSize);
+            grid[i, j]->Font = buttonFont;
+            grid[i, j]->FlatStyle = FlatStyle::Standard;
+            grid[i, j]->Tag = gcnew array<int>{i, j};
+            grid[i, j]->MouseUp += gcnew MouseEventHandler(this, &MainForm::Cell_MouseUp);
+            gridPanel->Controls->Add(grid[i, j]);
+        }
+    }
+}
     
     void ShowHowToPlay_Click(Object^ sender, EventArgs^ e) {
         MessageBox::Show(
@@ -746,6 +783,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
 
     void MainForm_Resize(Object^ sender, EventArgs^ e) {
         timerBox->Location = Point(this->ClientSize.Width - 120, menuStrip->Height + 5);
+        flagCounterBox->Location = Point(this->ClientSize.Width - 120, menuStrip->Height + timerBox->Height + 10);
         InitializeGrid();
         UpdateAllCells();
     }
