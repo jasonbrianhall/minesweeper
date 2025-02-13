@@ -134,19 +134,11 @@ bool Minesweeper::checkWin() {
     return true;
 }
 
-bool Minesweeper::isHighScore(int time) {
+bool Minesweeper::isHighScore(int time, const std::string& difficulty) {
     const auto& scores = highscores.getScores();
-    std::string difficultyStr;
-    
-    switch (width) {
-        case 9: difficultyStr = "Easy"; break;
-        case 16: difficultyStr = (height == 16) ? "Medium" : "Hard"; break;
-        default: return false;
-    }
-    
     int count = 0;
     for (const auto& score : scores) {
-        if (score.difficulty == difficultyStr) {
+        if (score.difficulty == difficulty) {
             count++;
             if (count >= 10 && score.time <= time) {
                 return false;
@@ -170,4 +162,3 @@ void Minesweeper::saveHighscore() {
     score.difficulty = difficultyStr;
     highscores.addScore(score);
 }
-
