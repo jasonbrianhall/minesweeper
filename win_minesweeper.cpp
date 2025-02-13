@@ -413,14 +413,20 @@ void InitializeGrid() {
     int height = minesweeper->GetHeight();
     int width = minesweeper->GetWidth();
     
-    // First calculate based on window height
-    int availableHeight = this->ClientSize.Height - menuStrip->Height - 100;
-    int cellSize = availableHeight / height;
+    // Get actual window dimensions
+    int windowWidth = this->ClientSize.Width;
+    int windowHeight = this->ClientSize.Height;
     
-    // If this would cause timer overlap, recalculate based on width
-    if ((width * cellSize + 40) > (this->ClientSize.Width - 120)) {
-        int availableWidth = this->ClientSize.Width - 140;
-        cellSize = availableWidth / width;
+    // Calculate cell size to fit vertically
+    int topSpace = menuStrip->Height + 25;
+    int bottomSpace = 75;  // Space for status bar and padding
+    int usableHeight = windowHeight - topSpace - bottomSpace;
+    int cellSize = usableHeight / height;
+    
+    // Check if this would exceed width and adjust if necessary
+    int totalWidth = (cellSize * width) + 40;  // Add left margin
+    if (totalWidth > (windowWidth - 120)) {  // If it would overlap timer
+        cellSize = (windowWidth - 160) / width;  // 160 = 120 for timer + 40 margin
     }
     
     Panel^ gridPanel = gcnew Panel();
