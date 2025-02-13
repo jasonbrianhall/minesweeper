@@ -346,6 +346,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         flagCounterBox->BorderStyle = BorderStyle::FixedSingle;
         flagCounterBox->BackColor = Color::White;
         flagCounterBox->Font = gcnew System::Drawing::Font(L"Consolas", 16, FontStyle::Bold);
+        flagCounterBox->Click += gcnew EventHandler(this, &MainForm::FlagCounterBox_Click);
         this->Controls->Add(flagCounterBox);
 
     
@@ -358,6 +359,13 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
     
         InitializeGrid();
     }
+
+void FlagCounterBox_Click(Object^ sender, EventArgs^ e) {
+    // Force timer to stop
+    nativeMinesweeper->timer.stop();
+    // Show high score entry dialog
+    ShowHighScoreEntry();
+}
 
     void UpdateTimer(Object^ sender, EventArgs^ e) {
         // Update flag counter
@@ -375,11 +383,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
             }
         }
         
-        if ((totalBombs - flagCount)>0) {
-            flagCounterBox->Text = (totalBombs - flagCount).ToString();
-        } else {
-            flagCounterBox->Text = "0";
-        }      
+        flagCounterBox->Text = (totalBombs - flagCount).ToString();
 
         if (!minesweeper->IsGameOver() && !minesweeper->HasWon()) {
             if (!minesweeper->NativeMinesweeper->firstMove) {
