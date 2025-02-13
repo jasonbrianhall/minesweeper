@@ -228,7 +228,7 @@ private:
     int minCellSize;
     TextBox^ seedInput;
     bool gameEndHandled = false;
-
+    Label^ flagCounterBox;
     Label^ timerBox;
 
     Image^ flagImage;
@@ -337,6 +337,17 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         timerBox->Text = "00:00";  // Initialize the timer text
         timerBox->Click += gcnew EventHandler(this, &MainForm::TimerBox_Click);
         this->Controls->Add(timerBox);
+
+        flagCounterBox = gcnew Label();
+        flagCounterBox->AutoSize = false;
+        flagCounterBox->Size = System::Drawing::Size(100, 30);
+        flagCounterBox->Location = Point(this->ClientSize.Width - 120, menuStrip->Height + timerBox->Height + 10);
+        flagCounterBox->TextAlign = ContentAlignment::MiddleCenter;
+        flagCounterBox->BorderStyle = BorderStyle::FixedSingle;
+        flagCounterBox->BackColor = Color::White;
+        flagCounterBox->Font = gcnew System::Drawing::Font(L"Consolas", 16, FontStyle::Bold);
+        this->Controls->Add(flagCounterBox)
+
     
         this->MainMenuStrip = menuStrip;
         this->Controls->Add(menuStrip);
@@ -349,6 +360,27 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
     }
 
     void UpdateTimer(Object^ sender, EventArgs^ e) {
+        // Update flag counter
+        int totalBombs=0;
+        switch(minesweeper->GetWidth()) {
+            case 9:  totalBombs = 10; break;  // Easy
+            case 16: totalBombs = 40; break;  // Medium
+            case 30: totalBombs = 99; break;  // Hard
+        }
+        
+        int flagCount = 0;
+        for (int i = 0; i < minesweeper->GetHeight(); i++) {
+            for (int j = 0; j < minesweeper->GetWidth(); j++) {
+               if (minesweeper->IsFlagged(i, j)) flagCount++;
+            }
+        }
+        
+        if ((totalBombs - flagCount)>0) {
+            flagCounterBox->Text = (totalBombs - flagCount).ToString();
+        } else {
+            flagCounterBox->Text = "0";
+        }      
+
         if (!minesweeper->IsGameOver() && !minesweeper->HasWon()) {
             if (!minesweeper->NativeMinesweeper->firstMove) {
                 String^ time = minesweeper->GetTime();
@@ -357,13 +389,14 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
             } else {
                 timerBox->Text = "00:00";
                 timeLabel->Text = "Time: 00:00";
-            }
-            statusStrip->Refresh();
+            }       
         }
 
         if (minesweeper->IsGameOver() || minesweeper->HasWon()) {
             HandleGameEnd();
         }
+        statusStrip->Refresh();
+
     }
     
     void HandleGameEnd() {
@@ -418,7 +451,7 @@ void InitializeGrid() {
     int cellSize = availableHeight / height;
     
     // Only adjust for width if in expert mode (30x16)
-    if (width == 30) {  // Expert mode width
+    if (width >= 30) {  // Expert mode width
         int availableWidth = this->ClientSize.Width - 140;  // Space before timer
         int widthBasedSize = availableWidth / width;
         if (widthBasedSize < cellSize) {
@@ -750,6 +783,7 @@ void InitializeGrid() {
 
     void MainForm_Resize(Object^ sender, EventArgs^ e) {
         timerBox->Location = Point(this->ClientSize.Width - 120, menuStrip->Height + 5);
+        flagCounterBox->Location = Point(this->ClientSize.Width - 120, menuStrip->Height + timerBox->Height + 10);
         InitializeGrid();
         UpdateAllCells();
     }
