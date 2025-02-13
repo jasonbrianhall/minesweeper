@@ -415,10 +415,15 @@ void InitializeGrid() {
     
     // Calculate available width before timer
     int availableWidth = this->ClientSize.Width - 140;  // Space before timer
-    int availableHeight = this->ClientSize.Height - menuStrip->Height - 100;
     
-    // Calculate cell size so the entire board fits
-    int cellSize = Math::Min(availableWidth / width, availableHeight / height);
+    // Calculate cell size based primarily on width
+    int cellSize = availableWidth / width;
+    
+    // Only constrain by height if absolutely necessary
+    int maxHeight = this->ClientSize.Height - menuStrip->Height - 100;
+    if (height * cellSize > maxHeight) {
+        cellSize = maxHeight / height;
+    }
     
     Panel^ gridPanel = gcnew Panel();
     gridPanel->Location = Point(20, menuStrip->Height + 25);
