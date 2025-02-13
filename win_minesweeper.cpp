@@ -221,7 +221,6 @@ private:
     StatusStrip^ statusStrip;
     ToolStripStatusLabel^ statusLabel;
     ToolStripStatusLabel^ timeLabel;
-    TextBox^ instructionsBox;
     System::Drawing::Font^ buttonFont;
     System::Windows::Forms::Timer^ gameTimer;    Form^ highScoreForm;
     TextBox^ nameEntryBox;
@@ -229,6 +228,8 @@ private:
     int minCellSize;
     TextBox^ seedInput;
     bool gameEndHandled = false;
+
+    Label^ timerBox;
 
     Image^ flagImage;
     Image^ bombImage;
@@ -324,6 +325,18 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         menuStrip->Items->Add(gameMenu);
         menuStrip->Items->Add(difficultyMenu);
         menuStrip->Items->Add(helpMenu);
+
+        timerBox = gcnew Label();
+        timerBox->AutoSize = false;
+        timerBox->Size = System::Drawing::Size(100, 30);
+        timerBox->Location = Point(this->ClientSize.Width - 120, menuStrip->Height + 5);
+        timerBox->TextAlign = ContentAlignment::MiddleCenter;
+        timerBox->BorderStyle = BorderStyle::FixedSingle;
+        timerBox->BackColor = Color::White;
+        timerBox->Font = gcnew System::Drawing::Font(L"Digital-7", 16, FontStyle::Bold);
+        timerBox->Text = "00:00";
+        this->Controls->Add(timerBox);
+
     
         this->MainMenuStrip = menuStrip;
         this->Controls->Add(menuStrip);
@@ -336,14 +349,13 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
     }
 
     void UpdateTimer(Object^ sender, EventArgs^ e) {
-        // Only update the timer if the game is in progress
         if (!minesweeper->IsGameOver() && !minesweeper->HasWon()) {
-            // Get and display the current time from the minesweeper timer
-            timeLabel->Text = "Time: " + minesweeper->GetTime();
-            statusStrip->Refresh(); // Force refresh of the status strip
+            String^ time = minesweeper->GetTime();
+            timerBox->Text = time;
+            timeLabel->Text = "Time: " + time;
+            statusStrip->Refresh();
         }
 
-        // Check for game end conditions
         if (minesweeper->IsGameOver() || minesweeper->HasWon()) {
             HandleGameEnd();
         }
@@ -722,6 +734,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
     }
 
     void MainForm_Resize(Object^ sender, EventArgs^ e) {
+        timerBox->Location = Point(this->ClientSize.Width - 120, menuStrip->Height + 5);
         InitializeGrid();
         UpdateAllCells();
     }
