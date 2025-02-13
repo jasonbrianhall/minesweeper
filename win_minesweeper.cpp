@@ -413,26 +413,27 @@ void InitializeGrid() {
     int height = minesweeper->GetHeight();
     int width = minesweeper->GetWidth();
     
-    // Calculate the point where the timer begins
-    int timerStart = this->ClientSize.Width - 120;
+    // First, calculate maximum available space in window
+    int maxWidth = this->ClientSize.Width - 140;  // Account for timer (120px) and margin
+    int maxHeight = this->ClientSize.Height - menuStrip->Height - 100;
     
-    // Calculate initial cell size based on available height
-    int availableHeight = this->ClientSize.Height - menuStrip->Height - 100;
-    int desiredCellSize = availableHeight / height;
+    // Calculate cell size that will fit within these boundaries
+    int cellSizeFromWidth = maxWidth / width;
+    int cellSizeFromHeight = maxHeight / height;
     
-    // If the grid would overlap with the timer, reduce cell size
-    int totalGridWidth = width * desiredCellSize;
-    if (20 + totalGridWidth > timerStart) {
-        // Need to shrink cells to fit
-        desiredCellSize = (timerStart - 40) / width;
-    }
+    // Use the smaller of the two to ensure grid fits both dimensions
+    int cellSize = Math::Min(cellSizeFromWidth, cellSizeFromHeight);
     
     // Ensure minimum cell size
-    int cellSize = Math::Max(minCellSize, desiredCellSize);
+    cellSize = Math::Max(minCellSize, cellSize);
     
     Panel^ gridPanel = gcnew Panel();
     gridPanel->Location = Point(20, menuStrip->Height + 25);
-    gridPanel->Size = System::Drawing::Size(width * cellSize + 1, height * cellSize + 1);
+    
+    // Ensure total grid size doesn't exceed available space
+    int actualWidth = Math::Min(width * cellSize + 1, maxWidth);
+    int actualHeight = Math::Min(height * cellSize + 1, maxHeight);
+    gridPanel->Size = System::Drawing::Size(actualWidth, actualHeight);
     gridPanel->BackColor = Color::Gray;
     this->Controls->Add(gridPanel);
 
