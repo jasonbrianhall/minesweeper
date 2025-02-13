@@ -413,26 +413,26 @@ void InitializeGrid() {
     int height = minesweeper->GetHeight();
     int width = minesweeper->GetWidth();
     
-    // Calculate cell size based on window size with proper margins
-    // Leave space for timer on right (120px) and left margin (50px)
-    int leftMargin = 20;
-    int rightMargin = 120; // Space for timer
-    int availableWidth = this->ClientSize.Width - leftMargin - rightMargin;
+    // Calculate the maximum space available before timer
+    int timerPosition = this->ClientSize.Width - 120; // Timer width
+    int availableWidth = timerPosition - 20; // Leave small left margin
     int availableHeight = this->ClientSize.Height - menuStrip->Height - 100;
     
-    // Calculate cell size to maximize grid size while maintaining square cells
+    // Calculate cell size to fit within available space
     int cellSizeFromWidth = availableWidth / width;
     int cellSizeFromHeight = availableHeight / height;
-    int cellSize = Math::Max(minCellSize, Math::Min(cellSizeFromWidth, cellSizeFromHeight));
+    int cellSize = Math::Min(cellSizeFromWidth, cellSizeFromHeight);
+    
+    // Ensure cell size stays within reasonable bounds
+    cellSize = Math::Max(minCellSize, cellSize);
     
     // Create and position the grid panel
     Panel^ gridPanel = gcnew Panel();
-    gridPanel->Location = Point(leftMargin, menuStrip->Height + 25);
+    gridPanel->Location = Point(20, menuStrip->Height + 25);
     gridPanel->Size = System::Drawing::Size(width * cellSize + 1, height * cellSize + 1);
     gridPanel->BackColor = Color::Gray;
     this->Controls->Add(gridPanel);
 
-    // Initialize grid of buttons
     grid = gcnew array<Button^, 2>(height, width);
     buttonFont = gcnew System::Drawing::Font(L"Lucida Console", cellSize / 3, FontStyle::Bold);
 
