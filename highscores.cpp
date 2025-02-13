@@ -68,15 +68,19 @@ std::vector<Score> Highscores::getScoresByDifficulty(const std::string& difficul
     return std::vector<Score>();
 }
 
-bool Minesweeper::isHighScore(int time) {
-    std::string difficulty;
-    if (width == 9) difficulty = "Easy";
-    else if (width == 16) difficulty = "Medium";
-    else if (width == 30) difficulty = "Expert";
+bool Highscores::isHighScore(int time, const std::string& difficulty) const {
+    auto it = scoresByDifficulty.find(difficulty);
+    if (it == scoresByDifficulty.end()) {
+        return true;  // First score for this difficulty
+    }
     
-    return highscores.isHighScore(time, difficulty);
+    const auto& difficultyScores = it->second;
+    if (difficultyScores.size() < MAX_SCORES_PER_DIFFICULTY) {
+        return true;  // Less than max scores for this difficulty
+    }
+    
+    return time < difficultyScores.back().time;  // Compare with worst time in top 10
 }
-
 
 void Highscores::loadScores() {
     std::ifstream file(scorePath);
