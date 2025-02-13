@@ -401,49 +401,49 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         }
     }
 
-    void InitializeGrid() {
-        // Remove existing grid if any
-        for each (Control^ control in this->Controls) {
-            if (dynamic_cast<Panel^>(control) != nullptr) {
-                this->Controls->Remove(control);
-                break;
-            }
-        }
-    
-        int height = minesweeper->GetHeight();
-        int width = minesweeper->GetWidth();
-        
-        // Calculate cell size based on window size
-        int availableWidth = this->ClientSize.Width - 100;  // Account for margins
-        int availableHeight = this->ClientSize.Height - menuStrip->Height - 100;
-        
-        int cellSizeFromWidth = availableWidth / width;
-        int cellSizeFromHeight = availableHeight / height;
-        int cellSize = Math::Max(minCellSize, Math::Min(cellSizeFromWidth, cellSizeFromHeight));
-        
-        Panel^ gridPanel = gcnew Panel();
-        int gridTop = menuStrip->Height + 25;  // Adjusted positioning without instructions box
-        gridPanel->Location = Point(50, gridTop);
-        gridPanel->Size = System::Drawing::Size(width * cellSize + 1, height * cellSize + 1);
-        gridPanel->BackColor = Color::Gray;
-        this->Controls->Add(gridPanel);
-    
-        grid = gcnew array<Button^, 2>(height, width);
-        buttonFont = gcnew System::Drawing::Font(L"Lucida Console", cellSize / 3, FontStyle::Bold);
-    
-        for (int i = 0; i < height; i++) {
-            for (int j = 0; j < width; j++) {
-                grid[i, j] = gcnew Button();
-                grid[i, j]->Size = System::Drawing::Size(cellSize - 1, cellSize - 1);
-                grid[i, j]->Location = Point(j * cellSize, i * cellSize);
-                grid[i, j]->Font = buttonFont;
-                grid[i, j]->FlatStyle = FlatStyle::Standard;  // Enable 3D effect
-                grid[i, j]->Tag = gcnew array<int>{i, j};
-                grid[i, j]->MouseUp += gcnew MouseEventHandler(this, &MainForm::Cell_MouseUp);
-                gridPanel->Controls->Add(grid[i, j]);
-            }
+void InitializeGrid() {
+    // Remove existing grid if any
+    for each (Control^ control in this->Controls) {
+        if (dynamic_cast<Panel^>(control) != nullptr) {
+            this->Controls->Remove(control);
+            break;
         }
     }
+
+    int height = minesweeper->GetHeight();
+    int width = minesweeper->GetWidth();
+    
+    // Calculate available space, accounting for timer width on the right
+    int availableWidth = this->ClientSize.Width - 170;  // 50px left margin + 120px timer width
+    int availableHeight = this->ClientSize.Height - menuStrip->Height - 100;
+    
+    int cellSizeFromWidth = availableWidth / width;
+    int cellSizeFromHeight = availableHeight / height;
+    int cellSize = Math::Max(minCellSize, Math::Min(cellSizeFromWidth, cellSizeFromHeight));
+    
+    Panel^ gridPanel = gcnew Panel();
+    int gridTop = menuStrip->Height + 25;
+    gridPanel->Location = Point(50, gridTop);
+    gridPanel->Size = System::Drawing::Size(width * cellSize + 1, height * cellSize + 1);
+    gridPanel->BackColor = Color::Gray;
+    this->Controls->Add(gridPanel);
+
+    grid = gcnew array<Button^, 2>(height, width);
+    buttonFont = gcnew System::Drawing::Font(L"Lucida Console", cellSize / 3, FontStyle::Bold);
+
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            grid[i, j] = gcnew Button();
+            grid[i, j]->Size = System::Drawing::Size(cellSize - 1, cellSize - 1);
+            grid[i, j]->Location = Point(j * cellSize, i * cellSize);
+            grid[i, j]->Font = buttonFont;
+            grid[i, j]->FlatStyle = FlatStyle::Standard;
+            grid[i, j]->Tag = gcnew array<int>{i, j};
+            grid[i, j]->MouseUp += gcnew MouseEventHandler(this, &MainForm::Cell_MouseUp);
+            gridPanel->Controls->Add(grid[i, j]);
+        }
+    }
+}
     
     void ShowHowToPlay_Click(Object^ sender, EventArgs^ e) {
         MessageBox::Show(
