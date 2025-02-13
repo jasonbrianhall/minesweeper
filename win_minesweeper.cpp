@@ -346,7 +346,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         flagCounterBox->BorderStyle = BorderStyle::FixedSingle;
         flagCounterBox->BackColor = Color::White;
         flagCounterBox->Font = gcnew System::Drawing::Font(L"Consolas", 16, FontStyle::Bold);
-        this->Controls->Add(flagCounterBox)
+        this->Controls->Add(flagCounterBox);
 
     
         this->MainMenuStrip = menuStrip;
