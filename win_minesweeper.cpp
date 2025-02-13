@@ -221,7 +221,6 @@ private:
     StatusStrip^ statusStrip;
     ToolStripStatusLabel^ statusLabel;
     ToolStripStatusLabel^ timeLabel;
-    TextBox^ instructionsBox;
     System::Drawing::Font^ buttonFont;
     System::Windows::Forms::Timer^ gameTimer;    Form^ highScoreForm;
     TextBox^ nameEntryBox;
@@ -229,6 +228,8 @@ private:
     int minCellSize;
     TextBox^ seedInput;
     bool gameEndHandled = false;
+
+    Label^ timerBox;
 
     Image^ flagImage;
     Image^ bombImage;
@@ -324,6 +325,18 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         menuStrip->Items->Add(gameMenu);
         menuStrip->Items->Add(difficultyMenu);
         menuStrip->Items->Add(helpMenu);
+
+        timerBox = gcnew Label();
+        timerBox->AutoSize = false;
+        timerBox->Size = System::Drawing::Size(100, 30);
+        timerBox->Location = Point(this->ClientSize.Width - 120, menuStrip->Height + 5);
+        timerBox->TextAlign = ContentAlignment::MiddleCenter;
+        timerBox->BorderStyle = BorderStyle::FixedSingle;
+        timerBox->BackColor = Color::White;
+        timerBox->Font = gcnew System::Drawing::Font(L"Consolas", 16, FontStyle::Bold);  // Changed to Consolas as it's more commonly available
+        timerBox->Text = "00:00";  // Initialize the timer text
+        timerBox->Click += gcnew EventHandler(this, &MainForm::TimerBox_Click);
+        this->Controls->Add(timerBox);
     
         this->MainMenuStrip = menuStrip;
         this->Controls->Add(menuStrip);
@@ -336,19 +349,23 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
     }
 
     void UpdateTimer(Object^ sender, EventArgs^ e) {
-        // Only update the timer if the game is in progress
         if (!minesweeper->IsGameOver() && !minesweeper->HasWon()) {
-            // Get and display the current time from the minesweeper timer
-            timeLabel->Text = "Time: " + minesweeper->GetTime();
-            statusStrip->Refresh(); // Force refresh of the status strip
+            if (!minesweeper->NativeMinesweeper->firstMove) {
+                String^ time = minesweeper->GetTime();
+                timerBox->Text = time;
+                timeLabel->Text = "Time: " + time;
+            } else {
+                timerBox->Text = "00:00";
+                timeLabel->Text = "Time: 00:00";
+            }
+            statusStrip->Refresh();
         }
 
-        // Check for game end conditions
         if (minesweeper->IsGameOver() || minesweeper->HasWon()) {
             HandleGameEnd();
         }
     }
-
+    
     void HandleGameEnd() {
         if (gameEndHandled) return;
         gameEndHandled = true;
@@ -443,6 +460,11 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
             MessageBoxButtons::OK,
             MessageBoxIcon::Information);
     }
+    
+    void TimerBox_Click(Object^ sender, EventArgs^ e) {
+        NewGame_Click(nullptr, nullptr);  // Start new game when timer is clicked
+    }
+    
     
     void ShowAbout_Click(Object^ sender, EventArgs^ e) {
         MessageBox::Show(
@@ -687,6 +709,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         UpdateAllCells();
         UpdateStatus("New game started");
         gameTimer->Start();
+        timerBox->Text = "00:00";        // Initialize the timer box
         timeLabel->Text = "Time: 00:00";
         statusStrip->Refresh();
     }
@@ -722,6 +745,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
     }
 
     void MainForm_Resize(Object^ sender, EventArgs^ e) {
+        timerBox->Location = Point(this->ClientSize.Width - 120, menuStrip->Height + 5);
         InitializeGrid();
         UpdateAllCells();
     }
