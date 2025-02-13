@@ -333,10 +333,9 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         timerBox->TextAlign = ContentAlignment::MiddleCenter;
         timerBox->BorderStyle = BorderStyle::FixedSingle;
         timerBox->BackColor = Color::White;
-        timerBox->Font = gcnew System::Drawing::Font(L"Digital-7", 16, FontStyle::Bold);
-        timerBox->Text = "00:00";
+        timerBox->Font = gcnew System::Drawing::Font(L"Consolas", 16, FontStyle::Bold);  // Changed to Consolas as it's more commonly available
+        timerBox->Text = "00:00";  // Initialize the timer text
         this->Controls->Add(timerBox);
-
     
         this->MainMenuStrip = menuStrip;
         this->Controls->Add(menuStrip);
@@ -699,6 +698,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         UpdateAllCells();
         UpdateStatus("New game started");
         gameTimer->Start();
+        timerBox->Text = "00:00";        // Initialize the timer box
         timeLabel->Text = "Time: 00:00";
         statusStrip->Refresh();
     }
