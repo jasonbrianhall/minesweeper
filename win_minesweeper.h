@@ -56,7 +56,7 @@ public:
     void revealCell(int row, int col);
     void revealAllMines();
     bool checkWin();
-    bool isHighScore(int time);
+    bool isHighScore(int time, const std::string& difficulty);
     void saveHighscore();
 };
 

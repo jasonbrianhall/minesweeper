@@ -107,7 +107,14 @@ public:
     }
 
     bool IsHighScore(int time) {
-        return nativeMinesweeper->isHighScore(time);
+        std::string difficulty;
+        switch(nativeMinesweeper->width) {
+            case 9:  difficulty = "Easy"; break;
+            case 16: difficulty = "Medium"; break;
+            case 30: difficulty = "Hard"; break;
+            default: difficulty = "Custom"; break;
+        }
+        return nativeMinesweeper->isHighScore(time, difficulty);
     }
 
     void SaveHighScore(String^ name) {
@@ -346,6 +353,8 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         flagCounterBox->BorderStyle = BorderStyle::FixedSingle;
         flagCounterBox->BackColor = Color::White;
         flagCounterBox->Font = gcnew System::Drawing::Font(L"Consolas", 16, FontStyle::Bold);
+        // This code was added as a cheat to check the highscores functionality
+        //flagCounterBox->Click += gcnew EventHandler(this, &MainForm::FlagCounterBox_Click);
         this->Controls->Add(flagCounterBox);
 
     
@@ -357,6 +366,13 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         this->KeyDown += gcnew KeyEventHandler(this, &MainForm::MainForm_KeyDown);
     
         InitializeGrid();
+    }
+
+    void FlagCounterBox_Click(Object^ sender, EventArgs^ e) {
+        // Force timer to stop
+        //gameTimer->stop();
+        // Show high score entry dialog
+        ShowHighScoreEntry();
     }
 
     void UpdateTimer(Object^ sender, EventArgs^ e) {
@@ -375,11 +391,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
             }
         }
         
-        if ((totalBombs - flagCount)>0) {
-            flagCounterBox->Text = (totalBombs - flagCount).ToString();
-        } else {
-            flagCounterBox->Text = "0";
-        }      
+        flagCounterBox->Text = (totalBombs - flagCount).ToString();
 
         if (!minesweeper->IsGameOver() && !minesweeper->HasWon()) {
             if (!minesweeper->NativeMinesweeper->firstMove) {
