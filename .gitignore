@@ -1,0 +1,36 @@
+# Object files and build artifacts
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+*.app
+*.dmg
+*.jks
+
+# Qt specific
+*.pro.user
+*.pro.user.*
+*.qmake.stash
+moc_*.cpp
+moc*.h
+qrc_*.cpp
+ui_*.h
+Makefile*
+*build-*
+*.moc
+
+# IDE specific
+.qmake.cache
+.qmake.stash
+*.autosave
+
+# Build directories
+debug/
+release/
+build/
+
+# Misc
+*.log
+.DS_Store
