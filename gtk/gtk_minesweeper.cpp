@@ -98,9 +98,9 @@ void GTKMinesweeper::create_menu() {
     GtkWidget *help_item = gtk_menu_item_new_with_label("Help");
     gtk_menu_item_set_submenu(GTK_MENU_ITEM(help_item), help_menu);
     
-    /*GtkWidget *how_to_play = gtk_menu_item_new_with_label("How To Play");
+    GtkWidget *how_to_play = gtk_menu_item_new_with_label("How To Play");
     g_signal_connect(G_OBJECT(how_to_play), "activate", G_CALLBACK(on_how_to_play), this);
-    gtk_menu_shell_append(GTK_MENU_SHELL(help_menu), how_to_play); */
+    gtk_menu_shell_append(GTK_MENU_SHELL(help_menu), how_to_play);
     
     GtkWidget *about = gtk_menu_item_new_with_label("About");
     g_signal_connect(G_OBJECT(about), "activate", G_CALLBACK(on_about), this);
@@ -246,7 +246,7 @@ void GTKMinesweeper::on_difficulty(GtkWidget *widget, gpointer difficulty) {
     minesweeper->update_mine_counter();
 }
 
-/*void GTKMinesweeper::on_how_to_play(GtkWidget *widget, gpointer user_data) {
+void GTKMinesweeper::on_how_to_play(GtkWidget *widget, gpointer user_data) {
     (void)widget;  // Unused parameter
     GTKMinesweeper *minesweeper = static_cast<GTKMinesweeper*>(user_data);
     GtkWidget *dialog = gtk_message_dialog_new(
@@ -264,7 +264,7 @@ void GTKMinesweeper::on_difficulty(GtkWidget *widget, gpointer difficulty) {
         
     gtk_dialog_run(GTK_DIALOG(dialog));
     gtk_widget_destroy(dialog);
-}*/
+}
 
 void GTKMinesweeper::on_about(GtkWidget *widget, gpointer user_data) {
     (void)widget;  // Unused parameter

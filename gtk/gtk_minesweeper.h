@@ -32,6 +32,8 @@ private:
     static void on_quit(GtkWidget *widget, gpointer user_data);
     static void on_difficulty(GtkWidget *widget, gpointer difficulty);
     static void on_about(GtkWidget *widget, gpointer user_data);
+    static void on_how_to_play(GtkWidget *widget, gpointer user_data);
+
     static gboolean update_timer(gpointer user_data);
 
 public:
