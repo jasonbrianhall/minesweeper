@@ -93,8 +93,22 @@ void GTKMinesweeper::create_menu() {
     gtk_menu_shell_append(GTK_MENU_SHELL(diff_menu), medium);
     gtk_menu_shell_append(GTK_MENU_SHELL(diff_menu), hard);
     
+    // Help menu
+    GtkWidget *help_menu = gtk_menu_new();
+    GtkWidget *help_item = gtk_menu_item_new_with_label("Help");
+    gtk_menu_item_set_submenu(GTK_MENU_ITEM(help_item), help_menu);
+    
+    /*GtkWidget *how_to_play = gtk_menu_item_new_with_label("How To Play");
+    g_signal_connect(G_OBJECT(how_to_play), "activate", G_CALLBACK(on_how_to_play), this);
+    gtk_menu_shell_append(GTK_MENU_SHELL(help_menu), how_to_play); */
+    
+    GtkWidget *about = gtk_menu_item_new_with_label("About");
+    g_signal_connect(G_OBJECT(about), "activate", G_CALLBACK(on_about), this);
+    gtk_menu_shell_append(GTK_MENU_SHELL(help_menu), about);
+    
     gtk_menu_shell_append(GTK_MENU_SHELL(menubar), game_item);
     gtk_menu_shell_append(GTK_MENU_SHELL(menubar), diff_item);
+    gtk_menu_shell_append(GTK_MENU_SHELL(menubar), help_item);
 }
 
 void GTKMinesweeper::initialize_grid() {
@@ -232,6 +246,26 @@ void GTKMinesweeper::on_difficulty(GtkWidget *widget, gpointer difficulty) {
     minesweeper->update_mine_counter();
 }
 
+/*void GTKMinesweeper::on_how_to_play(GtkWidget *widget, gpointer user_data) {
+    (void)widget;  // Unused parameter
+    GTKMinesweeper *minesweeper = static_cast<GTKMinesweeper*>(user_data);
+    GtkWidget *dialog = gtk_message_dialog_new(
+        GTK_WINDOW(minesweeper->window),
+        GTK_DIALOG_MODAL,
+        GTK_MESSAGE_INFO,
+        GTK_BUTTONS_OK,
+        "How to Play Minesweeper:\n\n"
+        "- Left click to reveal a cell\n"
+        "- Right click to flag/unflag a cell\n"
+        "- Click on revealed number to reveal adjacent cells\n"
+        "  if correct number of flags are placed\n"
+        "- The goal is to reveal all non-mine cells\n"
+        "  without triggering any mines!");
+        
+    gtk_dialog_run(GTK_DIALOG(dialog));
+    gtk_widget_destroy(dialog);
+}*/
+
 void GTKMinesweeper::on_about(GtkWidget *widget, gpointer user_data) {
     (void)widget;  // Unused parameter
     GTKMinesweeper *minesweeper = static_cast<GTKMinesweeper*>(user_data);
@@ -244,12 +278,12 @@ void GTKMinesweeper::on_about(GtkWidget *widget, gpointer user_data) {
         "A classic game where you must avoid the mines and clear the field.\n\n"
         "Left click: Reveal cell\n"
         "Right click: Flag/unflag cell\n"
-        "Written by [Your Name] (2025)");
+        "Click on revealed number: Reveal adjacent cells if correct number of flags\n\n"
+        "Written by Jason Hall (2025)");
         
     gtk_dialog_run(GTK_DIALOG(dialog));
     gtk_widget_destroy(dialog);
 }
-
 gboolean GTKMinesweeper::update_timer(gpointer user_data) {
     GTKMinesweeper *minesweeper = static_cast<GTKMinesweeper*>(user_data);
     if(!minesweeper->game->gameOver && !minesweeper->game->won && 
