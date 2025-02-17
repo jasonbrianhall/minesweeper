@@ -236,10 +236,13 @@ void GTKMinesweeper::update_all_cells() {
 
 void GTKMinesweeper::update_cell(int row, int col) {
     GtkWidget *button = buttons[row][col];
-    GtkWidget *label = gtk_bin_get_child(GTK_BIN(button));
-    if(label != NULL) {
-        gtk_widget_destroy(label);
+    
+    // Clear any existing content safely
+    GtkWidget *child = gtk_bin_get_child(GTK_BIN(button));
+    if(GTK_IS_WIDGET(child)) {
+        gtk_container_remove(GTK_CONTAINER(button), child);
     }
+    gtk_button_set_image(GTK_BUTTON(button), NULL);
     
     if(game->revealed[row][col]) {
         if(game->minefield[row][col]) {
@@ -258,8 +261,6 @@ void GTKMinesweeper::update_cell(int row, int col) {
         GtkWidget *image = gtk_image_new_from_icon_name(
             "emblem-important", GTK_ICON_SIZE_BUTTON);
         gtk_button_set_image(GTK_BUTTON(button), image);
-    } else {
-        gtk_button_set_image(GTK_BUTTON(button), NULL);
     }
     
     gtk_widget_show_all(button);
