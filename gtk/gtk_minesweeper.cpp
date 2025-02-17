@@ -6,6 +6,42 @@
 #include <gdk/gdk.h>
 #include <cstring>
 
+const char* GTKMinesweeper::FLAG_BASE64 = R"(iVBORw0KGgoAAAANSUhEUgAAACAAAAAgBAMAAACBVGfHAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAdn
+JLH8AAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAACFQTFRFAAAA/2Z
+mAAAA////mTMzzMzMzGZmZjMzmWYzMwAA/8xmaoi8KgAAAAF0Uk5TAEDm2GYAAABdSURBVCjPY2DABpQ
+U0AS6GggJKCkooepSVkkUTJnEwMAEE1VWFBQUFHOf7oIiAAIDLaDmXu6GIqAEdPaUREERuACYgeRBZfQ
+AGqwCSmixwhQaGhqEIgBUocSAEwAAjwQWTza+izoAAAAASUVORK5CYII=)";
+
+const char* GTKMinesweeper::BOMB_BASE64 = R"(iVBORw0KGgoAAAANSUhEUgAAACAAAAAgBAMAAACBVGfHAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAd
+nJLH8AAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAACFQTFRFAAAA
+gwMTcwoRqBIlgTE0yyk14kFE21NWqnN1z5ye////XulGdQAAAAF0Uk5TAEDm2GYAAADbSURBVCjPbdK9
+DoIwEAfwQ/lYKeEBsOEFTF10qm9AQqpxc7GzizAbN1cmeALCU0rLtUVClza/XPMvdwCsrNocfK63UBYI
+JNdb5YBmukA+Ec40/4cdpRMI2DK2B49ogDq8RKJkjHgEY6AQGjg3+dEExL4sQLAVL4TYwAMhNSAQkiW4
+iu/QsOPQO+hGOA29u3JrS3Zo3+k8tpvHavjMQKUMzQLasSIDJ+odqftYUJD6WFFVoghGiEmy4VMLrxCM
+LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
+
+const char* GTKMinesweeper::REVEALED_BASE64 = R"(iVBORw0KGgoAAAANSUhEUgAAACAAAAAgAQMAAABJtOi3AAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAdn
+JLH8AAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAAAZQTFRFAAAAIx8
+gaVhvIAAAAAF0Uk5TAEDm2GYAAABWSURBVAjXY2DADRpghEITkDBoAxICLDBJ/g9AwoIPSCQcBin72MD
+AyPDDgYGJ44cCAwv/DwMGNhDBzP8jgYGx/cMBBobjD4FmFbQDFcvZAAn2BwxEAADI2BObaHDmJQAAAAB
+JRU5ErkJggg==)";
+
+const char* GTKMinesweeper::ICON_BASE64 = R"(AAABAAEAICAQAAEABADoAgAAFgAAACgAAAAgAAAAQAAAAAEABAAAAAAAAAIAAAAAAAAAAAAAEAAAABAA
+AABKNaUAhl1FAE5gdQDkljwAjXu8AHVy4AAfgN8AsaKMAGmwzgDt6NwAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAmZmZmZmZmZmZmZmZmZmZmZmZd3d3
+d3d3d3d3d3d3eZmZcREREQAAACAAACEREReZmREUERBQAABmZmZhMzMzeZdxBgEQUAAAhmZmYXd3EXmXeI
+ZmEAVVAIaGZmF3d3F5l3KIghBEBVCGKIZhmZlxeZdxdxEQWZQAhmJmZ3d3EXmXd3dxFFBQUIZmZmcXdxF5
+l3d3cRd0d3R5d3InF5cReZd3mXd4SIgABFSEhxFxEXmXl3d3eIiCEzMUiIcXdxF5l3mXmXKIEzMzMUiHF3
+cReZczNzM4gjMxEzMVh3FxcXmXF3d3coF3d3czNIAAAAB5l3d3d3gnd3d3czKAUAAAeZeWImB4h3d3d3M4
+hQF3EHmXl2ZgcoGZl3mTGIVHd3B5l3hmJ3iCmZmXMyiFCZlweZeYYodygilxETKIhVAUAHmXlyd3eIICeX
+GIiIURVVB5l5mZmXdIIndBiISXdERAeZdWZmZRERERIhF3EAAAAHmXZgZmYXERESIgd3VQAAB5l4BoZmd3
+cRF3Zmd1AFAAeZeAiYBnd3cRcImAdVSUUHmXiIiIZ3d3EXdoh3UERAB5mYiAiGd5l3F3cnd1VQVQmZl4iI
+iHmZmXeZmZdEREVJmZl3d3d3d3d3d3d3d3d3mZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZkA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==)";
+
+
 // GameTimer implementation
 void GameTimer::start() {
     startTime = std::chrono::steady_clock::now();
@@ -249,21 +285,25 @@ void GTKMinesweeper::update_cell(int row, int col) {
     if(game->revealed[row][col]) {
         if(game->minefield[row][col]) {
             // Show mine
-            GtkWidget *image = gtk_image_new_from_icon_name("dialog-error", GTK_ICON_SIZE_BUTTON);
+            GtkWidget *image = gtk_image_new_from_pixbuf(bomb_pixbuf);
             gtk_widget_show(image);
             gtk_button_set_image(GTK_BUTTON(button), image);
         } else {
-            // Show number
             int count = game->countAdjacentMines(row, col);
             if(count > 0) {
                 GtkWidget *label = gtk_label_new(std::to_string(count).c_str());
                 gtk_widget_show(label);
                 gtk_container_add(GTK_CONTAINER(button), label);
+            } else {
+                // Show revealed background for empty cells
+                GtkWidget *image = gtk_image_new_from_pixbuf(revealed_pixbuf);
+                gtk_widget_show(image);
+                gtk_button_set_image(GTK_BUTTON(button), image);
             }
         }
     } else if(game->flagged[row][col]) {
         // Show flag
-        GtkWidget *image = gtk_image_new_from_icon_name("emblem-important", GTK_ICON_SIZE_BUTTON);
+        GtkWidget *image = gtk_image_new_from_pixbuf(flag_pixbuf);
         gtk_widget_show(image);
         gtk_button_set_image(GTK_BUTTON(button), image);
     }
@@ -271,6 +311,43 @@ void GTKMinesweeper::update_cell(int row, int col) {
     gtk_widget_show(button);
 }
 
+    GdkPixbuf* GTKMinesweeper::load_base64_image(const char* base64_data) {
+        std::vector<guchar> decoded_data;
+        gsize decoded_len;
+        guchar* raw_data = g_base64_decode(base64_data, &decoded_len);
+        
+        GInputStream* stream = g_memory_input_stream_new_from_data(raw_data, decoded_len, nullptr);
+        GError* error = nullptr;
+        GdkPixbuf* pixbuf = gdk_pixbuf_new_from_stream(stream, nullptr, &error);
+        
+        g_object_unref(stream);
+        g_free(raw_data);
+        
+        if (error) {
+            g_error_free(error);
+            return nullptr;
+        }
+        
+        return pixbuf;
+    }
+    
+    void GTKMinesweeper::load_images() {
+        flag_pixbuf = load_base64_image(FLAG_BASE64);
+        bomb_pixbuf = load_base64_image(BOMB_BASE64);
+        revealed_pixbuf = load_base64_image(REVEALED_BASE64);
+        app_icon = load_base64_image(ICON_BASE64);
+        
+        if (app_icon) {
+            gtk_window_set_icon(GTK_WINDOW(window), app_icon);
+        }
+    }
+    
+    void GTKMinesweeper::cleanup_images() {
+        if (flag_pixbuf) g_object_unref(flag_pixbuf);
+        if (bomb_pixbuf) g_object_unref(bomb_pixbuf);
+        if (revealed_pixbuf) g_object_unref(revealed_pixbuf);
+        if (app_icon) g_object_unref(app_icon);
+    }
 
 GTKMinesweeper::GTKMinesweeper() 
     : game(std::make_unique<Minesweeper>())
@@ -279,8 +356,14 @@ GTKMinesweeper::GTKMinesweeper()
     , timer_label(nullptr)
     , mines_label(nullptr)
     , menubar(nullptr)
-    , timer_id(0) {
+    , timer_id(0)
+    , flag_pixbuf(nullptr)
+    , bomb_pixbuf(nullptr)
+    , revealed_pixbuf(nullptr)
+    , app_icon(nullptr) {
+    
     game->setDifficulty(Difficulty::EASY);
+    load_images();
 }
 
 GTKMinesweeper::~GTKMinesweeper() {

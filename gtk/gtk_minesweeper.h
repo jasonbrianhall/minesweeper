@@ -24,7 +24,9 @@ private:
     void show_game_over_dialog();
     void show_win_dialog();
     void show_high_scores();
-
+    void load_images();
+    void cleanup_images();
+    GdkPixbuf* load_base64_image(const char* base64_data);
     static void activate(GtkApplication *app, gpointer user_data);
     static void on_button_click(GtkWidget *widget, GdkEventButton *event, gpointer user_data);
     static void on_new_game(GtkWidget *widget, gpointer user_data);
@@ -35,6 +37,18 @@ private:
     static void on_how_to_play(GtkWidget *widget, gpointer user_data);
 
     static gboolean update_timer(gpointer user_data);
+
+    GdkPixbuf *flag_pixbuf;
+    GdkPixbuf *bomb_pixbuf;
+    GdkPixbuf *revealed_pixbuf;
+    GdkPixbuf *app_icon;
+
+    // Base64 encoded PNG data
+    static const char* FLAG_BASE64;
+    static const char* BOMB_BASE64;
+    static const char* REVEALED_BASE64;
+    static const char* ICON_BASE64;
+
 
 public:
     GTKMinesweeper();
