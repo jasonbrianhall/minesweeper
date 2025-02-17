@@ -63,12 +63,16 @@ void Minesweeper::reset() {
 
 void Minesweeper::initializeMinefield(int firstY, int firstX, int seed) {
     std::mt19937 gen;
+    unsigned int finalSeed;
+    
     if (seed < 0) {
         std::random_device rd;
-        gen.seed(rd());
+        finalSeed = rd();
     } else {
-        gen.seed(static_cast<unsigned int>(seed));
+        finalSeed = static_cast<unsigned int>(seed);
     }
+    currentSeed=finalSeed;
+    gen.seed(finalSeed);
     
     std::uniform_int_distribution<> disH(0, height - 1);
     std::uniform_int_distribution<> disW(0, width - 1);

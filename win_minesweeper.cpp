@@ -625,8 +625,16 @@ void InitializeGrid() {
                 }
             }
         } else {
-            cell->FlatStyle = FlatStyle::Standard;  // Raised appearance for unrevealed cells
-            cell->BackColor = Color::LightGray;
+            // Create raised border effect for unrevealed cells
+            cell->FlatStyle = FlatStyle::Flat;
+            cell->BackColor = Color::FromArgb(224, 224, 224); // #E0E0E0
+            cell->FlatAppearance->BorderColor = Color::FromArgb(212, 212, 212); // #D4D4D4
+            cell->FlatAppearance->BorderSize = 2;
+            // Use BorderStyle property to create the raised effect
+            cell->FlatAppearance->BorderColor = SystemColors::ButtonHighlight;
+            cell->FlatAppearance->MouseOverBackColor = cell->BackColor;
+            cell->FlatAppearance->MouseDownBackColor = SystemColors::ButtonShadow;
+
             if (minesweeper->IsFlagged(row, col) && flagImage) {
                 cell->Image = flagImage;
                 cell->ImageAlign = ContentAlignment::MiddleCenter;
