@@ -480,6 +480,53 @@ void GTKMinesweeper::show_high_scores() {
     gtk_widget_destroy(dialog);
 }
 
+// Add these helper methods to the Minesweeper class:
+int Minesweeper::countAdjacentFlags(int y, int x) {
+    int count = 0;
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            int newY = y + dy;
+            int newX = x + dx;
+            if (newY >= 0 && newY < height && newX >= 0 && newX < width) {
+                if (flagged[newY][newX]) count++;
+            }
+        }
+    }
+    return count;
+}
+
+void Minesweeper::revealAdjacent(int y, int x) {
+    if (!revealed[y][x]) return;
+
+    int mineCount = countAdjacentMines(y, x);
+    int flagCount = countAdjacentFlags(y, x);
+
+    if (mineCount == flagCount) {
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                int newY = y + dy;
+                int newX = x + dx;
+                if (newY >= 0 && newY < height && newX >= 0 && newX < width) {
+                    if (!flagged[newY][newX] && !revealed[newY][newX]) {
+                        if (minefield[newY][newX]) {
+                            gameOver = true;
+                            revealAllMines();
+                            timer.stop();
+                            return;
+                        }
+                        revealCell(newY, newX);
+                    }
+                }
+            }
+        }
+        if (checkWin()) {
+            won = true;
+            timer.stop();
+        }
+    }
+}
+
+// Modify the on_button_click handler:
 void GTKMinesweeper::on_button_click(GtkWidget *widget, GdkEventButton *event, gpointer user_data) {
     GTKMinesweeper *minesweeper = static_cast<GTKMinesweeper*>(user_data);
     int row = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "row"));
@@ -492,26 +539,35 @@ void GTKMinesweeper::on_button_click(GtkWidget *widget, GdkEventButton *event, g
             minesweeper->game->timer.start();
         }
         
-        if(!minesweeper->game->flagged[row][col]) {
+        if(minesweeper->game->revealed[row][col]) {
+            // If clicking on a revealed number, try to reveal adjacent
+            minesweeper->game->revealAdjacent(row, col);
+            minesweeper->update_all_cells();
+            if(minesweeper->game->gameOver) {
+                minesweeper->show_game_over_dialog();
+            } else if(minesweeper->game->won) {
+                minesweeper->show_win_dialog();
+            }
+        } else if(!minesweeper->game->flagged[row][col]) {
             if(minesweeper->game->minefield[row][col]) {
                 minesweeper->game->gameOver = true;
                 minesweeper->game->revealAllMines();
                 minesweeper->game->timer.stop();
-                minesweeper->update_all_cells();  // Update display first
-                while (gtk_events_pending()) {    // Process pending events to ensure display updates
+                minesweeper->update_all_cells();
+                while (gtk_events_pending()) {
                     gtk_main_iteration();
                 }
-                minesweeper->show_game_over_dialog();  // Then show dialog
+                minesweeper->show_game_over_dialog();
             } else {
                 minesweeper->game->revealCell(row, col);
                 if(minesweeper->game->checkWin()) {
                     minesweeper->game->won = true;
                     minesweeper->game->timer.stop();
-                    minesweeper->update_all_cells();  // Update display first
-                    while (gtk_events_pending()) {    // Process pending events to ensure display updates
+                    minesweeper->update_all_cells();
+                    while (gtk_events_pending()) {
                         gtk_main_iteration();
                     }
-                    minesweeper->show_win_dialog();  // Then show dialog
+                    minesweeper->show_win_dialog();
                 } else {
                     minesweeper->update_all_cells();
                 }
