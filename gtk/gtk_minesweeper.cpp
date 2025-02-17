@@ -237,33 +237,38 @@ void GTKMinesweeper::update_all_cells() {
 void GTKMinesweeper::update_cell(int row, int col) {
     GtkWidget *button = buttons[row][col];
     
-    // Clear any existing content safely
-    GtkWidget *child = gtk_bin_get_child(GTK_BIN(button));
-    if(GTK_IS_WIDGET(child)) {
-        gtk_container_remove(GTK_CONTAINER(button), child);
+    // Remove any existing image first
+    gtk_button_set_image(GTK_BUTTON(button), nullptr);
+    
+    // Get and remove any existing label
+    GtkWidget *existing_child = gtk_bin_get_child(GTK_BIN(button));
+    if (existing_child) {
+        gtk_container_remove(GTK_CONTAINER(button), existing_child);
     }
-    gtk_button_set_image(GTK_BUTTON(button), NULL);
     
     if(game->revealed[row][col]) {
         if(game->minefield[row][col]) {
-            GtkWidget *image = gtk_image_new_from_icon_name(
-                "dialog-error", GTK_ICON_SIZE_BUTTON);
+            // Show mine
+            GtkWidget *image = gtk_image_new_from_icon_name("dialog-error", GTK_ICON_SIZE_BUTTON);
+            gtk_widget_show(image);
             gtk_button_set_image(GTK_BUTTON(button), image);
         } else {
+            // Show number
             int count = game->countAdjacentMines(row, col);
             if(count > 0) {
-                GtkWidget *label = gtk_label_new(
-                    std::to_string(count).c_str());
+                GtkWidget *label = gtk_label_new(std::to_string(count).c_str());
+                gtk_widget_show(label);
                 gtk_container_add(GTK_CONTAINER(button), label);
             }
         }
     } else if(game->flagged[row][col]) {
-        GtkWidget *image = gtk_image_new_from_icon_name(
-            "emblem-important", GTK_ICON_SIZE_BUTTON);
+        // Show flag
+        GtkWidget *image = gtk_image_new_from_icon_name("emblem-important", GTK_ICON_SIZE_BUTTON);
+        gtk_widget_show(image);
         gtk_button_set_image(GTK_BUTTON(button), image);
     }
     
-    gtk_widget_show_all(button);
+    gtk_widget_show(button);
 }
 
 
