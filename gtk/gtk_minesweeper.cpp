@@ -596,23 +596,71 @@ void GTKMinesweeper::show_high_scores() {
         "_OK",
         GTK_RESPONSE_ACCEPT,
         NULL);
+
+    // Set dialog size
+    gtk_window_set_default_size(GTK_WINDOW(dialog), 400, 300);
         
     GtkWidget *content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
-    
-    GtkWidget *list = gtk_list_box_new();
-    gtk_container_add(GTK_CONTAINER(content_area), list);
-    
-    const auto& scores = game->highscores.getScores();
-    for(const auto& score : scores) {
-        std::string text = score.name + " - " + 
-                          std::to_string(score.time) + "s - " + 
-                          score.difficulty;
-        GtkWidget *row = gtk_list_box_row_new();
-        GtkWidget *label = gtk_label_new(text.c_str());
-        gtk_container_add(GTK_CONTAINER(row), label);
-        gtk_list_box_insert(GTK_LIST_BOX(list), row, -1);
+    gtk_container_set_border_width(GTK_CONTAINER(content_area), 10);
+
+    // Create a grid for the table
+    GtkWidget *grid = gtk_grid_new();
+    gtk_grid_set_row_spacing(GTK_GRID(grid), 10);
+    gtk_grid_set_column_spacing(GTK_GRID(grid), 20);
+    gtk_container_add(GTK_CONTAINER(content_area), grid);
+
+    // Create and style header labels
+    const char* header_css = "label { font-weight: bold; }";
+    GtkCssProvider *header_provider = gtk_css_provider_new();
+    gtk_css_provider_load_from_data(header_provider, header_css, -1, NULL);
+
+    // Add headers
+    GtkWidget *name_header = gtk_label_new("Player");
+    GtkWidget *time_header = gtk_label_new("Time");
+    GtkWidget *diff_header = gtk_label_new("Difficulty");
+
+    // Apply bold style to headers
+    for (GtkWidget* header : {name_header, time_header, diff_header}) {
+        GtkStyleContext *context = gtk_widget_get_style_context(header);
+        gtk_style_context_add_provider(context,
+                                     GTK_STYLE_PROVIDER(header_provider),
+                                     GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+        gtk_widget_set_halign(header, GTK_ALIGN_START);
     }
-    
+
+    // Attach headers
+    gtk_grid_attach(GTK_GRID(grid), name_header, 0, 0, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), time_header, 1, 0, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), diff_header, 2, 0, 1, 1);
+
+    // Add separator after headers
+    GtkWidget *separator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+    gtk_grid_attach(GTK_GRID(grid), separator, 0, 1, 3, 1);
+
+    // Add scores
+    const auto& scores = game->highscores.getScores();
+    int row = 2;  // Start after header and separator
+    for (const auto& score : scores) {
+        // Create labels for each column
+        GtkWidget *name_label = gtk_label_new(score.name.c_str());
+        GtkWidget *time_label = gtk_label_new((std::to_string(score.time) + "s").c_str());
+        GtkWidget *diff_label = gtk_label_new(score.difficulty.c_str());
+
+        // Align labels to the left
+        for (GtkWidget* label : {name_label, time_label, diff_label}) {
+            gtk_widget_set_halign(label, GTK_ALIGN_START);
+        }
+
+        // Attach labels to grid
+        gtk_grid_attach(GTK_GRID(grid), name_label, 0, row, 1, 1);
+        gtk_grid_attach(GTK_GRID(grid), time_label, 1, row, 1, 1);
+        gtk_grid_attach(GTK_GRID(grid), diff_label, 2, row, 1, 1);
+
+        row++;
+    }
+
+    g_object_unref(header_provider);
+
     gtk_widget_show_all(dialog);
     gtk_dialog_run(GTK_DIALOG(dialog));
     gtk_widget_destroy(dialog);
