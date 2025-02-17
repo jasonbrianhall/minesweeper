@@ -915,6 +915,7 @@ public:
         minesweeper = gcnew MinesweeperWrapper();
         InitializeComponent();
         this->Resize += gcnew EventHandler(this, &MainForm::MainForm_Resize);
+        NewGame_Click(nullptr, nullptr);
     }
 }; 
 
