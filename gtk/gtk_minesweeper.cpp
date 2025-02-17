@@ -216,6 +216,11 @@ void GTKMinesweeper::show_game_over_dialog() {
     gtk_widget_destroy(dialog);
 }
 
+void GTKMinesweeper::on_entry_activate(GtkEntry*, gpointer user_data) {
+    GtkDialog *dialog = GTK_DIALOG(user_data);
+    gtk_dialog_response(dialog, GTK_RESPONSE_ACCEPT);
+}
+
 void GTKMinesweeper::show_win_dialog() {
     int time = game->timer.getElapsedSeconds();
     std::string difficulty;
@@ -240,6 +245,8 @@ void GTKMinesweeper::show_win_dialog() {
         GtkWidget *name_entry = gtk_entry_new();
         gtk_entry_set_placeholder_text(GTK_ENTRY(name_entry), "Enter your name");
         gtk_container_add(GTK_CONTAINER(content_area), name_entry);
+
+        g_signal_connect(name_entry, "activate", G_CALLBACK(&GTKMinesweeper::on_entry_activate), dialog);
         
         gtk_widget_show_all(dialog);
         
@@ -265,6 +272,8 @@ void GTKMinesweeper::show_win_dialog() {
         gtk_widget_destroy(dialog);
     }
 }
+
+
 
 void GTKMinesweeper::update_all_cells() {
     for(int i = 0; i < game->height; i++) {
@@ -484,70 +493,84 @@ void GTKMinesweeper::create_window(GtkApplication *app) {
 
 void GTKMinesweeper::create_menu() {
     menubar = gtk_menu_bar_new();
-    
+
+    GtkAccelGroup *accel_group = gtk_accel_group_new();
+
     // Game menu
     GtkWidget *game_menu = gtk_menu_new();
     GtkWidget *game_item = gtk_menu_item_new_with_label("Game");
     gtk_menu_item_set_submenu(GTK_MENU_ITEM(game_item), game_menu);
-    
+
     GtkWidget *new_game = gtk_menu_item_new_with_label("New Game");
     g_signal_connect(G_OBJECT(new_game), "activate", G_CALLBACK(on_new_game), this);
     gtk_menu_shell_append(GTK_MENU_SHELL(game_menu), new_game);
-    
+    gtk_widget_add_accelerator(new_game, "activate", accel_group, GDK_KEY_n, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
+
     GtkWidget *high_scores = gtk_menu_item_new_with_label("High Scores");
     g_signal_connect(G_OBJECT(high_scores), "activate", G_CALLBACK(on_high_scores), this);
     gtk_menu_shell_append(GTK_MENU_SHELL(game_menu), high_scores);
+    gtk_widget_add_accelerator(high_scores, "activate", accel_group, GDK_KEY_h, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
 
     GtkWidget *reset = gtk_menu_item_new_with_label("Reset Current Game");
     g_signal_connect(G_OBJECT(reset), "activate", G_CALLBACK(on_reset_game), this); 
     gtk_menu_shell_append(GTK_MENU_SHELL(game_menu), reset);
+    gtk_widget_add_accelerator(reset, "activate", accel_group, GDK_KEY_r, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
 
     GtkWidget *set_seed = gtk_menu_item_new_with_label("Set Custom Seed");
     g_signal_connect(G_OBJECT(set_seed), "activate", G_CALLBACK(on_set_seed), this);
     gtk_menu_shell_append(GTK_MENU_SHELL(game_menu), set_seed);
-    
+    gtk_widget_add_accelerator(set_seed, "activate", accel_group, GDK_KEY_s, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
+
     GtkWidget *quit = gtk_menu_item_new_with_label("Quit");
     g_signal_connect(G_OBJECT(quit), "activate", G_CALLBACK(on_quit), this);
     gtk_menu_shell_append(GTK_MENU_SHELL(game_menu), quit);
-    
+    gtk_widget_add_accelerator(quit, "activate", accel_group, GDK_KEY_q, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
+
     // Difficulty menu
     GtkWidget *diff_menu = gtk_menu_new();
     GtkWidget *diff_item = gtk_menu_item_new_with_label("Difficulty");
     gtk_menu_item_set_submenu(GTK_MENU_ITEM(diff_item), diff_menu);
-    
+
     GtkWidget *easy = gtk_menu_item_new_with_label("Easy");
     GtkWidget *medium = gtk_menu_item_new_with_label("Medium");
     GtkWidget *hard = gtk_menu_item_new_with_label("Hard");
-    
+
     g_object_set_data(G_OBJECT(easy), "minesweeper", this);
     g_object_set_data(G_OBJECT(medium), "minesweeper", this);
     g_object_set_data(G_OBJECT(hard), "minesweeper", this);
-    
+
     g_signal_connect(G_OBJECT(easy), "activate", G_CALLBACK(on_difficulty), GINT_TO_POINTER(0));
     g_signal_connect(G_OBJECT(medium), "activate", G_CALLBACK(on_difficulty), GINT_TO_POINTER(1));
     g_signal_connect(G_OBJECT(hard), "activate", G_CALLBACK(on_difficulty), GINT_TO_POINTER(2));
-    
+
     gtk_menu_shell_append(GTK_MENU_SHELL(diff_menu), easy);
     gtk_menu_shell_append(GTK_MENU_SHELL(diff_menu), medium);
     gtk_menu_shell_append(GTK_MENU_SHELL(diff_menu), hard);
-    
+
+    gtk_widget_add_accelerator(easy, "activate", accel_group, GDK_KEY_1, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
+    gtk_widget_add_accelerator(medium, "activate", accel_group, GDK_KEY_2, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
+    gtk_widget_add_accelerator(hard, "activate", accel_group, GDK_KEY_3, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
+
     // Help menu
     GtkWidget *help_menu = gtk_menu_new();
     GtkWidget *help_item = gtk_menu_item_new_with_label("Help");
     gtk_menu_item_set_submenu(GTK_MENU_ITEM(help_item), help_menu);
-    
+
     GtkWidget *how_to_play = gtk_menu_item_new_with_label("How To Play");
     g_signal_connect(G_OBJECT(how_to_play), "activate", G_CALLBACK(on_how_to_play), this);
     gtk_menu_shell_append(GTK_MENU_SHELL(help_menu), how_to_play);
-    
+
     GtkWidget *about = gtk_menu_item_new_with_label("About");
-    g_signal_connect(G_OBJECT(about), "activate", G_CALLBACK(on_about), this);
+    gtk_widget_add_accelerator(about, "activate", accel_group, GDK_KEY_F1, (GdkModifierType)0, GTK_ACCEL_VISIBLE);
     gtk_menu_shell_append(GTK_MENU_SHELL(help_menu), about);
-    
+
     gtk_menu_shell_append(GTK_MENU_SHELL(menubar), game_item);
     gtk_menu_shell_append(GTK_MENU_SHELL(menubar), diff_item);
     gtk_menu_shell_append(GTK_MENU_SHELL(menubar), help_item);
+
+    gtk_window_add_accel_group(GTK_WINDOW(window), accel_group);
 }
+
 
 void GTKMinesweeper::initialize_grid() {
     GList *children = gtk_container_get_children(GTK_CONTAINER(grid));
@@ -729,6 +752,10 @@ void GTKMinesweeper::on_button_click(GtkWidget *widget, GdkEventButton *event, g
     GTKMinesweeper *minesweeper = static_cast<GTKMinesweeper*>(user_data);
     int row = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "row"));
     int col = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "col"));
+
+    if (minesweeper->game->won || minesweeper->game->gameOver) {
+         return;
+    }
     
     if(event->button == 1) { // Left click
         if(minesweeper->game->firstMove) {
@@ -829,6 +856,9 @@ void GTKMinesweeper::show_seed_dialog() {
                       std::to_string(game->currentSeed).c_str());
     gtk_box_pack_start(GTK_BOX(box), entry, TRUE, TRUE, 5);
 
+    // Connect the 'activate' signal to the entry widget
+    g_signal_connect(entry, "activate", G_CALLBACK(&GTKMinesweeper::on_entry_activate), dialog);
+
     gtk_widget_show_all(dialog);
 
     if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
@@ -881,7 +911,8 @@ void GTKMinesweeper::on_high_scores(GtkWidget *widget, gpointer user_data) {
 void GTKMinesweeper::on_quit(GtkWidget *widget, gpointer user_data) {
     (void)widget;  // Unused parameter
     (void)user_data;  // Unused parameter
-    g_application_quit(G_APPLICATION(gtk_window_get_application(GTK_WINDOW(widget))));
+    GTKMinesweeper *self = static_cast<GTKMinesweeper*>(user_data);
+    gtk_widget_destroy(self->window);
 }
 
 void GTKMinesweeper::on_difficulty(GtkWidget *widget, gpointer difficulty) {
