@@ -381,39 +381,6 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         ShowHighScoreEntry();
     }
 
-    void EnterSeed_Click(Object^ sender, EventArgs^ e) {
-        Form^ seedForm = gcnew Form();
-        seedForm->Text = L"Enter Seed";
-        seedForm->Size = System::Drawing::Size(300, 150);
-        seedForm->StartPosition = FormStartPosition::CenterParent;
-        seedForm->FormBorderStyle = Windows::Forms::FormBorderStyle::FixedDialog;
-    
-        seedInput = gcnew TextBox();
-        seedInput->Location = Point(20, 20);
-        seedInput->Size = System::Drawing::Size(240, 20);
-    
-        Button^ okButton = gcnew Button();
-        okButton->Text = L"OK";
-        okButton->DialogResult = System::Windows::Forms::DialogResult::OK;
-        okButton->Location = Point(100, 60);
-    
-        seedForm->Controls->Add(seedInput);
-        seedForm->Controls->Add(okButton);
-        seedForm->AcceptButton = okButton;
-    
-        if (seedForm->ShowDialog() == System::Windows::Forms::DialogResult::OK) {
-            try {
-                int seed = Int32::Parse(seedInput->Text);
-                minesweeper->setSeed(seed);  // Set the seed
-                NewGame_Click(nullptr, nullptr);  // Start new game with seed
-            }
-            catch (...) {
-                MessageBox::Show(L"Invalid seed value", L"Error", 
-                    MessageBoxButtons::OK, MessageBoxIcon::Error);
-            }
-        }
-    }
-
     void UpdateTimer(Object^ sender, EventArgs^ e) {
         // Update flag counter
         int totalBombs=0;
