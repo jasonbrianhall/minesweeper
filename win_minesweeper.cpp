@@ -548,75 +548,24 @@ void InitializeGrid() {
         seedForm->Size = System::Drawing::Size(300, 150);
         seedForm->StartPosition = FormStartPosition::CenterParent;
         seedForm->FormBorderStyle = Windows::Forms::FormBorderStyle::FixedDialog;
-    
-        Label^ instructionLabel = gcnew Label();
-        instructionLabel->Text = L"Enter a numeric seed value:";
-        instructionLabel->Location = Point(20, 20);
-        instructionLabel->AutoSize = true;
-    
+        
         seedInput = gcnew TextBox();
-        seedInput->Location = Point(20, 50);
+        seedInput->Location = Point(20, 20);
         seedInput->Size = System::Drawing::Size(240, 20);
-        // Set the current seed as default text
-        seedInput->Text = minesweeper->getSeed().ToString();
-    
+        
         Button^ okButton = gcnew Button();
         okButton->Text = L"OK";
         okButton->DialogResult = System::Windows::Forms::DialogResult::OK;
-        okButton->Location = Point(100, 80);
-        okButton->Enabled = false;  // Initially disabled
-    
-        // Validate input on text change
-        seedInput->TextChanged += gcnew EventHandler(
-            [okButton](Object^ sender, EventArgs^ e) {
-                TextBox^ textBox = safe_cast<TextBox^>(sender);
-                String^ input = textBox->Text;
-                bool isValid = !String::IsNullOrEmpty(input);
-            
-                // Check if the input string contains only digits    
-                for each (Char c in input) {
-                    if (!Char::IsDigit(c)) {
-                        isValid = false;
-                        break;
-                    }
-                }
-            
-                okButton->Enabled = isValid;
-            }
-        );
-    
-        // Handle Enter key
-        seedInput->KeyPress += gcnew KeyPressEventHandler(
-            [seedForm](Object^ sender, KeyPressEventArgs^ e) {
-                TextBox^ textBox = safe_cast<TextBox^>(sender);
-                if (e->KeyChar == (char)Keys::Enter) {
-                    e->Handled = true;  // Prevent the ding sound
-                    // Only process if the input is valid
-                    if (!String::IsNullOrEmpty(textBox->Text) && textBox->Text->Length > 0) {
-                        bool isValid = true;
-                        for each (Char c in textBox->Text) {
-                            if (!Char::IsDigit(c)) {
-                                isValid = false;
-                                break;
-                            }
-                        }
-                        if (isValid) {
-                            seedForm->DialogResult = System::Windows::Forms::DialogResult::OK;
-                            seedForm->Close();
-                        }
-                    }
-                }
-            }
-        );
-    
-        seedForm->Controls->Add(instructionLabel);
+        okButton->Location = Point(100, 60);
+        
         seedForm->Controls->Add(seedInput);
         seedForm->Controls->Add(okButton);
         seedForm->AcceptButton = okButton;
-    
+        
         if (seedForm->ShowDialog() == System::Windows::Forms::DialogResult::OK) {
             try {
                 int seed = Int32::Parse(seedInput->Text);
+                // Update the wrapper to handle seed
                 minesweeper->setSeed(seed);
                 ResetGame_Click(nullptr, nullptr);
             }
@@ -626,7 +575,7 @@ void InitializeGrid() {
             }
         }
     }
-        
+    
     void Cell_MouseUp(Object^ sender, MouseEventArgs^ e) {
         Button^ button = safe_cast<Button^>(sender);
         array<int>^ position = safe_cast<array<int>^>(button->Tag);
