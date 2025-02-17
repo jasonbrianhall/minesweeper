@@ -287,10 +287,23 @@ GTKMinesweeper::~GTKMinesweeper() {
 void GTKMinesweeper::create_window(GtkApplication *app) {
     window = gtk_application_window_new(app);
     gtk_window_set_title(GTK_WINDOW(window), "Minesweeper");
+    
+    // Set minimum window size
+    gtk_window_set_resizable(GTK_WINDOW(window), TRUE);
     gtk_window_set_default_size(GTK_WINDOW(window), 400, 500);
+    
+    // Create geometry hints struct properly
+    GdkGeometry geometry;
+    geometry.min_width = 300;
+    geometry.min_height = 400;
+    gtk_window_set_geometry_hints(GTK_WINDOW(window), NULL,
+                                &geometry,
+                                GDK_HINT_MIN_SIZE);
     
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     gtk_container_add(GTK_CONTAINER(window), vbox);
+    gtk_widget_set_vexpand(vbox, TRUE);
+    gtk_widget_set_hexpand(vbox, TRUE);
     
     create_menu();
     gtk_box_pack_start(GTK_BOX(vbox), menubar, FALSE, FALSE, 0);
@@ -381,12 +394,24 @@ void GTKMinesweeper::initialize_grid() {
     }
     g_list_free(children);
     
+    // Set grid to expand
+    gtk_widget_set_vexpand(grid, TRUE);
+    gtk_widget_set_hexpand(grid, TRUE);
+    gtk_grid_set_row_homogeneous(GTK_GRID(grid), TRUE);
+    gtk_grid_set_column_homogeneous(GTK_GRID(grid), TRUE);
+    
     buttons.resize(game->height);
     for(int i = 0; i < game->height; i++) {
         buttons[i].resize(game->width);
         for(int j = 0; j < game->width; j++) {
             GtkWidget *button = gtk_button_new();
-            gtk_widget_set_size_request(button, 30, 30);
+            
+            // Make buttons expand
+            gtk_widget_set_vexpand(button, TRUE);
+            gtk_widget_set_hexpand(button, TRUE);
+            
+            // Set minimum size to prevent buttons from becoming too small
+            gtk_widget_set_size_request(button, 25, 25);
             
             g_object_set_data(G_OBJECT(button), "row", GINT_TO_POINTER(i));
             g_object_set_data(G_OBJECT(button), "col", GINT_TO_POINTER(j));
