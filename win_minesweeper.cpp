@@ -291,6 +291,10 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
             "New Game (N)", nullptr, 
             gcnew EventHandler(this, &MainForm::NewGame_Click)));
         fileMenu->DropDownItems->Add(gcnew ToolStripMenuItem(
+            "Reset Game (R)", nullptr, 
+            gcnew EventHandler(this, &MainForm::ResetGame_Click)));
+
+        fileMenu->DropDownItems->Add(gcnew ToolStripMenuItem(
             "Exit", nullptr,
             gcnew EventHandler(this, &MainForm::Exit_Click)));
     
@@ -449,6 +453,10 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
             case Keys::N:
                 NewGame_Click(nullptr, nullptr);
                 break;
+            case Keys::R:
+                ResetGame_Click(nullptr, nullptr);
+                break;
+
         }
     }
 
@@ -559,7 +567,7 @@ void InitializeGrid() {
                 int seed = Int32::Parse(seedInput->Text);
                 // Update the wrapper to handle seed
                 minesweeper->setSeed(seed);
-                NewGame_Click(nullptr, nullptr);
+                ResetGame_Click(nullptr, nullptr);
             }
             catch (...) {
                 MessageBox::Show(L"Invalid seed value", L"Error", 
@@ -776,6 +784,18 @@ void InitializeGrid() {
         timeLabel->Text = "Time: 00:00";
         statusStrip->Refresh();
     }
+
+    void ResetGame_Click(Object^ sender, EventArgs^ e) {
+        minesweeper->Reset();
+        gameEndHandled = false;
+        UpdateAllCells();
+        UpdateStatus("New game started");
+        gameTimer->Start();
+        timerBox->Text = "00:00";        // Initialize the timer box
+        timeLabel->Text = "Time: 00:00";
+        statusStrip->Refresh();
+    }
+
 
     void Exit_Click(Object^ sender, EventArgs^ e) {
         Application::Exit();
