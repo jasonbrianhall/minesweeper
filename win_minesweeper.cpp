@@ -542,90 +542,75 @@ void InitializeGrid() {
             MessageBoxIcon::Information);
     }
     
-    void EnterSeed_Click(Object^ sender, EventArgs^ e) {
-        Form^ seedForm = gcnew Form();
-        seedForm->Text = L"Enter Seed";
-        seedForm->Size = System::Drawing::Size(300, 150);
-        seedForm->StartPosition = FormStartPosition::CenterParent;
-        seedForm->FormBorderStyle = Windows::Forms::FormBorderStyle::FixedDialog;
+void EnterSeed_Click(Object^ sender, EventArgs^ e) {
+    Form^ seedForm = gcnew Form();
+    seedForm->Text = L"Enter Seed";
+    seedForm->Size = System::Drawing::Size(300, 150);
+    seedForm->StartPosition = FormStartPosition::CenterParent;
+    seedForm->FormBorderStyle = Windows::Forms::FormBorderStyle::FixedDialog;
     
-        Label^ instructionLabel = gcnew Label();
-        instructionLabel->Text = L"Enter a number for the random seed:";
-        instructionLabel->Location = Point(20, 15);
-        instructionLabel->AutoSize = true;
-        seedForm->Controls->Add(instructionLabel);
+    Label^ instructionLabel = gcnew Label();
+    instructionLabel->Text = L"Enter a number for the random seed:";
+    instructionLabel->Location = Point(20, 15);
+    instructionLabel->AutoSize = true;
+    seedForm->Controls->Add(instructionLabel);
     
-        seedInput = gcnew TextBox();
-        seedInput->Location = Point(20, 40);
-        seedInput->Size = System::Drawing::Size(240, 20);
+    seedInput = gcnew TextBox();
+    seedInput->Location = Point(20, 40);
+    seedInput->Size = System::Drawing::Size(240, 20);
     
-        // Set the current seed as default text if it exists
-        int currentSeed = minesweeper->getSeed();
-        if (currentSeed >= 0) {
-            seedInput->Text = currentSeed.ToString();
-            // Select all text so user can easily replace it
-            seedInput->SelectAll();
+    // Set the current seed as default text if it exists
+    int currentSeed = minesweeper->getSeed();
+    if (currentSeed >= 0) {
+        seedInput->Text = currentSeed.ToString();
+        seedInput->SelectAll();
+    }
+    
+    Button^ okButton = gcnew Button();
+    okButton->Text = L"OK";
+    okButton->DialogResult = System::Windows::Forms::DialogResult::OK;
+    okButton->Location = Point(85, 70);
+    
+    Button^ cancelButton = gcnew Button();
+    cancelButton->Text = L"Cancel";
+    cancelButton->DialogResult = System::Windows::Forms::DialogResult::Cancel;
+    cancelButton->Location = Point(165, 70);
+    
+    seedForm->Controls->Add(seedInput);
+    seedForm->Controls->Add(okButton);
+    seedForm->Controls->Add(cancelButton);
+    
+    seedForm->AcceptButton = okButton;
+    seedForm->CancelButton = cancelButton;
+    
+    if (seedForm->ShowDialog() == System::Windows::Forms::DialogResult::OK) {
+        if (String::IsNullOrWhiteSpace(seedInput->Text)) {
+            MessageBox::Show(L"Please enter a valid number", L"Invalid Input", 
+                MessageBoxButtons::OK, MessageBoxIcon::Warning);
+            return;
         }
-    
-        // Add KeyPress event handler for real-time validation
-        seedInput->KeyPress += gcnew KeyPressEventHandler(
-        [](Object^ sender, KeyPressEventArgs^ e) {
-            // Allow control characters (backspace, etc.) and digits
-            if (!Char::IsControl(e->KeyChar) && !Char::IsDigit(e->KeyChar)) {
-                e->Handled = true;  // Suppress non-digit characters
-            }
-        });
-    
-        Button^ okButton = gcnew Button();
-        okButton->Text = L"OK";
-        okButton->DialogResult = System::Windows::Forms::DialogResult::OK;
-        okButton->Location = Point(85, 70);
-    
-        Button^ cancelButton = gcnew Button();
-        cancelButton->Text = L"Cancel";
-        cancelButton->DialogResult = System::Windows::Forms::DialogResult::Cancel;
-        cancelButton->Location = Point(165, 70);
-    
-        seedForm->Controls->Add(seedInput);
-        seedForm->Controls->Add(okButton);
-        seedForm->Controls->Add(cancelButton);
-    
-        seedForm->AcceptButton = okButton;      // Handle Enter key
-        seedForm->CancelButton = cancelButton;  // Handle Escape key
-    
-        // Focus the input box when form opens
-        seedForm->Shown += gcnew EventHandler([](Object^ sender, EventArgs^ e) {
-            safe_cast<Form^>(sender)->Controls["seedInput"]->Focus();
-        });
-    
-        if (seedForm->ShowDialog() == System::Windows::Forms::DialogResult::OK) {
-            if (String::IsNullOrWhiteSpace(seedInput->Text)) {
-                MessageBox::Show(L"Please enter a valid number", L"Invalid Input", 
+        
+        try {
+            int seed = Int32::Parse(seedInput->Text);
+            if (seed < 0) {
+                MessageBox::Show(L"Please enter a positive number", L"Invalid Input", 
                     MessageBoxButtons::OK, MessageBoxIcon::Warning);
                 return;
             }
-        
-            try {
-                int seed = Int32::Parse(seedInput->Text);
-                if (seed < 0) {
-                    MessageBox::Show(L"Please enter a positive number", L"Invalid Input", 
-                        MessageBoxButtons::OK, MessageBoxIcon::Warning);
-                    return;
-                }
-                // Update the wrapper to handle seed
-                minesweeper->setSeed(seed);
-                ResetGame_Click(nullptr, nullptr);
-            }
-            catch (FormatException^) {
-                MessageBox::Show(L"Please enter a valid number", L"Invalid Input", 
-                    MessageBoxButtons::OK, MessageBoxIcon::Warning);
-            }
-            catch (OverflowException^) {
-                MessageBox::Show(L"Number is too large", L"Invalid Input", 
-                    MessageBoxButtons::OK, MessageBoxIcon::Warning);
-            }
+            minesweeper->setSeed(seed);
+            ResetGame_Click(nullptr, nullptr);
         }
-    }    
+        catch (FormatException^) {
+            MessageBox::Show(L"Please enter a valid number", L"Invalid Input", 
+                MessageBoxButtons::OK, MessageBoxIcon::Warning);
+        }
+        catch (OverflowException^) {
+            MessageBox::Show(L"Number is too large", L"Invalid Input", 
+                MessageBoxButtons::OK, MessageBoxIcon::Warning);
+        }
+    }
+}
+
     void Cell_MouseUp(Object^ sender, MouseEventArgs^ e) {
         Button^ button = safe_cast<Button^>(sender);
         array<int>^ position = safe_cast<array<int>^>(button->Tag);
