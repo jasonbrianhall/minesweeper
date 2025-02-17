@@ -729,6 +729,10 @@ void GTKMinesweeper::on_button_click(GtkWidget *widget, GdkEventButton *event, g
     GTKMinesweeper *minesweeper = static_cast<GTKMinesweeper*>(user_data);
     int row = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "row"));
     int col = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "col"));
+
+    if (minesweeper->game->won || minesweeper->game->gameOver) {
+         return;
+    }
     
     if(event->button == 1) { // Left click
         if(minesweeper->game->firstMove) {
