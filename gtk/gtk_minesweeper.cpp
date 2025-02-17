@@ -842,6 +842,9 @@ void GTKMinesweeper::show_seed_dialog() {
                       std::to_string(game->currentSeed).c_str());
     gtk_box_pack_start(GTK_BOX(box), entry, TRUE, TRUE, 5);
 
+    // Connect the 'activate' signal to the entry widget
+    g_signal_connect(entry, "activate", G_CALLBACK(&GTKMinesweeper::on_entry_activate), dialog);
+
     gtk_widget_show_all(dialog);
 
     if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
