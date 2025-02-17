@@ -107,12 +107,16 @@ void Minesweeper::reset() {
 
 void Minesweeper::initializeMinefield(int firstY, int firstX, int seed) {
     std::mt19937 gen;
+    unsigned int finalSeed;
+    
     if (seed < 0) {
         std::random_device rd;
-        gen.seed(rd());
+        finalSeed = rd();
     } else {
-        gen.seed(static_cast<unsigned int>(seed));
+        finalSeed = static_cast<unsigned int>(seed);
     }
+    currentSeed=finalSeed;
+    gen.seed(finalSeed);
     
     std::uniform_int_distribution<> disH(0, height - 1);
     std::uniform_int_distribution<> disW(0, width - 1);
@@ -493,6 +497,11 @@ void GTKMinesweeper::create_menu() {
     GtkWidget *high_scores = gtk_menu_item_new_with_label("High Scores");
     g_signal_connect(G_OBJECT(high_scores), "activate", G_CALLBACK(on_high_scores), this);
     gtk_menu_shell_append(GTK_MENU_SHELL(game_menu), high_scores);
+
+    GtkWidget *reset = gtk_menu_item_new_with_label("Reset Current Game");
+    g_signal_connect(G_OBJECT(reset), "activate", G_CALLBACK(on_reset_game), this); 
+    gtk_menu_shell_append(GTK_MENU_SHELL(game_menu), reset);
+
     
     GtkWidget *quit = gtk_menu_item_new_with_label("Quit");
     g_signal_connect(G_OBJECT(quit), "activate", G_CALLBACK(on_quit), this);
@@ -772,6 +781,29 @@ void GTKMinesweeper::on_new_game(GtkWidget *widget, gpointer user_data) {
     (void)widget;  // Unused parameter
     GTKMinesweeper *minesweeper = static_cast<GTKMinesweeper*>(user_data);
     minesweeper->game->reset();
+    minesweeper->initialize_grid();
+    minesweeper->update_mine_counter();
+}
+
+void Minesweeper::resetWithSeed() {
+    reset();  // Do regular reset first
+    
+    // If we have a valid seed from a previous game
+    if (currentSeed != 0) {
+        // Reinitialize the minefield with the same seed
+        initializeMinefield(0, 0, currentSeed);
+        // We don't want the first move protection since we're recreating a specific board
+        firstMove = false;
+        timer.start();
+    }
+}
+
+
+void GTKMinesweeper::on_reset_game(GtkWidget *widget, gpointer user_data) {
+    (void)widget;  // Unused parameter
+    GTKMinesweeper *minesweeper = static_cast<GTKMinesweeper*>(user_data);
+    
+    minesweeper->game->resetWithSeed();
     minesweeper->initialize_grid();
     minesweeper->update_mine_counter();
 }
