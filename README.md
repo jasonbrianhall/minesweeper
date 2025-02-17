@@ -1,11 +1,14 @@
 # 🎮 Minesweeper
 
-A modern, feature-rich implementation of the classic Minesweeper game, available in both Windows Forms and Terminal versions.
+A modern, feature-rich implementation of the classic Minesweeper game, available in Windows Forms, Linux GTK, and Terminal versions.
 
 ## 📦 Versions
 
 ### Windows Forms Version
-A polished, graphical implementation built with Windows Forms and C++/CLI, featuring a modern user interface.
+A polished, graphical implementation built with Windows Forms and C++, featuring a modern user interface.
+
+### Linux GTK Version
+A polished, graphical implementation built with GTK and C++, featuring a modern user interface.
 
 ### Terminal Version
 A classic, ncurses-based implementation perfect for terminal environments and systems without graphical interfaces.
@@ -43,6 +46,21 @@ Keyboard Shortcuts:
 - **F3**: Switch to Hard difficulty
 - **Ctrl+H**: View high scores
 
+### GTK Version
+Mouse Controls:
+- **Left Click**: Reveal cell
+- **Right Click**: Flag/unflag cell
+- **Left Click on Number**: Quick-reveal adjacent cells (if correct number of flags placed)
+
+Keyboard Shortcuts:
+- **CTRL+N**: Start new game
+- **CTRL+1**: Switch to Easy difficulty
+- **CTRL+2**: Switch to Medium difficulty
+- **CTRL+3**: Switch to Hard difficulty
+- **Ctrl+H**: View high scores
+- **Ctrl+Q**: Quit
+- **Ctrl+R**: Reset Game
+
 ### Terminal Version
 - **Arrow Keys**: Move cursor
 - **Space**: Reveal cell
@@ -56,8 +74,8 @@ Keyboard Shortcuts:
 
 ## 🎨 Display Features
 
-### Windows Forms Version
-- Clean, modern Windows Forms interface
+### Windows/GTK Forms Version
+- Clean, modern interface
 - Status bar showing game state and timer
 - Intuitive menu system
 - Custom icons for mines and flags
@@ -88,6 +106,26 @@ Requirements:
 - Minimum 2GB RAM
 - Screen resolution: 800x600 or higher
 
+``` cmd
+msbuild /p:Configuration=Release /p:Platform=x64 minesweeper.vcxproj
+```
+
+### GTK Version
+Requirements:
+- Linux operating system
+- G++
+- 64-bit processor
+- Minimum 2GB RAM
+- Screen resolution: 800x600 or higher
+
+```bash
+# Compile and run GTK version
+cd gtk
+make
+./minesweeper
+```
+
+
 ### Terminal Version
 Requirements:
 - C++ compiler with C++11 support
@@ -109,7 +147,7 @@ Requirements:
 
 ## 🔄 Game States
 
-Both versions support:
+All versions support:
 - Active gameplay
 - Game over (mine revealed)
 - Victory (all non-mine cells revealed)
@@ -132,6 +170,6 @@ MINESWEEPER                  Time: 01:23
 
 ## 📝 License
 
-Both versions are licensed under MIT; see LICENSE.md.
+All versions are licensed under MIT; see LICENSE.md.
 
 Created by Jason Brian Hall (jasonbrianhall@gmail.com)
