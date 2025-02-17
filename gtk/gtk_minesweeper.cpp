@@ -300,35 +300,38 @@ void GTKMinesweeper::create_window(GtkApplication *app) {
                                 &geometry,
                                 GDK_HINT_MIN_SIZE);
     
-    // Create main vbox with 20px margin
-    GtkWidget *margin_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-    gtk_container_add(GTK_CONTAINER(window), margin_box);
-    gtk_widget_set_margin_start(margin_box, 20);   // Left margin
-    gtk_widget_set_margin_end(margin_box, 20);     // Right margin
-    gtk_widget_set_margin_top(margin_box, 20);     // Top margin
-    gtk_widget_set_margin_bottom(margin_box, 20);  // Bottom margin
+    // Main vbox for entire window
+    GtkWidget *main_vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    gtk_container_add(GTK_CONTAINER(window), main_vbox);
+    gtk_widget_set_vexpand(main_vbox, TRUE);
+    gtk_widget_set_hexpand(main_vbox, TRUE);
     
-    // Main content vbox
-    GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-    gtk_container_add(GTK_CONTAINER(margin_box), vbox);
-    gtk_widget_set_vexpand(vbox, TRUE);
-    gtk_widget_set_hexpand(vbox, TRUE);
-    
+    // Menu bar (flush with window edges)
     create_menu();
-    gtk_box_pack_start(GTK_BOX(vbox), menubar, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(main_vbox), menubar, FALSE, FALSE, 0);
     
+    // Content box with margins
+    GtkWidget *content_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    gtk_box_pack_start(GTK_BOX(main_vbox), content_box, TRUE, TRUE, 0);
+    gtk_widget_set_margin_start(content_box, 20);   // Left margin
+    gtk_widget_set_margin_end(content_box, 20);     // Right margin
+    gtk_widget_set_margin_top(content_box, 20);     // Top margin
+    gtk_widget_set_margin_bottom(content_box, 20);  // Bottom margin
+    
+    // Info box (timer and mines counter)
     GtkWidget *info_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
-    gtk_box_pack_start(GTK_BOX(vbox), info_box, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(content_box), info_box, FALSE, FALSE, 5);
     
     timer_label = gtk_label_new("Time: 00:00");
     mines_label = gtk_label_new("Mines: 10");
     gtk_box_pack_start(GTK_BOX(info_box), timer_label, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(info_box), mines_label, TRUE, TRUE, 5);
     
+    // Game grid
     grid = gtk_grid_new();
     gtk_grid_set_row_spacing(GTK_GRID(grid), 1);
     gtk_grid_set_column_spacing(GTK_GRID(grid), 1);
-    gtk_box_pack_start(GTK_BOX(vbox), grid, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(content_box), grid, TRUE, TRUE, 5);
     
     initialize_grid();
     
@@ -494,16 +497,25 @@ void GTKMinesweeper::on_button_click(GtkWidget *widget, GdkEventButton *event, g
                 minesweeper->game->gameOver = true;
                 minesweeper->game->revealAllMines();
                 minesweeper->game->timer.stop();
-                minesweeper->show_game_over_dialog();
+                minesweeper->update_all_cells();  // Update display first
+                while (gtk_events_pending()) {    // Process pending events to ensure display updates
+                    gtk_main_iteration();
+                }
+                minesweeper->show_game_over_dialog();  // Then show dialog
             } else {
                 minesweeper->game->revealCell(row, col);
                 if(minesweeper->game->checkWin()) {
                     minesweeper->game->won = true;
                     minesweeper->game->timer.stop();
-                    minesweeper->show_win_dialog();
+                    minesweeper->update_all_cells();  // Update display first
+                    while (gtk_events_pending()) {    // Process pending events to ensure display updates
+                        gtk_main_iteration();
+                    }
+                    minesweeper->show_win_dialog();  // Then show dialog
+                } else {
+                    minesweeper->update_all_cells();
                 }
             }
-            minesweeper->update_all_cells();
         }
     } else if(event->button == 3) { // Right click
         if(!minesweeper->game->revealed[row][col]) {
