@@ -811,8 +811,10 @@ void EnterSeed_Click(Object^ sender, EventArgs^ e) {
     void NewGame_Click(Object^ sender, EventArgs^ e) {
         Random^ rand = gcnew Random();
         int newSeed = rand->Next(0, Int32::MaxValue);
-        currentSeed=newSeed;
         minesweeper->setSeed(newSeed);
+        if (seedInput != nullptr) {
+            seedInput->Text = newSeed.ToString();
+        }
         minesweeper->Reset();
         gameEndHandled = false;
         UpdateAllCells();
