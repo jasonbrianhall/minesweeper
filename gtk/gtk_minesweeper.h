@@ -15,6 +15,7 @@ private:
     GtkWidget *menubar;
     guint timer_id;
     
+    
     void create_window(GtkApplication *app);
     void create_menu();
     void initialize_grid();
@@ -30,12 +31,14 @@ private:
     static void activate(GtkApplication *app, gpointer user_data);
     static void on_button_click(GtkWidget *widget, GdkEventButton *event, gpointer user_data);
     static void on_new_game(GtkWidget *widget, gpointer user_data);
+    static void on_reset_game(GtkWidget *widget, gpointer user_data);
     static void on_high_scores(GtkWidget *widget, gpointer user_data);
     static void on_quit(GtkWidget *widget, gpointer user_data);
     static void on_difficulty(GtkWidget *widget, gpointer difficulty);
     static void on_about(GtkWidget *widget, gpointer user_data);
     static void on_how_to_play(GtkWidget *widget, gpointer user_data);
-
+    static void on_set_seed(GtkWidget *widget, gpointer user_data);
+    void show_seed_dialog();
     static gboolean update_timer(gpointer user_data);
 
     GdkPixbuf *flag_pixbuf;

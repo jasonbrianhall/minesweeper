@@ -502,6 +502,9 @@ void GTKMinesweeper::create_menu() {
     g_signal_connect(G_OBJECT(reset), "activate", G_CALLBACK(on_reset_game), this); 
     gtk_menu_shell_append(GTK_MENU_SHELL(game_menu), reset);
 
+    GtkWidget *set_seed = gtk_menu_item_new_with_label("Set Custom Seed");
+    g_signal_connect(G_OBJECT(set_seed), "activate", G_CALLBACK(on_set_seed), this);
+    gtk_menu_shell_append(GTK_MENU_SHELL(game_menu), set_seed);
     
     GtkWidget *quit = gtk_menu_item_new_with_label("Quit");
     g_signal_connect(G_OBJECT(quit), "activate", G_CALLBACK(on_quit), this);
@@ -798,6 +801,67 @@ void Minesweeper::resetWithSeed() {
     }
 }
 
+void GTKMinesweeper::show_seed_dialog() {
+    GtkWidget *dialog = gtk_dialog_new_with_buttons(
+        "Set Custom Seed",
+        GTK_WINDOW(window),
+        GTK_DIALOG_MODAL,
+        "_Cancel",
+        GTK_RESPONSE_CANCEL,
+        "_OK",
+        GTK_RESPONSE_ACCEPT,
+        NULL);
+
+    GtkWidget *content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+    gtk_container_set_border_width(GTK_CONTAINER(content_area), 10);
+
+    // Create a box for the label and entry
+    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
+    gtk_container_add(GTK_CONTAINER(content_area), box);
+
+    // Add label
+    GtkWidget *label = gtk_label_new("Seed value:");
+    gtk_box_pack_start(GTK_BOX(box), label, FALSE, FALSE, 5);
+
+    // Add entry with current seed as default
+    GtkWidget *entry = gtk_entry_new();
+    gtk_entry_set_text(GTK_ENTRY(entry), 
+                      std::to_string(game->currentSeed).c_str());
+    gtk_box_pack_start(GTK_BOX(box), entry, TRUE, TRUE, 5);
+
+    gtk_widget_show_all(dialog);
+
+    if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
+        const gchar *text = gtk_entry_get_text(GTK_ENTRY(entry));
+        try {
+            int seed = std::stoi(text);
+            game->reset();
+            game->initializeMinefield(0, 0, seed);
+            game->firstMove = false;  // Skip first move protection for custom seeds
+            game->timer.start();
+            initialize_grid();
+            update_mine_counter();
+        } catch (const std::exception& e) {
+            // Show error dialog if input is invalid
+            GtkWidget *error_dialog = gtk_message_dialog_new(
+                GTK_WINDOW(window),
+                GTK_DIALOG_MODAL,
+                GTK_MESSAGE_ERROR,
+                GTK_BUTTONS_OK,
+                "Invalid seed value. Please enter a valid number.");
+            gtk_dialog_run(GTK_DIALOG(error_dialog));
+            gtk_widget_destroy(error_dialog);
+        }
+    }
+
+    gtk_widget_destroy(dialog);
+}
+
+void GTKMinesweeper::on_set_seed(GtkWidget *widget, gpointer user_data) {
+    (void)widget;  // Unused parameter
+    GTKMinesweeper *minesweeper = static_cast<GTKMinesweeper*>(user_data);
+    minesweeper->show_seed_dialog();
+}
 
 void GTKMinesweeper::on_reset_game(GtkWidget *widget, gpointer user_data) {
     (void)widget;  // Unused parameter
