@@ -38,6 +38,7 @@ private:
     static void on_about(GtkWidget *widget, gpointer user_data);
     static void on_how_to_play(GtkWidget *widget, gpointer user_data);
     static void on_set_seed(GtkWidget *widget, gpointer user_data);
+    //void on_entry_activate(GtkEntry *entry, gpointer user_data);
     void show_seed_dialog();
     static gboolean update_timer(gpointer user_data);
 

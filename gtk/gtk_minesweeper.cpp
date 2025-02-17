@@ -216,6 +216,12 @@ void GTKMinesweeper::show_game_over_dialog() {
     gtk_widget_destroy(dialog);
 }
 
+void on_entry_activate(GtkEntry *entry, gpointer user_data) {
+    (void)entry;
+    GtkDialog *dialog = GTK_DIALOG(user_data);
+    gtk_dialog_response(dialog, GTK_RESPONSE_ACCEPT);
+}
+
 void GTKMinesweeper::show_win_dialog() {
     int time = game->timer.getElapsedSeconds();
     std::string difficulty;
@@ -240,6 +246,8 @@ void GTKMinesweeper::show_win_dialog() {
         GtkWidget *name_entry = gtk_entry_new();
         gtk_entry_set_placeholder_text(GTK_ENTRY(name_entry), "Enter your name");
         gtk_container_add(GTK_CONTAINER(content_area), name_entry);
+
+        g_signal_connect(name_entry, "activate", G_CALLBACK(on_entry_activate), dialog);
         
         gtk_widget_show_all(dialog);
         
@@ -265,6 +273,7 @@ void GTKMinesweeper::show_win_dialog() {
         gtk_widget_destroy(dialog);
     }
 }
+
 
 void GTKMinesweeper::update_all_cells() {
     for(int i = 0; i < game->height; i++) {
