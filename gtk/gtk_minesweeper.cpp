@@ -292,6 +292,33 @@ void GTKMinesweeper::update_cell(int row, int col) {
             int count = game->countAdjacentMines(row, col);
             if(count > 0) {
                 GtkWidget *label = gtk_label_new(std::to_string(count).c_str());
+                
+                // Create a CSS provider for the label
+                GtkCssProvider *provider = gtk_css_provider_new();
+                GtkStyleContext *context = gtk_widget_get_style_context(label);
+                
+                // Add color based on number like in Windows version
+                const char* color;
+                switch(count) {
+                    case 1: color = "blue"; break;
+                    case 2: color = "green"; break;
+                    case 3: color = "red"; break;
+                    case 4: color = "darkblue"; break;
+                    case 5: color = "darkred"; break;
+                    default: color = "darkgray"; break;
+                }
+                
+                // Create CSS string and load it
+                gchar *css = g_strdup_printf("label { color: %s; }", color);
+                gtk_css_provider_load_from_data(provider, css, -1, NULL);
+                g_free(css);
+                
+                // Apply the CSS to the label
+                gtk_style_context_add_provider(context,
+                                            GTK_STYLE_PROVIDER(provider),
+                                            GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+                g_object_unref(provider);
+                
                 gtk_widget_show(label);
                 gtk_container_add(GTK_CONTAINER(button), label);
             } else {
@@ -371,6 +398,7 @@ GTKMinesweeper::~GTKMinesweeper() {
         g_source_remove(timer_id);
         timer_id = 0;
     }
+    cleanup_images();
 }
 
 void GTKMinesweeper::create_window(GtkApplication *app) {
