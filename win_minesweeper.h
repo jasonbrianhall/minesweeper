@@ -58,6 +58,9 @@ public:
     bool checkWin();
     bool isHighScore(int time, const std::string& difficulty);
     void saveHighscore();
+    Button^ seedOkButton;
+    Form^ seedDialogForm;
+
 };
 
 namespace MinesweeperGame {
