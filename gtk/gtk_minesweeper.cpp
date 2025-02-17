@@ -282,7 +282,18 @@ void GTKMinesweeper::update_cell(int row, int col) {
         gtk_container_remove(GTK_CONTAINER(button), existing_child);
     }
     
+    // Create style provider for the button
+    GtkCssProvider *button_provider = gtk_css_provider_new();
+    GtkStyleContext *button_context = gtk_widget_get_style_context(button);
+    
     if(game->revealed[row][col]) {
+        // Set the revealed cell background color to match Windows SystemColors::Control
+        const char* revealed_bg_css = "button { background: #F0F0F0; border: 1px solid #A0A0A0; }";
+        gtk_css_provider_load_from_data(button_provider, revealed_bg_css, -1, NULL);
+        gtk_style_context_add_provider(button_context,
+                                     GTK_STYLE_PROVIDER(button_provider),
+                                     GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+        
         if(game->minefield[row][col]) {
             // Show mine
             GtkWidget *image = gtk_image_new_from_pixbuf(bomb_pixbuf);
@@ -328,13 +339,23 @@ void GTKMinesweeper::update_cell(int row, int col) {
                 gtk_button_set_image(GTK_BUTTON(button), image);
             }
         }
-    } else if(game->flagged[row][col]) {
-        // Show flag
-        GtkWidget *image = gtk_image_new_from_pixbuf(flag_pixbuf);
-        gtk_widget_show(image);
-        gtk_button_set_image(GTK_BUTTON(button), image);
+    } else {
+        // Unrevealed cell style with raised border effect
+        const char* unrevealed_bg_css = "button { background: #E0E0E0; border: 2px outset #D4D4D4; }";
+        gtk_css_provider_load_from_data(button_provider, unrevealed_bg_css, -1, NULL);
+        gtk_style_context_add_provider(button_context,
+                                     GTK_STYLE_PROVIDER(button_provider),
+                                     GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+        
+        if(game->flagged[row][col]) {
+            // Show flag
+            GtkWidget *image = gtk_image_new_from_pixbuf(flag_pixbuf);
+            gtk_widget_show(image);
+            gtk_button_set_image(GTK_BUTTON(button), image);
+        }
     }
     
+    g_object_unref(button_provider);
     gtk_widget_show(button);
 }
 
