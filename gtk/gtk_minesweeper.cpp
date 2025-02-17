@@ -300,8 +300,17 @@ void GTKMinesweeper::create_window(GtkApplication *app) {
                                 &geometry,
                                 GDK_HINT_MIN_SIZE);
     
+    // Create main vbox with 20px margin
+    GtkWidget *margin_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    gtk_container_add(GTK_CONTAINER(window), margin_box);
+    gtk_widget_set_margin_start(margin_box, 20);   // Left margin
+    gtk_widget_set_margin_end(margin_box, 20);     // Right margin
+    gtk_widget_set_margin_top(margin_box, 20);     // Top margin
+    gtk_widget_set_margin_bottom(margin_box, 20);  // Bottom margin
+    
+    // Main content vbox
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-    gtk_container_add(GTK_CONTAINER(window), vbox);
+    gtk_container_add(GTK_CONTAINER(margin_box), vbox);
     gtk_widget_set_vexpand(vbox, TRUE);
     gtk_widget_set_hexpand(vbox, TRUE);
     
