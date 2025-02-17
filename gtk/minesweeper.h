@@ -47,6 +47,10 @@ public:
     std::vector<std::vector<bool>> minefield;
     std::vector<std::vector<bool>> revealed;
     std::vector<std::vector<bool>> flagged;
+    void revealAdjacent(int y, int x);
+    int currentSeed;
+    int countAdjacentFlags(int, int);
+    void resetWithSeed();
 
     Minesweeper();
     void setDifficulty(Difficulty diff);

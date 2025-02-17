@@ -15,6 +15,7 @@ private:
     GtkWidget *menubar;
     guint timer_id;
     
+    
     void create_window(GtkApplication *app);
     void create_menu();
     void initialize_grid();
@@ -24,17 +25,33 @@ private:
     void show_game_over_dialog();
     void show_win_dialog();
     void show_high_scores();
-
+    void load_images();
+    void cleanup_images();
+    GdkPixbuf* load_base64_image(const char* base64_data);
     static void activate(GtkApplication *app, gpointer user_data);
     static void on_button_click(GtkWidget *widget, GdkEventButton *event, gpointer user_data);
     static void on_new_game(GtkWidget *widget, gpointer user_data);
+    static void on_reset_game(GtkWidget *widget, gpointer user_data);
     static void on_high_scores(GtkWidget *widget, gpointer user_data);
     static void on_quit(GtkWidget *widget, gpointer user_data);
     static void on_difficulty(GtkWidget *widget, gpointer difficulty);
     static void on_about(GtkWidget *widget, gpointer user_data);
     static void on_how_to_play(GtkWidget *widget, gpointer user_data);
-
+    static void on_set_seed(GtkWidget *widget, gpointer user_data);
+    void show_seed_dialog();
     static gboolean update_timer(gpointer user_data);
+
+    GdkPixbuf *flag_pixbuf;
+    GdkPixbuf *bomb_pixbuf;
+    GdkPixbuf *revealed_pixbuf;
+    GdkPixbuf *app_icon;
+
+    // Base64 encoded PNG data
+    static const char* FLAG_BASE64;
+    static const char* BOMB_BASE64;
+    static const char* REVEALED_BASE64;
+    static const char* ICON_BASE64;
+
 
 public:
     GTKMinesweeper();
