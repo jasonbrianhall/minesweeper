@@ -897,7 +897,8 @@ void GTKMinesweeper::on_high_scores(GtkWidget *widget, gpointer user_data) {
 void GTKMinesweeper::on_quit(GtkWidget *widget, gpointer user_data) {
     (void)widget;  // Unused parameter
     (void)user_data;  // Unused parameter
-    g_application_quit(G_APPLICATION(gtk_window_get_application(GTK_WINDOW(widget))));
+    GTKMinesweeper *self = static_cast<GTKMinesweeper*>(user_data);
+    gtk_widget_destroy(self->window);
 }
 
 void GTKMinesweeper::on_difficulty(GtkWidget *widget, gpointer difficulty) {
