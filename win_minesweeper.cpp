@@ -809,7 +809,9 @@ void EnterSeed_Click(Object^ sender, EventArgs^ e) {
     }
 
     void NewGame_Click(Object^ sender, EventArgs^ e) {
-        minesweeper->setSeed(-1);
+        Random^ rand = gcnew Random();
+        int newSeed = rand->Next(0, Int32::MaxValue);
+        minesweeper->setSeed(newSeed);
         minesweeper->Reset();
         gameEndHandled = false;
         UpdateAllCells();
@@ -824,7 +826,7 @@ void EnterSeed_Click(Object^ sender, EventArgs^ e) {
         minesweeper->Reset();
         gameEndHandled = false;
         UpdateAllCells();
-        UpdateStatus("New game started");
+        UpdateStatus("Reset current game");
         gameTimer->Start();
         timerBox->Text = "00:00";        // Initialize the timer box
         timeLabel->Text = "Time: 00:00";
