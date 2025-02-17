@@ -133,6 +133,7 @@ Requirements:
 
 ```bash
 # Compile and run Terminal version
+cd CLI
 ./compile.sh
 ./minesweeper
 ```

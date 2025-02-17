@@ -291,6 +291,10 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
             "New Game (N)", nullptr, 
             gcnew EventHandler(this, &MainForm::NewGame_Click)));
         fileMenu->DropDownItems->Add(gcnew ToolStripMenuItem(
+            "Reset Game (R)", nullptr, 
+            gcnew EventHandler(this, &MainForm::ResetGame_Click)));
+
+        fileMenu->DropDownItems->Add(gcnew ToolStripMenuItem(
             "Exit", nullptr,
             gcnew EventHandler(this, &MainForm::Exit_Click)));
     
@@ -304,7 +308,13 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         highScoresMenuItem->ShortcutKeys = Keys::Control | Keys::H;
         highScoresMenuItem->ShowShortcutKeys = true;
     
+        ToolStripMenuItem^ setSeedMenuItem = gcnew ToolStripMenuItem("&Set Seed", nullptr, gcnew EventHandler(this, &MainForm::EnterSeed_Click));
+        setSeedMenuItem->ShortcutKeys = Keys::Control | Keys::S;
+        setSeedMenuItem->ShowShortcutKeys = true;
+
+    
         gameMenu->DropDownItems->Add(highScoresMenuItem);
+        gameMenu->DropDownItems->Add(setSeedMenuItem);
     
         menuStrip->Items->Add(gameMenu);            
     
@@ -443,6 +453,10 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
             case Keys::N:
                 NewGame_Click(nullptr, nullptr);
                 break;
+            case Keys::R:
+                ResetGame_Click(nullptr, nullptr);
+                break;
+
         }
     }
 
@@ -528,40 +542,75 @@ void InitializeGrid() {
             MessageBoxIcon::Information);
     }
     
-    void EnterSeed_Click(Object^ sender, EventArgs^ e) {
-        Form^ seedForm = gcnew Form();
-        seedForm->Text = L"Enter Seed";
-        seedForm->Size = System::Drawing::Size(300, 150);
-        seedForm->StartPosition = FormStartPosition::CenterParent;
-        seedForm->FormBorderStyle = Windows::Forms::FormBorderStyle::FixedDialog;
-        
-        seedInput = gcnew TextBox();
-        seedInput->Location = Point(20, 20);
-        seedInput->Size = System::Drawing::Size(240, 20);
-        
-        Button^ okButton = gcnew Button();
-        okButton->Text = L"OK";
-        okButton->DialogResult = System::Windows::Forms::DialogResult::OK;
-        okButton->Location = Point(100, 60);
-        
-        seedForm->Controls->Add(seedInput);
-        seedForm->Controls->Add(okButton);
-        seedForm->AcceptButton = okButton;
-        
-        if (seedForm->ShowDialog() == System::Windows::Forms::DialogResult::OK) {
-            try {
-                int seed = Int32::Parse(seedInput->Text);
-                // Update the wrapper to handle seed
-                minesweeper->setSeed(seed);
-                NewGame_Click(nullptr, nullptr);
-            }
-            catch (...) {
-                MessageBox::Show(L"Invalid seed value", L"Error", 
-                    MessageBoxButtons::OK, MessageBoxIcon::Error);
-            }
-        }
+void EnterSeed_Click(Object^ sender, EventArgs^ e) {
+    Form^ seedForm = gcnew Form();
+    seedForm->Text = L"Enter Seed";
+    seedForm->Size = System::Drawing::Size(300, 150);
+    seedForm->StartPosition = FormStartPosition::CenterParent;
+    seedForm->FormBorderStyle = Windows::Forms::FormBorderStyle::FixedDialog;
+    
+    Label^ instructionLabel = gcnew Label();
+    instructionLabel->Text = L"Enter a number for the random seed:";
+    instructionLabel->Location = Point(20, 15);
+    instructionLabel->AutoSize = true;
+    seedForm->Controls->Add(instructionLabel);
+    
+    seedInput = gcnew TextBox();
+    seedInput->Location = Point(20, 40);
+    seedInput->Size = System::Drawing::Size(240, 20);
+    
+    // Set the current seed as default text if it exists
+    int currentSeed = minesweeper->getSeed();
+    if (currentSeed >= 0) {
+        seedInput->Text = currentSeed.ToString();
+        seedInput->SelectAll();
     }
     
+    Button^ okButton = gcnew Button();
+    okButton->Text = L"OK";
+    okButton->DialogResult = System::Windows::Forms::DialogResult::OK;
+    okButton->Location = Point(85, 70);
+    
+    Button^ cancelButton = gcnew Button();
+    cancelButton->Text = L"Cancel";
+    cancelButton->DialogResult = System::Windows::Forms::DialogResult::Cancel;
+    cancelButton->Location = Point(165, 70);
+    
+    seedForm->Controls->Add(seedInput);
+    seedForm->Controls->Add(okButton);
+    seedForm->Controls->Add(cancelButton);
+    
+    seedForm->AcceptButton = okButton;
+    seedForm->CancelButton = cancelButton;
+    
+    if (seedForm->ShowDialog() == System::Windows::Forms::DialogResult::OK) {
+        if (String::IsNullOrWhiteSpace(seedInput->Text)) {
+            MessageBox::Show(L"Please enter a valid number", L"Invalid Input", 
+                MessageBoxButtons::OK, MessageBoxIcon::Warning);
+            return;
+        }
+        
+        try {
+            int seed = Int32::Parse(seedInput->Text);
+            if (seed < 0) {
+                MessageBox::Show(L"Please enter a positive number", L"Invalid Input", 
+                    MessageBoxButtons::OK, MessageBoxIcon::Warning);
+                return;
+            }
+            minesweeper->setSeed(seed);
+            ResetGame_Click(nullptr, nullptr);
+        }
+        catch (FormatException^) {
+            MessageBox::Show(L"Please enter a valid number", L"Invalid Input", 
+                MessageBoxButtons::OK, MessageBoxIcon::Warning);
+        }
+        catch (OverflowException^) {
+            MessageBox::Show(L"Number is too large", L"Invalid Input", 
+                MessageBoxButtons::OK, MessageBoxIcon::Warning);
+        }
+    }
+}
+
     void Cell_MouseUp(Object^ sender, MouseEventArgs^ e) {
         Button^ button = safe_cast<Button^>(sender);
         array<int>^ position = safe_cast<array<int>^>(button->Tag);
@@ -625,8 +674,16 @@ void InitializeGrid() {
                 }
             }
         } else {
-            cell->FlatStyle = FlatStyle::Standard;  // Raised appearance for unrevealed cells
-            cell->BackColor = Color::LightGray;
+            // Create raised border effect for unrevealed cells
+            cell->FlatStyle = FlatStyle::Flat;
+            cell->BackColor = Color::FromArgb(224, 224, 224); // #E0E0E0
+            cell->FlatAppearance->BorderColor = Color::FromArgb(212, 212, 212); // #D4D4D4
+            cell->FlatAppearance->BorderSize = 2;
+            // Use BorderStyle property to create the raised effect
+            cell->FlatAppearance->BorderColor = SystemColors::ButtonHighlight;
+            cell->FlatAppearance->MouseOverBackColor = cell->BackColor;
+            cell->FlatAppearance->MouseDownBackColor = SystemColors::ButtonShadow;
+
             if (minesweeper->IsFlagged(row, col) && flagImage) {
                 cell->Image = flagImage;
                 cell->ImageAlign = ContentAlignment::MiddleCenter;
@@ -752,7 +809,12 @@ void InitializeGrid() {
     }
 
     void NewGame_Click(Object^ sender, EventArgs^ e) {
-        minesweeper->setSeed(-1);
+        Random^ rand = gcnew Random();
+        int newSeed = rand->Next(0, Int32::MaxValue);
+        minesweeper->setSeed(newSeed);
+        if (seedInput != nullptr) {
+            seedInput->Text = newSeed.ToString();
+        }
         minesweeper->Reset();
         gameEndHandled = false;
         UpdateAllCells();
@@ -762,6 +824,18 @@ void InitializeGrid() {
         timeLabel->Text = "Time: 00:00";
         statusStrip->Refresh();
     }
+
+    void ResetGame_Click(Object^ sender, EventArgs^ e) {
+        minesweeper->Reset();
+        gameEndHandled = false;
+        UpdateAllCells();
+        UpdateStatus("Reset current game");
+        gameTimer->Start();
+        timerBox->Text = "00:00";        // Initialize the timer box
+        timeLabel->Text = "Time: 00:00";
+        statusStrip->Refresh();
+    }
+
 
     void Exit_Click(Object^ sender, EventArgs^ e) {
         Application::Exit();
@@ -841,6 +915,7 @@ public:
         minesweeper = gcnew MinesweeperWrapper();
         InitializeComponent();
         this->Resize += gcnew EventHandler(this, &MainForm::MainForm_Resize);
+        NewGame_Click(nullptr, nullptr);
     }
 }; 
 
