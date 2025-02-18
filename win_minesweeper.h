@@ -64,3 +64,18 @@ namespace MinesweeperGame {
     ref class MinesweeperWrapper;
     ref class MainForm;
 }
+
+struct CustomGameSettings {
+    int height;
+    int width;
+    int mines;
+    static const int MIN_SIZE = 5;
+    static const int MAX_SIZE = 50;
+    static const int MIN_MINES = 1;
+    
+    static bool isValid(int h, int w, int m) {
+        return h >= MIN_SIZE && h <= MAX_SIZE &&
+               w >= MIN_SIZE && w <= MAX_SIZE &&
+               m >= MIN_MINES && m < (h * w);
+    }
+};
