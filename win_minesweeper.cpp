@@ -411,19 +411,14 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
 
   void UpdateTimer(Object ^ sender, EventArgs ^ e) {
     // Update flag counter
-    int totalBombs = 0;
-    switch (minesweeper->GetWidth()) {
-    case 9:
-      totalBombs = 10;
-      break; // Easy
-    case 16:
-      totalBombs = 40;
-      break; // Medium
-    case 30:
-      totalBombs = 99;
-      break; // Hard
+    int totalBombs = minesweeper->NativeMinesweeper->mines;
+    
+    int flagCount = 0;
+    for (int i = 0; i < minesweeper->GetHeight(); i++) {
+        for (int j = 0; j < minesweeper->GetWidth(); j++) {
+            if (minesweeper->IsFlagged(i, j)) flagCount++;
+        }
     }
-
     int flagCount = 0;
     for (int i = 0; i < minesweeper->GetHeight(); i++) {
       for (int j = 0; j < minesweeper->GetWidth(); j++) {
