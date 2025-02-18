@@ -466,7 +466,10 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         NumericUpDown^ minesInput;
     };
 
-    void UpdateMinesMaximum(Object^ sender, EventArgs^ e, CustomGameControls^ controls) {
+    void ValueChanged(Object^ sender, EventArgs^ e) {
+        NumericUpDown^ changedControl = safe_cast<NumericUpDown^>(sender);
+        CustomGameControls^ controls = safe_cast<CustomGameControls^>(changedControl->Tag);
+        
         int maxMines = (int)(controls->widthInput->Value * controls->heightInput->Value) - 1;
         controls->minesInput->Maximum = maxMines;
         if (controls->minesInput->Value > maxMines) {
@@ -491,8 +494,8 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         
         NumericUpDown^ widthInput = gcnew NumericUpDown();
         widthInput->Location = Point(120, 20);
-        widthInput->Minimum = CustomGameSettings::MIN_SIZE;
-        widthInput->Maximum = CustomGameSettings::MAX_SIZE;
+        widthInput->Minimum = 5;
+        widthInput->Maximum = 50;
         widthInput->Value = 16;
 
         // Height input
@@ -503,8 +506,8 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         
         NumericUpDown^ heightInput = gcnew NumericUpDown();
         heightInput->Location = Point(120, 50);
-        heightInput->Minimum = CustomGameSettings::MIN_SIZE;
-        heightInput->Maximum = CustomGameSettings::MAX_SIZE;
+        heightInput->Minimum = 5;
+        heightInput->Maximum = 50;
         heightInput->Value = 16;
 
         // Mines input
@@ -515,7 +518,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         
         NumericUpDown^ minesInput = gcnew NumericUpDown();
         minesInput->Location = Point(120, 80);
-        minesInput->Minimum = CustomGameSettings::MIN_MINES;
+        minesInput->Minimum = 1;
         minesInput->Maximum = (heightInput->Value * widthInput->Value) - 1;
         minesInput->Value = 40;
 
@@ -525,15 +528,13 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         controls->heightInput = heightInput;
         controls->minesInput = minesInput;
 
-        // Update mines maximum when width/height change
-        widthInput->ValueChanged += gcnew EventHandler(
-            [this, controls](Object^ sender, EventArgs^ e) {
-                UpdateMinesMaximum(sender, e, controls);
-            });
-        heightInput->ValueChanged += gcnew EventHandler(
-            [this, controls](Object^ sender, EventArgs^ e) {
-                UpdateMinesMaximum(sender, e, controls);
-            });
+        // Set the controls reference as Tag for both width and height inputs
+        widthInput->Tag = controls;
+        heightInput->Tag = controls;
+
+        // Add event handlers
+        widthInput->ValueChanged += gcnew EventHandler(this, &MainForm::ValueChanged);
+        heightInput->ValueChanged += gcnew EventHandler(this, &MainForm::ValueChanged);
 
         // Buttons
         Button^ okButton = gcnew Button();
@@ -562,7 +563,9 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
             int height = (int)heightInput->Value;
             int mines = (int)minesInput->Value;
 
-            if (CustomGameSettings::isValid(height, width, mines)) {
+            if (height >= 5 && height <= 50 && 
+                width >= 5 && width <= 50 && 
+                mines >= 1 && mines < (height * width)) {
                 minesweeper->NativeMinesweeper->height = height;
                 minesweeper->NativeMinesweeper->width = width;
                 minesweeper->NativeMinesweeper->mines = mines;
