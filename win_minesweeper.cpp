@@ -420,13 +420,6 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         }
     }
 
-    for (int i = 0; i < minesweeper->GetHeight(); i++) {
-      for (int j = 0; j < minesweeper->GetWidth(); j++) {
-        if (minesweeper->IsFlagged(i, j))
-          flagCount++;
-      }
-    }
-
     flagCounterBox->Text = (totalBombs - flagCount).ToString();
 
     if (!minesweeper->IsGameOver() && !minesweeper->HasWon()) {
