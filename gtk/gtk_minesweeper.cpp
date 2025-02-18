@@ -183,16 +183,22 @@ bool Minesweeper::checkWin() {
 }
 
 bool Minesweeper::isHighScore(int time, const std::string& difficulty) {
-    return highscores.isHighScore(time, difficulty);
+    // Only check high scores for standard difficulty levels
+    if ((width == 9 && height == 9 && mines == 10) ||
+        (width == 16 && height == 16 && mines == 40) ||
+        (width == 30 && height == 16 && mines == 99)) {
+        return highscores.isHighScore(time, difficulty);
+    }
+    // Custom games always return false for high scores
+    return false;
 }
-
 void Minesweeper::saveHighscore() {
     std::string difficultyStr;
     switch (width) {
         case 9: difficultyStr = "Easy"; break;
         case 16: difficultyStr = "Medium"; break;
         case 30: difficultyStr = "Hard"; break;
-        default: difficultyStr = "Custom"; break;
+        default: return;
     }
     
     Score score;
@@ -535,13 +541,20 @@ void GTKMinesweeper::create_menu() {
     GtkWidget *medium = gtk_menu_item_new_with_label("Medium");
     GtkWidget *hard = gtk_menu_item_new_with_label("Hard");
 
+    GtkWidget *custom = gtk_menu_item_new_with_label("Custom...");
+
+
     g_object_set_data(G_OBJECT(easy), "minesweeper", this);
     g_object_set_data(G_OBJECT(medium), "minesweeper", this);
     g_object_set_data(G_OBJECT(hard), "minesweeper", this);
+    g_object_set_data(G_OBJECT(custom), "minesweeper", this);
+
 
     g_signal_connect(G_OBJECT(easy), "activate", G_CALLBACK(on_difficulty), GINT_TO_POINTER(0));
     g_signal_connect(G_OBJECT(medium), "activate", G_CALLBACK(on_difficulty), GINT_TO_POINTER(1));
     g_signal_connect(G_OBJECT(hard), "activate", G_CALLBACK(on_difficulty), GINT_TO_POINTER(2));
+    g_signal_connect(G_OBJECT(custom), "activate", G_CALLBACK(on_custom_board), this);
+
 
     gtk_menu_shell_append(GTK_MENU_SHELL(diff_menu), easy);
     gtk_menu_shell_append(GTK_MENU_SHELL(diff_menu), medium);
@@ -550,6 +563,10 @@ void GTKMinesweeper::create_menu() {
     gtk_widget_add_accelerator(easy, "activate", accel_group, GDK_KEY_1, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
     gtk_widget_add_accelerator(medium, "activate", accel_group, GDK_KEY_2, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
     gtk_widget_add_accelerator(hard, "activate", accel_group, GDK_KEY_3, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
+    gtk_menu_shell_append(GTK_MENU_SHELL(diff_menu), gtk_separator_menu_item_new());
+    gtk_menu_shell_append(GTK_MENU_SHELL(diff_menu), custom);
+    gtk_widget_add_accelerator(custom, "activate", accel_group, GDK_KEY_4, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
+
 
     // Help menu
     GtkWidget *help_menu = gtk_menu_new();
@@ -943,6 +960,95 @@ void GTKMinesweeper::on_how_to_play(GtkWidget *widget, gpointer user_data) {
     gtk_dialog_run(GTK_DIALOG(dialog));
     gtk_widget_destroy(dialog);
 }
+
+void GTKMinesweeper::show_custom_board_dialog() {
+    GtkWidget *dialog = gtk_dialog_new_with_buttons(
+        "Custom Board Size",
+        GTK_WINDOW(window),
+        GTK_DIALOG_MODAL,
+        "_Cancel",
+        GTK_RESPONSE_CANCEL,
+        "_OK",
+        GTK_RESPONSE_ACCEPT,
+        NULL);
+
+    GtkWidget *content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+    gtk_container_set_border_width(GTK_CONTAINER(content_area), 10);
+
+    // Create a grid for the inputs
+    GtkWidget *grid = gtk_grid_new();
+    gtk_grid_set_row_spacing(GTK_GRID(grid), 10);
+    gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
+    gtk_container_add(GTK_CONTAINER(content_area), grid);
+
+    // Width input
+    GtkWidget *width_label = gtk_label_new("Width (8-50):");
+    GtkWidget *width_entry = gtk_entry_new();
+    gtk_entry_set_text(GTK_ENTRY(width_entry), std::to_string(game->width).c_str());
+    gtk_grid_attach(GTK_GRID(grid), width_label, 0, 0, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), width_entry, 1, 0, 1, 1);
+
+    // Height input
+    GtkWidget *height_label = gtk_label_new("Height (8-50):");
+    GtkWidget *height_entry = gtk_entry_new();
+    gtk_entry_set_text(GTK_ENTRY(height_entry), std::to_string(game->height).c_str());
+    gtk_grid_attach(GTK_GRID(grid), height_label, 0, 1, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), height_entry, 1, 1, 1, 1);
+
+    // Mines input
+    GtkWidget *mines_label = gtk_label_new("Mines:");
+    GtkWidget *mines_entry = gtk_entry_new();
+    gtk_entry_set_text(GTK_ENTRY(mines_entry), std::to_string(game->mines).c_str());
+    gtk_grid_attach(GTK_GRID(grid), mines_label, 0, 2, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), mines_entry, 1, 2, 1, 1);
+
+    gtk_widget_show_all(dialog);
+
+    if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
+        try {
+            int width = std::stoi(gtk_entry_get_text(GTK_ENTRY(width_entry)));
+            int height = std::stoi(gtk_entry_get_text(GTK_ENTRY(height_entry)));
+            int mines = std::stoi(gtk_entry_get_text(GTK_ENTRY(mines_entry)));
+
+            // Validate input
+            if (width < 8 || width > 50 || height < 8 || height > 50) {
+                throw std::invalid_argument("Board dimensions must be between 8 and 50");
+            }
+
+            int maxMines = (width * height) - 9; // Leave room for first click
+            if (mines < 1 || mines > maxMines) {
+                throw std::invalid_argument("Invalid number of mines");
+            }
+
+            // Set custom board size
+            game->width = width;
+            game->height = height;
+            game->mines = mines;
+            game->reset();
+            initialize_grid();
+            update_mine_counter();
+
+        } catch (const std::exception& e) {
+            GtkWidget *error_dialog = gtk_message_dialog_new(
+                GTK_WINDOW(window),
+                GTK_DIALOG_MODAL,
+                GTK_MESSAGE_ERROR,
+                GTK_BUTTONS_OK,
+                "Invalid input: %s", e.what());
+            gtk_dialog_run(GTK_DIALOG(error_dialog));
+            gtk_widget_destroy(error_dialog);
+        }
+    }
+
+    gtk_widget_destroy(dialog);
+}
+
+void GTKMinesweeper::on_custom_board(GtkWidget *widget, gpointer user_data) {
+    (void)widget;  // Unused parameter
+    GTKMinesweeper *minesweeper = static_cast<GTKMinesweeper*>(user_data);
+    minesweeper->show_custom_board_dialog();
+}
+
 
 void GTKMinesweeper::on_about(GtkWidget *widget, gpointer user_data) {
     (void)widget;  // Unused parameter
