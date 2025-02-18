@@ -460,6 +460,107 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         }
     }
 
+    void ShowCustomGameDialog() {
+        Form^ customForm = gcnew Form();
+        customForm->Text = L"Custom Game";
+        customForm->Size = System::Drawing::Size(300, 200);
+        customForm->StartPosition = FormStartPosition::CenterParent;
+        customForm->FormBorderStyle = Windows::Forms::FormBorderStyle::FixedDialog;
+        customForm->MaximizeBox = false;
+        customForm->MinimizeBox = false;
+
+        // Width input
+        Label^ widthLabel = gcnew Label();
+        widthLabel->Text = L"Width:";
+        widthLabel->Location = Point(20, 20);
+        widthLabel->AutoSize = true;
+        
+        NumericUpDown^ widthInput = gcnew NumericUpDown();
+        widthInput->Location = Point(120, 20);
+        widthInput->Minimum = CustomGameSettings::MIN_SIZE;
+        widthInput->Maximum = CustomGameSettings::MAX_SIZE;
+        widthInput->Value = 16;
+
+        // Height input
+        Label^ heightLabel = gcnew Label();
+        heightLabel->Text = L"Height:";
+        heightLabel->Location = Point(20, 50);
+        heightLabel->AutoSize = true;
+        
+        NumericUpDown^ heightInput = gcnew NumericUpDown();
+        heightInput->Location = Point(120, 50);
+        heightInput->Minimum = CustomGameSettings::MIN_SIZE;
+        heightInput->Maximum = CustomGameSettings::MAX_SIZE;
+        heightInput->Value = 16;
+
+        // Mines input
+        Label^ minesLabel = gcnew Label();
+        minesLabel->Text = L"Mines:";
+        minesLabel->Location = Point(20, 80);
+        minesLabel->AutoSize = true;
+        
+        NumericUpDown^ minesInput = gcnew NumericUpDown();
+        minesInput->Location = Point(120, 80);
+        minesInput->Minimum = CustomGameSettings::MIN_MINES;
+        minesInput->Maximum = (heightInput->Value * widthInput->Value) - 1;
+        minesInput->Value = 40;
+
+        // Update mines maximum when width/height change
+        EventHandler^ updateMinesMax = gcnew EventHandler([minesInput, widthInput, heightInput](Object^ sender, EventArgs^ e) {
+            int maxMines = (int)(widthInput->Value * heightInput->Value) - 1;
+            minesInput->Maximum = maxMines;
+            if (minesInput->Value > maxMines) {
+                minesInput->Value = maxMines;
+            }
+        });
+
+        widthInput->ValueChanged += updateMinesMax;
+        heightInput->ValueChanged += updateMinesMax;
+
+        // Buttons
+        Button^ okButton = gcnew Button();
+        okButton->Text = L"OK";
+        okButton->DialogResult = System::Windows::Forms::DialogResult::OK;
+        okButton->Location = Point(85, 120);
+
+        Button^ cancelButton = gcnew Button();
+        cancelButton->Text = L"Cancel";
+        cancelButton->DialogResult = System::Windows::Forms::DialogResult::Cancel;
+        cancelButton->Location = Point(165, 120);
+
+        // Add controls
+        customForm->Controls->AddRange(gcnew array<Control^> {
+            widthLabel, widthInput,
+            heightLabel, heightInput,
+            minesLabel, minesInput,
+            okButton, cancelButton
+        });
+
+        customForm->AcceptButton = okButton;
+        customForm->CancelButton = cancelButton;
+
+        if (customForm->ShowDialog() == System::Windows::Forms::DialogResult::OK) {
+            int width = (int)widthInput->Value;
+            int height = (int)heightInput->Value;
+            int mines = (int)minesInput->Value;
+
+            if (CustomGameSettings::isValid(height, width, mines)) {
+                minesweeper->NativeMinesweeper->height = height;
+                minesweeper->NativeMinesweeper->width = width;
+                minesweeper->NativeMinesweeper->mines = mines;
+                minesweeper->Reset();
+                InitializeGrid();
+                UpdateAllCells();
+                UpdateStatus("Custom game started");
+                gameEndHandled = false;
+            } else {
+                MessageBox::Show(L"Invalid game settings", L"Error",
+                    MessageBoxButtons::OK, MessageBoxIcon::Error);
+            }
+        }
+    }
+
+
 void InitializeGrid() {
     // Remove existing grid if any
     for each (Control^ control in this->Controls) {
