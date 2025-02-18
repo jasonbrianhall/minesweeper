@@ -460,6 +460,20 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         }
     }
 
+    ref struct CustomGameControls {
+        NumericUpDown^ widthInput;
+        NumericUpDown^ heightInput;
+        NumericUpDown^ minesInput;
+    };
+
+    void UpdateMinesMaximum(Object^ sender, EventArgs^ e, CustomGameControls^ controls) {
+        int maxMines = (int)(controls->widthInput->Value * controls->heightInput->Value) - 1;
+        controls->minesInput->Maximum = maxMines;
+        if (controls->minesInput->Value > maxMines) {
+            controls->minesInput->Value = maxMines;
+        }
+    }
+
     void ShowCustomGameDialog() {
         Form^ customForm = gcnew Form();
         customForm->Text = L"Custom Game";
@@ -505,17 +519,21 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         minesInput->Maximum = (heightInput->Value * widthInput->Value) - 1;
         minesInput->Value = 40;
 
-        // Update mines maximum when width/height change
-        EventHandler^ updateMinesMax = gcnew EventHandler([minesInput, widthInput, heightInput](Object^ sender, EventArgs^ e) {
-            int maxMines = (int)(widthInput->Value * heightInput->Value) - 1;
-            minesInput->Maximum = maxMines;
-            if (minesInput->Value > maxMines) {
-                minesInput->Value = maxMines;
-            }
-        });
+        // Store controls in a ref struct for event handling
+        CustomGameControls^ controls = gcnew CustomGameControls();
+        controls->widthInput = widthInput;
+        controls->heightInput = heightInput;
+        controls->minesInput = minesInput;
 
-        widthInput->ValueChanged += updateMinesMax;
-        heightInput->ValueChanged += updateMinesMax;
+        // Update mines maximum when width/height change
+        widthInput->ValueChanged += gcnew EventHandler(
+            [this, controls](Object^ sender, EventArgs^ e) {
+                UpdateMinesMaximum(sender, e, controls);
+            });
+        heightInput->ValueChanged += gcnew EventHandler(
+            [this, controls](Object^ sender, EventArgs^ e) {
+                UpdateMinesMaximum(sender, e, controls);
+            });
 
         // Buttons
         Button^ okButton = gcnew Button();
@@ -559,6 +577,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
             }
         }
     }
+
 
 
 void InitializeGrid() {
