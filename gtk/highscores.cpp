@@ -1,1 +1,1 @@
-../highscores.cpp
+../src/highscores.cpp
