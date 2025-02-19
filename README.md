@@ -16,11 +16,11 @@ A classic, ncurses-based implementation perfect for terminal environments and sy
 ## ✨ Common Features
 
 All versions include:
-- Three difficulty levels:
+- Four difficulty levels:
   - Easy (9x9 grid, 10 mines)
   - Medium (16x16 grid, 40 mines)
   - Hard (16x30 grid, 99 mines)
-  - Custom board size
+  - Custom board size with custom number of mines
 - High score system with persistent storage
   - Separate leaderboards for each difficulty
   - Top 10 times per difficulty level
