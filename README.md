@@ -107,6 +107,7 @@ Requirements:
 - Screen resolution: 800x600 or higher
 
 ``` cmd
+cd windows
 msbuild /p:Configuration=Release /p:Platform=x64 minesweeper.vcxproj
 ```
 
@@ -134,7 +135,7 @@ Requirements:
 ```bash
 # Compile and run Terminal version
 cd CLI
-./compile.sh
+make
 ./minesweeper
 ```
 
