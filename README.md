@@ -171,7 +171,7 @@ MINESWEEPER                  Time: 01:23
 ```
 
 ## 📝 License
+All versions are licensed under [MIT](LICENSE.md); see [LICENSE.md](LICENSE.md).  
 
-All versions are licensed under MIT; see LICENSE.md.
-
-Created by Jason Brian Hall (jasonbrianhall@gmail.com)
+## ✉️  Contact Author
+Created by Jason Brian Hall ([jasonbrianhall@gmail.com](mailto:jasonbrianhall@gmail.com))
