@@ -82,7 +82,7 @@ jobs:
         light installer.wixobj -out Minesweeper.msi
 
     - name: Upload Windows Artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: windows-artifacts
         path: |
@@ -161,7 +161,7 @@ jobs:
         wixl -v installer-gtk.wxs -o ../Minesweeper-GTK.msi
 
     - name: Upload GTK Artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: gtk-artifacts
         path: |
@@ -177,13 +177,13 @@ jobs:
     
     steps:
     - name: Download Windows Artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: windows-artifacts
         path: windows-artifacts
 
     - name: Download GTK Artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: gtk-artifacts
         path: gtk-artifacts
