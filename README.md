@@ -107,6 +107,7 @@ Requirements:
 - Screen resolution: 800x600 or higher
 
 ``` cmd
+cd windows
 msbuild /p:Configuration=Release /p:Platform=x64 minesweeper.vcxproj
 ```
 
@@ -134,7 +135,7 @@ Requirements:
 ```bash
 # Compile and run Terminal version
 cd CLI
-./compile.sh
+make
 ./minesweeper
 ```
 
@@ -170,7 +171,7 @@ MINESWEEPER                  Time: 01:23
 ```
 
 ## 📝 License
+All versions are licensed under [MIT](LICENSE.md); see [LICENSE.md](LICENSE.md).  
 
-All versions are licensed under MIT; see LICENSE.md.
-
-Created by Jason Brian Hall (jasonbrianhall@gmail.com)
+## ✉️  Contact Author
+Created by Jason Brian Hall ([jasonbrianhall@gmail.com](mailto:jasonbrianhall@gmail.com))

@@ -1,4 +1,4 @@
-name: Build Sudoku
+name: Build Minesweeper
 
 on:
   push:
@@ -25,6 +25,7 @@ jobs:
 
     # Build the standalone executable
     - name: Build C++ Executable
+      working-directory: windows
       run: |
         msbuild /p:Configuration=Release /p:Platform=x64 minesweeper.vcxproj
 
@@ -37,10 +38,11 @@ jobs:
         echo "$pwd" | Out-File -FilePath $env:GITHUB_PATH -Append
 
     - name: Create MSI Installer
+      working-directory: windows
       run: |
         echo '<?xml version="1.0" encoding="UTF-8"?>
         <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-          <Product Id="*" Name="Minesweeper" Language="1033" Version="1.0.0" Manufacturer="Your Name" UpgradeCode="A4F3B891-9D23-41DA-8E35-F94721E8F123">
+          <Product Id="*" Name="Minesweeper" Language="1033" Version="1.0.0" Manufacturer="Jason Hall" UpgradeCode="A4F3B891-9D23-41DA-8E35-F94721E8F123">
             <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
             <MajorUpgrade DowngradeErrorMessage="A newer version is already installed." />
             <MediaTemplate EmbedCab="yes" />
@@ -50,8 +52,8 @@ jobs:
                   <Component Id="MainExecutable" Guid="67CD3A92-4F45-4E67-AC89-2A5D6F981D45">
                     <File Id="MainEXE" Name="minesweeper.exe" Source="x64/Release/minesweeper.exe" KeyPath="yes"/>
                     <File Id="IconFile" Name="icon.ico" Source="icon.ico"/>
-                    <File Id="README" Name="README.md" Source="README.md"/>
-                    <File Id="LICENSE" Name="LICENSE.md" Source="LICENSE.md"/>
+                    <File Id="README" Name="README.md" Source="../README.md"/>
+                    <File Id="LICENSE" Name="LICENSE.md" Source="../LICENSE.md"/>
                   </Component>
                 </Directory>
               </Directory>
@@ -86,8 +88,8 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          Minesweeper.msi
-          x64/Release/minesweeper.exe
+          windows/Minesweeper.msi
+          windows/x64/Release/minesweeper.exe
         tag_name: v${{ github.run_number }}
         name: Release ${{ github.run_number }}
         draft: false
@@ -104,8 +106,8 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          Minesweeper.msi
-          x64/Release/minesweeper.exe
+          windows/Minesweeper.msi
+          windows/x64/Release/minesweeper.exe
         tag_name: bleedingedge-v${{ github.run_number }}
         name: Dev Build ${{ github.run_number }}
         draft: false

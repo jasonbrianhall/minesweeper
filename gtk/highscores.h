@@ -1,1 +1,1 @@
-../highscores.h
+../src/highscores.h
