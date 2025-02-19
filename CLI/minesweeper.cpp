@@ -100,7 +100,6 @@ private:
   std::string customMines;
   int customStep = 0; // 0=width, 1=height, 2=mines
 
-
   bool isHighScore(int time) {
     const auto &scores = highscores.getScores();
     std::string currentDifficulty;
@@ -676,10 +675,9 @@ public:
     }
     if (state == GameState::MENU) {
       if (enteringCustom) {
-          handleCustomDifficulty(ch);
-          return true;
-       }
-      else if (enteringSeed) {
+        handleCustomDifficulty(ch);
+        return true;
+      } else if (enteringSeed) {
         if (ch == '\n' || ch == '\r' || ch == KEY_ENTER) {
           enteringSeed = false;
           try {
