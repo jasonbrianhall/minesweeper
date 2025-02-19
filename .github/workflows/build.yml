@@ -118,7 +118,18 @@ jobs:
     - name: Create GTK MSI Installer
       working-directory: gtk
       run: |
-        echo '<?xml version="1.0" encoding="UTF-8"?>
+        # Generate the DLL entries
+        DLL_ENTRIES=$(cd build && for f in *.dll; do 
+          if [ -f "$f" ]; then
+            # Create a safe ID by removing invalid characters
+            SAFE_ID=$(echo "$f" | sed 's/[^a-zA-Z0-9]/_/g')
+            echo "<File Id=\"$SAFE_ID\" Name=\"$f\" Source=\"build/$f\"/>"
+          fi
+        done)
+
+        # Create the WXS file with the generated DLL entries
+        cat > installer-gtk.wxs << 'EOL'
+        <?xml version="1.0" encoding="UTF-8"?>
         <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
           <Product Id="*" Name="Minesweeper GTK" Language="1033" Version="1.0.0" Manufacturer="Jason Hall" UpgradeCode="B5F3B891-9D23-41DA-8E35-F94721E8F124">
             <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
@@ -129,10 +140,13 @@ jobs:
                 <Directory Id="INSTALLFOLDER" Name="Minesweeper GTK">
                   <Component Id="MainExecutable" Guid="77CD3A92-4F45-4E67-AC89-2A5D6F981D46">
                     <File Id="MainEXE" Name="minesweeper_gtk.exe" Source="build/minesweeper_gtk.exe" KeyPath="yes"/>
-                    <!-- Dynamically add DLL files -->
-                    <?foreach DllFile in build/*.dll ?>
-                      <File Id="$(var.DllFile)" Name="$(var.DllFile)" Source="build/$(var.DllFile)"/>
-                    <?endforeach?>
+        EOL
+
+        # Add the generated DLL entries
+        echo "$DLL_ENTRIES" >> installer-gtk.wxs
+
+        # Complete the WXS file
+        cat >> installer-gtk.wxs << 'EOL'
                     <File Id="README" Name="README.md" Source="../README.md"/>
                     <File Id="LICENSE" Name="LICENSE.md" Source="../LICENSE.md"/>
                   </Component>
@@ -156,7 +170,12 @@ jobs:
               <ComponentRef Id="ApplicationShortcuts" />
             </Feature>
           </Product>
-        </Wix>' > installer-gtk.wxs
+        </Wix>
+        EOL
+
+        # Debug output
+        echo "Generated WXS file contents:"
+        cat installer-gtk.wxs
 
         wixl -v installer-gtk.wxs -o ../Minesweeper-GTK.msi
 
@@ -210,3 +229,4 @@ jobs:
           - Windows version (Minesweeper.msi)
           - GTK version (Minesweeper-GTK.msi)
           - GTK portable version (Minesweeper-GTK.zip)
+          
