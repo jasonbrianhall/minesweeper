@@ -229,3 +229,8 @@ jobs:
           - Windows version (Minesweeper.msi)
           - GTK version (Minesweeper-GTK.msi)
           - GTK portable version (Minesweeper-GTK.zip)
+
+    - name: Output Release URL
+      if: success()
+      run: |
+        echo "::notice::Release available at: https://github.com/${{ github.repository }}/releases/tag/${{ github.ref == 'refs/heads/main' && format('v{0}', github.run_number) || format('bleedingedge-v{0}', github.run_number) }}"          
