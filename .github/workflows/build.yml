@@ -91,6 +91,8 @@ jobs:
 
   build-gtk:
     runs-on: ubuntu-latest
+    container: 
+      image: fedora:latest
     permissions:
       contents: write
 
@@ -99,13 +101,9 @@ jobs:
 
     - name: Install Dependencies
       run: |
-        sudo apt-get update
-        sudo apt-get install -y mingw-w64 mingw-w64-tools mingw-w64-x86-64-dev
-        sudo apt-get install -y wine64 wixl
-        # Add extra repositories for GTK cross-compilation
-        sudo add-apt-repository ppa:mingw-w64-gtk/ppa -y
-        sudo apt-get update
-        sudo apt-get install -y mingw-w64-x86-64-gtk3 mingw-w64-x86-64-glade mingw-w64-x86-64-pkg-config
+        dnf -y update
+        dnf -y install mingw64-gcc mingw64-gcc-c++ mingw64-gtk3 mingw64-gtkmm30
+        dnf -y install wine wine-devel wixl
 
     - name: Build GTK Version
       working-directory: gtk
