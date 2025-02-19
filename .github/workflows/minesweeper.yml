@@ -187,26 +187,6 @@ jobs:
           Minesweeper-GTK.msi
           Minesweeper-GTK.zip
 
-  create-release:
-    needs: [build-windows, build-gtk]
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')
-    permissions:
-      contents: write
-    
-    steps:
-    - name: Download Windows Artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: windows-artifacts
-        path: windows-artifacts
-
-    - name: Download GTK Artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: gtk-artifacts
-        path: gtk-artifacts
-
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
@@ -229,4 +209,8 @@ jobs:
           - Windows version (Minesweeper.msi)
           - GTK version (Minesweeper-GTK.msi)
           - GTK portable version (Minesweeper-GTK.zip)
-          
+
+    - name: Output Release URL
+      if: success()
+      run: |
+        echo "::notice::Release available at: https://github.com/${{ github.repository }}/releases/tag/${{ github.ref == 'refs/heads/main' && format('v{0}', github.run_number) || format('bleedingedge-v{0}', github.run_number) }}"
