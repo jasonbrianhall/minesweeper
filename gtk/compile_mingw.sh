@@ -1,19 +1,73 @@
 #!/bin/bash
 
-# Directory setup
-BUILD_DIR="build"
+# Help function
+show_help() {
+    echo "Usage: $0 [OPTIONS] [EXE_PATH] [DLL_SOURCE_DIR] [OUTPUT_DIR]"
+    echo
+    echo "Compiles a GTK3 application and collects required DLLs."
+    echo
+    echo "When run without parameters, uses these defaults:"
+    echo "  EXE_PATH: Compiles minesweeper from current directory"
+    echo "  DLL_SOURCE_DIR: /usr/x86_64-w64-mingw32/sys-root/mingw/bin"
+    echo "  OUTPUT_DIR: ./build"
+    echo
+    echo "Options:"
+    echo "  -h, --help    Show this help message"
+    echo
+    echo "Examples:"
+    echo "  $0                   # Use defaults"
+    echo "  $0 ./myapp.exe /path/to/dlls ./dist    # Custom paths"
+    exit 0
+}
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -h|--help)
+            show_help
+            ;;
+        *)
+            if [ -z "$EXE_PATH" ]; then
+                EXE_PATH="$1"
+            elif [ -z "$DLL_SOURCE_DIR" ]; then
+                DLL_SOURCE_DIR="$1"
+            elif [ -z "$OUTPUT_DIR" ]; then
+                OUTPUT_DIR="$1"
+            else
+                echo "Error: Too many arguments"
+                show_help
+            fi
+            shift
+            ;;
+    esac
+done
+
+# Set default values if not provided
+BUILD_DIR=${OUTPUT_DIR:-"build"}
+DLL_SOURCE_DIR=${DLL_SOURCE_DIR:-"/usr/x86_64-w64-mingw32/sys-root/mingw/bin"}
+
+# Create build directory
 mkdir -p "$BUILD_DIR"
 
-# Compile the application
-echo "Compiling minesweeper..."
-x86_64-w64-mingw32-gcc -o "$BUILD_DIR/minesweeper_gtk.exe" gtk_minesweeper.cpp highscores.cpp `mingw64-pkg-config --cflags gtk+-3.0 --libs gtk+-3.0` -lstdc++
-
-if [ $? -ne 0 ]; then
-    echo "Compilation failed!"
-    exit 1
+# Compile the application if no exe path provided
+if [ -z "$EXE_PATH" ]; then
+    echo "Compiling minesweeper..."
+    x86_64-w64-mingw32-gcc -o "$BUILD_DIR/minesweeper_gtk.exe" gtk_minesweeper.cpp highscores.cpp `mingw64-pkg-config --cflags gtk+-3.0 --libs gtk+-3.0` -lstdc++
+    
+    if [ $? -ne 0 ]; then
+        echo "Compilation failed!"
+        exit 1
+    fi
+    
+    echo "Compilation successful!"
+    EXE_PATH="$BUILD_DIR/minesweeper_gtk.exe"
+else
+    # If exe path provided but file doesn't exist
+    if [ ! -f "$EXE_PATH" ]; then
+        echo "Error: File not found: $EXE_PATH"
+        exit 1
+    fi
 fi
-
-echo "Compilation successful!"
 
 # Function to get direct dependencies of a file
 get_dependencies() {
@@ -27,15 +81,14 @@ dll_exists() {
     [ -f "$DLL_SOURCE_DIR/$dll" ]
 }
 
-# Set MinGW DLL directory
-DLL_SOURCE_DIR="/usr/x86_64-w64-mingw32/sys-root/mingw/bin"
+# Verify DLL directory exists
 if [ ! -d "$DLL_SOURCE_DIR" ]; then
-    echo "Could not find MinGW DLL directory at: $DLL_SOURCE_DIR"
-    echo "Please ensure MinGW is properly installed."
+    echo "Error: DLL directory not found: $DLL_SOURCE_DIR"
     exit 1
 fi
 
 echo "Using DLL source directory: $DLL_SOURCE_DIR"
+echo "Output directory: $BUILD_DIR"
 
 # Initialize arrays for processing
 declare -A processed_dlls
@@ -43,8 +96,8 @@ declare -a dlls_to_process
 declare -a missing_dlls
 
 # Get initial dependencies
-echo "Analyzing dependencies for minesweeper_gtk.exe..."
-initial_dlls=$(get_dependencies "$BUILD_DIR/minesweeper_gtk.exe")
+echo "Analyzing dependencies for $(basename "$EXE_PATH")..."
+initial_dlls=$(get_dependencies "$EXE_PATH")
 
 # Add initial DLLs to processing queue
 for dll in $initial_dlls; do
