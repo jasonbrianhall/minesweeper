@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-windows:
     runs-on: windows-latest
     permissions:
       contents: write
@@ -23,7 +23,6 @@ jobs:
     - name: Setup Developer Command Prompt
       uses: ilammy/msvc-dev-cmd@v1
 
-    # Build the standalone executable
     - name: Build C++ Executable
       working-directory: windows
       run: |
@@ -82,38 +81,159 @@ jobs:
         candle installer.wxs
         light installer.wixobj -out Minesweeper.msi
 
-    - name: Create Release
-      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-      id: create_release
-      uses: softprops/action-gh-release@v1
+    - name: Upload Windows Artifacts
+      uses: actions/upload-artifact@v4
       with:
-        files: |
+        name: windows-artifacts
+        path: |
           windows/Minesweeper.msi
           windows/x64/Release/minesweeper.exe
-        tag_name: v${{ github.run_number }}
-        name: Release ${{ github.run_number }}
-        draft: false
-        prerelease: false
-        token: ${{ secrets.GITHUB_TOKEN }}
-        body: |
-          Automated release from CI build
-          Commit: ${{ github.sha }}
-          Build number: ${{ github.run_number }}
 
-    - name: Create Dev Build
-      if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
-      id: create_dev_build
+  build-gtk:
+    runs-on: ubuntu-latest
+    container: 
+      image: fedora:latest
+    permissions:
+      contents: write
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Dependencies
+      run: |
+        dnf -y update
+        dnf -y install mingw64-gcc mingw64-gcc-c++ mingw64-gtk3 mingw64-gtkmm30 wine wine-devel wixl binutils
+
+    - name: Build GTK Version
+      working-directory: gtk
+      run: |
+        chmod +x compile_mingw.sh
+        ./compile_mingw.sh
+
+    - name: Create ZIP Archive
+      working-directory: gtk/build
+      run: |
+        zip -r ../../Minesweeper-GTK.zip ./*
+
+    - name: Create GTK MSI Installer
+      working-directory: gtk
+      run: |
+        # Generate the DLL entries
+        DLL_ENTRIES=$(cd build && for f in *.dll; do 
+          if [ -f "$f" ]; then
+            # Create a safe ID by removing invalid characters
+            SAFE_ID=$(echo "$f" | sed 's/[^a-zA-Z0-9]/_/g')
+            echo "<File Id=\"$SAFE_ID\" Name=\"$f\" Source=\"build/$f\"/>"
+          fi
+        done)
+
+        # Create the WXS file with the generated DLL entries
+        cat > installer-gtk.wxs << 'EOL'
+        <?xml version="1.0" encoding="UTF-8"?>
+        <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+          <Product Id="*" Name="Minesweeper GTK" Language="1033" Version="1.0.0" Manufacturer="Jason Hall" UpgradeCode="B5F3B891-9D23-41DA-8E35-F94721E8F124">
+            <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+            <MajorUpgrade DowngradeErrorMessage="A newer version is already installed." />
+            <MediaTemplate EmbedCab="yes" />
+            <Directory Id="TARGETDIR" Name="SourceDir">
+              <Directory Id="ProgramFilesFolder">
+                <Directory Id="INSTALLFOLDER" Name="Minesweeper GTK">
+                  <Component Id="MainExecutable" Guid="77CD3A92-4F45-4E67-AC89-2A5D6F981D46">
+                    <File Id="MainEXE" Name="minesweeper_gtk.exe" Source="build/minesweeper_gtk.exe" KeyPath="yes"/>
+                    <File Id="IconFile" Name="icon.ico" Source="icon.ico"/>
+        EOL
+
+        # Add the generated DLL entries
+        echo "$DLL_ENTRIES" >> installer-gtk.wxs
+
+        # Complete the WXS file
+        cat >> installer-gtk.wxs << 'EOL'
+                    <File Id="README" Name="README.md" Source="../README.md"/>
+                    <File Id="LICENSE" Name="LICENSE.md" Source="../LICENSE.md"/>
+                  </Component>
+                </Directory>
+              </Directory>
+              <Directory Id="ProgramMenuFolder">
+                <Directory Id="ApplicationProgramsFolder" Name="Minesweeper GTK">
+                  <Component Id="ApplicationShortcuts" Guid="C71F9E23-8A78-4B12-8C34-6789ABCD8902">
+                    <Shortcut Id="ApplicationStartMenu" 
+                             Name="Minesweeper GTK" 
+                             Target="[INSTALLFOLDER]minesweeper_gtk.exe" 
+                             WorkingDirectory="INSTALLFOLDER"
+                             Icon="MinesweeperIcon"/>
+                    <RemoveFolder Id="ApplicationProgramsFolder" On="uninstall"/>
+                    <RegistryValue Root="HKCU" Key="Software\MinesweeperGTK" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
+                  </Component>
+                </Directory>
+              </Directory>
+            </Directory>
+            <Feature Id="ProductFeature" Title="Minesweeper GTK" Level="1">
+              <ComponentRef Id="MainExecutable" />
+              <ComponentRef Id="ApplicationShortcuts" />
+            </Feature>
+            <Icon Id="MinesweeperIcon" SourceFile="icon.ico"/>
+          </Product>
+        </Wix>
+        EOL
+
+        # Debug output
+        echo "Generated WXS file contents:"
+        cat installer-gtk.wxs
+
+        wixl -v installer-gtk.wxs -o ../Minesweeper-GTK.msi
+
+    - name: Upload GTK Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: gtk-artifacts
+        path: |
+          Minesweeper-GTK.msi
+          Minesweeper-GTK.zip
+
+  create-release:
+    needs: [build-windows, build-gtk]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    if: github.event_name == 'push'
+    
+    steps:
+    - name: Download Windows Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: windows-artifacts
+        path: windows-artifacts
+
+    - name: Download GTK Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: gtk-artifacts
+        path: gtk-artifacts
+
+    - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          windows/Minesweeper.msi
-          windows/x64/Release/minesweeper.exe
-        tag_name: bleedingedge-v${{ github.run_number }}
-        name: Dev Build ${{ github.run_number }}
+          windows-artifacts/Minesweeper.msi
+          windows-artifacts/x64/Release/minesweeper.exe
+          gtk-artifacts/Minesweeper-GTK.msi
+          gtk-artifacts/Minesweeper-GTK.zip
+        tag_name: ${{ github.ref == 'refs/heads/main' && format('v{0}', github.run_number) || format('bleedingedge-v{0}', github.run_number) }}
+        name: ${{ github.ref == 'refs/heads/main' && format('Release {0}', github.run_number) || format('Dev Build {0}', github.run_number) }}
         draft: false
-        prerelease: true
+        prerelease: ${{ github.ref != 'refs/heads/main' }}
         token: ${{ secrets.GITHUB_TOKEN }}
         body: |
-          Development build
+          ${{ github.ref == 'refs/heads/main' && 'Release build' || 'Development build' }}
           Commit: ${{ github.sha }}
           Build number: ${{ github.run_number }}
+          
+          This release includes both the standard Windows version and the GTK version:
+          - Windows version (Minesweeper.msi)
+          - GTK version (Minesweeper-GTK.msi)
+          - GTK portable version (Minesweeper-GTK.zip)
+
+    - name: Output Release URL
+      if: success()
+      run: |
+        echo "::notice::Release available at: https://github.com/${{ github.repository }}/releases/tag/${{ github.ref == 'refs/heads/main' && format('v{0}', github.run_number) || format('bleedingedge-v{0}', github.run_number) }}"          

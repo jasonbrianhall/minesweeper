@@ -578,6 +578,7 @@ void GTKMinesweeper::create_menu() {
     gtk_menu_shell_append(GTK_MENU_SHELL(help_menu), how_to_play);
 
     GtkWidget *about = gtk_menu_item_new_with_label("About");
+    g_signal_connect(G_OBJECT(about), "activate", G_CALLBACK(on_about), this);
     gtk_widget_add_accelerator(about, "activate", accel_group, GDK_KEY_F1, (GdkModifierType)0, GTK_ACCEL_VISIBLE);
     gtk_menu_shell_append(GTK_MENU_SHELL(help_menu), about);
 
@@ -1068,6 +1069,7 @@ void GTKMinesweeper::on_about(GtkWidget *widget, gpointer user_data) {
     gtk_dialog_run(GTK_DIALOG(dialog));
     gtk_widget_destroy(dialog);
 }
+
 gboolean GTKMinesweeper::update_timer(gpointer user_data) {
     GTKMinesweeper *minesweeper = static_cast<GTKMinesweeper*>(user_data);
     if(!minesweeper->game->gameOver && !minesweeper->game->won && 

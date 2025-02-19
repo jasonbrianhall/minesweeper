@@ -115,6 +115,7 @@ msbuild /p:Configuration=Release /p:Platform=x64 minesweeper.vcxproj
 Requirements:
 - Linux operating system
 - G++
+- gtk3-development libraries (gtk3-devel on Fedora)
 - 64-bit processor
 - Minimum 2GB RAM
 - Screen resolution: 800x600 or higher
@@ -123,9 +124,32 @@ Requirements:
 # Compile and run GTK version
 cd gtk
 make
+cd build/linux
 ./minesweeper
 ```
+### Windows GTK Version
 
+Requirements:
+- Linux operating system (to compile)
+- G++
+- 64-bit processor
+- Minimum 2GB RAM
+- Screen resolution: 800x600 or higher
+- MINGW and GTK3-development (mingw-gtk3 on Fedora)
+
+```bash
+# Compile and run GTK version
+cd gtk
+make windows
+cd build
+mv windows minesweeper_gtk
+zip minesweeper_gtk.zip minesweeper_gtk -r
+```
+
+```
+# Copy ZIP file to windows and decompress
+On windows run minesweeper_gtk.exe
+```
 
 ### Terminal Version
 Requirements:
