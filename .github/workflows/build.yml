@@ -102,8 +102,7 @@ jobs:
     - name: Install Dependencies
       run: |
         dnf -y update
-        dnf -y install mingw64-gcc mingw64-gcc-c++ mingw64-gtk3 mingw64-gtkmm30
-        dnf -y install wine wine-devel wixl
+        dnf -y install mingw64-gcc mingw64-gcc-c++ mingw64-gtk3 mingw64-gtkmm30 wine wine-devel wixl binutils
 
     - name: Build GTK Version
       working-directory: gtk
