@@ -115,6 +115,8 @@ private:
     case Difficulty::HARD:
       currentDifficulty = "Hard";
       break;
+    case Difficulty::CUSTOM:
+      return false;
     }
 
     // Count scores for current difficulty
