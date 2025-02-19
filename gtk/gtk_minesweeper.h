@@ -15,7 +15,8 @@ private:
     GtkWidget *menubar;
     guint timer_id;
     
-    
+    void show_custom_board_dialog();
+    static void on_custom_board(GtkWidget *widget, gpointer user_data);
     void create_window(GtkApplication *app);
     void create_menu();
     void initialize_grid();
