@@ -131,7 +131,7 @@ jobs:
         cat > installer-gtk.wxs << 'EOL'
         <?xml version="1.0" encoding="UTF-8"?>
         <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-          <Product Id="*" Name="Minesweeper GTK" Language="1033" Version="1.0.0" Manufacturer="Jason Hall" UpgradeCode="B5F3B891-9D23-41DA-8E35-F94721E8F124">
+          <Product Id="*" Name="Minesweeper GTK" Language="1033" Version="1.0.0.${{ github.run_number }}" Manufacturer="Jason Hall" UpgradeCode="B5F3B891-9D23-41DA-8E35-F94721E8F124">
             <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
             <MajorUpgrade DowngradeErrorMessage="A newer version is already installed." />
             <MediaTemplate EmbedCab="yes" />
