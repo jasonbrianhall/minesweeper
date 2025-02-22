@@ -41,7 +41,7 @@ jobs:
       run: |
         echo '<?xml version="1.0" encoding="UTF-8"?>
         <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-          <Product Id="*" Name="Minesweeper" Language="1033" Version="1.0.0" Manufacturer="Jason Hall" UpgradeCode="A4F3B891-9D23-41DA-8E35-F94721E8F123">
+          <Product Id="*" Name="Minesweeper" Language="1033" Version="1.0.0.${{ github.run_number }}" Manufacturer="Jason Hall" UpgradeCode="A4F3B891-9D23-41DA-8E35-F94721E8F123">
             <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
             <MajorUpgrade DowngradeErrorMessage="A newer version is already installed." />
             <MediaTemplate EmbedCab="yes" />
