@@ -5,7 +5,7 @@ CXXFLAGS_COMMON = -std=c++17 -Wall -Wextra
 
 # Platform-specific settings
 CXXFLAGS_LINUX = $(CXXFLAGS_COMMON) $(shell pkg-config --cflags gtk+-3.0)
-CXXFLAGS_WIN = $(CXXFLAGS_COMMON) $(shell mingw64-pkg-config --cflags gtk+-3.0)
+CXXFLAGS_WIN = $(CXXFLAGS_COMMON) $(shell mingw64-pkg-config --cflags gtk+-3.0) -mwindows
 
 LDFLAGS_LINUX = $(shell pkg-config --libs gtk+-3.0)
 LDFLAGS_WIN = $(shell mingw64-pkg-config --libs gtk+-3.0) -lstdc++
