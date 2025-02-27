@@ -117,7 +117,6 @@ Requirements:
 - Linux operating system
 - G++
 - gtk3-development libraries (gtk3-devel on Fedora)
-- 64-bit processor
 - Minimum 2GB RAM
 - Screen resolution: 800x600 or higher
 
