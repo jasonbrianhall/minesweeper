@@ -199,3 +199,30 @@ All versions are licensed under [MIT](LICENSE.md); see [LICENSE.md](LICENSE.md).
 
 ## ✉️  Contact Author
 Created by Jason Brian Hall ([jasonbrianhall@gmail.com](mailto:jasonbrianhall@gmail.com))
+
+
+## 🎮 Other Projects: The Coding Playground
+
+Bored? Let me rescue you from the depths of monotony with these digital delights! 🚀
+
+🃏 **Solitaire Insanity** [Solitaire & Freecell](https://github.com/jasonbrianhall/solitaire) - A meticulously crafted digital card game that brings both Klondike Solitaire and Freecell to life! Featuring smooth animations, custom card decks, multiple drawing modes, and keyboard-friendly controls. Whether you're a classic Solitaire fan or a Freecell strategist, this game offers a delightful mix of challenge and entertainment! 🃏✨ (Prepare to get hooked!) 🎮
+
+🧩 **Sudoku Solver Spectacular**: [Sudoku Solver](https://github.com/jasonbrianhall/sudoku_solver) - A Sudoku Swiss Army Knife! 🚀 This project is way more than just solving puzzles. Dive into a world where:
+- 🧠 Puzzle Generation: Create brain-twisting Sudoku challenges
+- 📄 MS-Word Magic: Generate professional puzzle documents
+- 🚀 Extreme Solver: Crack instantaneously the most mind-bending Sudoku puzzles
+- 🎮 Bonus Game Mode: Check out the playable version hidden in python_generated_puzzles
+
+Numbers have never been this exciting! Prepare for a Sudoku adventure that'll make your brain cells do a happy dance! 🕺
+
+🧊 **Rubik's Cube Chaos**: [Rubik's Cube Solver](https://github.com/jasonbrianhall/rubikscube/) - Crack the code of the most mind-bending 3x3 puzzle known to humanity! Solving optional, frustration guaranteed! 😅
+
+🐛 **Willy the Worm's Wild Ride**: [Willy the worm](https://github.com/jasonbrianhall/willytheworm) - A 2D side-scroller starring the most adventurous invertebrate in gaming history! Who said worms can't be heroes? 🦸‍♂️
+
+🧙‍♂️ **The Wizard's Castle: Choose Your Own Adventure**: [The Wizard's Castle](https://github.com/jasonbrianhall/wizardscastle) - A Text-Based RPG that works on QT5, CLI, and even Android! Magic knows no boundaries! ✨
+
+🔤 **Hangman Hijinks**: [Hangman](https://github.com/jasonbrianhall/hangman) - Word-guessing mayhem in your terminal! Prepare for linguistic warfare! 💬
+
+🕹️ **Bonus Level**: I've got a treasure trove of [more projects](https://github.com/jasonbrianhall) just waiting to be discovered! Some are shiny and new, some are old code that might need a digital retirement party. It's like a coding yard sale - you never know what gems you'll find! 🏴‍☠️
+
+*Warning: Prolonged exposure may cause uncontrollable coding inspiration and spontaneous nerd moments* 🤓✨
