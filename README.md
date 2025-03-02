@@ -205,7 +205,7 @@ Created by Jason Brian Hall ([jasonbrianhall@gmail.com](mailto:jasonbrianhall@gm
 
 Bored? Let me rescue you from the depths of monotony with these digital delights! 🚀
 
-🃏 **Solitaire Insanity** [Solitaire & Freecell](https://github.com/jasonbrianhall/solitaire) - A meticulously crafted digital card game that brings both Klondike Solitaire and Freecell to life! Featuring smooth animations, custom card decks, multiple drawing modes, and keyboard-friendly controls. Whether you're a classic Solitaire fan or a Freecell strategist, this game offers a delightful mix of challenge and entertainment! 🃏✨ (Prepare to get hooked!) 🎮
+🃏 **Solitaire Insanity**: [Solitaire & Freecell](https://github.com/jasonbrianhall/solitaire) - A meticulously crafted digital card game that brings both Klondike Solitaire and Freecell to life! Featuring smooth animations, custom card decks, multiple drawing modes, and keyboard-friendly controls. Whether you're a classic Solitaire fan or a Freecell strategist, this game offers a delightful mix of challenge and entertainment! 🃏✨ (Prepare to get hooked!) 🎮
 
 🧩 **Sudoku Solver Spectacular**: [Sudoku Solver](https://github.com/jasonbrianhall/sudoku_solver) - A Sudoku Swiss Army Knife! 🚀 This project is way more than just solving puzzles. Dive into a world where:
 - 🧠 Puzzle Generation: Create brain-twisting Sudoku challenges
