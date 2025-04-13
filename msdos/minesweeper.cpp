@@ -271,46 +271,30 @@ private:
   }
 
 void initializeMinefield(int firstY, int firstX, int seed = -1) {
-  minefield =
-      std::vector<std::vector<bool>>(height, std::vector<bool>(width, false));
+    minefield = std::vector<std::vector<bool>>(height, std::vector<bool>(width, false));
 
-  if (seed == -1) {
-    // Use a combination of time and other dynamic values for better randomness
-    unsigned int time_seed = static_cast<unsigned int>(time(nullptr));
-    unsigned int clock_seed = static_cast<unsigned int>(clock());
-    unsigned int cursor_pos = static_cast<unsigned int>((firstY * 31) + firstX);
-    
-    // Mix multiple sources of entropy
-    currentSeed = time_seed ^ 
-                 (clock_seed << 8) ^ 
-                 (cursor_pos << 16) ^
-                 ((height * width * mines) << 12);
-    
-    // Ensure positive seed but don't use hardcoded values
-    if (currentSeed < 0) {
-      currentSeed = -currentSeed;
+    if (seed == -1) {
+        // Generate a more evenly distributed 32-bit seed
+        unsigned int timeSeed = static_cast<unsigned int>(time(nullptr));
+        currentSeed = timeSeed ^ (timeSeed << 16);  // XOR with shifted version to spread bits
+        currentSeed = ((currentSeed * 1103515245 + 12345)*65535) & 0xFFFFFFFF;  // Linear congruential generator
+    } else {
+        currentSeed = seed;
     }
-    // Avoid seed being 0 without hardcoding
-    if (currentSeed == 0) {
-      currentSeed = time_seed | 1; // Ensure at least bit 0 is set
-    }
-  } else {
-    currentSeed = seed;
-  }
 
-  std::mt19937 gen(currentSeed);
-  std::uniform_int_distribution<> disH(0, height - 1);
-  std::uniform_int_distribution<> disW(0, width - 1);
+    std::mt19937 gen(currentSeed);
+    std::uniform_int_distribution<> disH(0, height - 1);
+    std::uniform_int_distribution<> disW(0, width - 1);
 
-  int placedMines = 0;
-  while (placedMines < mines) {
-    int y = disH(gen);
-    int x = disW(gen);
-    if (!minefield[y][x] && (abs(y - firstY) > 1 || abs(x - firstX) > 1)) {
-      minefield[y][x] = true;
-      placedMines++;
+    int placedMines = 0;
+    while (placedMines < mines) {
+        int y = disH(gen);
+        int x = disW(gen);
+        if (!minefield[y][x] && (abs(y - firstY) > 1 || abs(x - firstX) > 1)) {
+            minefield[y][x] = true;
+            placedMines++;
+        }
     }
-  }
 }
 
   int countAdjacentMines(int y, int x) {
