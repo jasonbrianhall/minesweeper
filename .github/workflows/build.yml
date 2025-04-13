@@ -1,4 +1,4 @@
-name: Build Minesweeper
+name: Build Minesweeper for MS-DOS and Windows
 
 on:
   push:
