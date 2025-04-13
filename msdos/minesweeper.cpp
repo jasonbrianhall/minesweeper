@@ -1,4 +1,6 @@
+// Developed 2025 by Jason Hall
 // https://github.com/jasonbrianhall/minesweeper
+
 
 #include "highscores.h"
 #include <atomic>
