@@ -1,3 +1,5 @@
+// https://github.com/jasonbrianhall/minesweeper
+
 #include "highscores.h"
 #include <atomic>
 #include <ctime>

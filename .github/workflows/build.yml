@@ -1,4 +1,4 @@
-name: Build Minesweeper for MS-DOS and Windows
+name: Build Minesweeper
 
 on:
   push:
@@ -7,12 +7,16 @@ on:
       - '**.cpp'
       - '**.h'
       - 'Makefile*'
+      - '.github/worksflows/build.yml'
+
   pull_request:
     branches: [ dev, master ]
     paths:
       - '**.cpp'
       - '**.h'
       - 'Makefile*'
+      - '.github/worksflows/build.yml'
+
 
   workflow_dispatch:
 
@@ -30,7 +34,7 @@ jobs:
     - name: Install Dependencies
       run: |
         apt-get update
-        apt-get install -y wget unzip
+        apt-get install -y wget unzip zip
 
     - name: Download CSDPMI
       working-directory: msdos
@@ -259,21 +263,12 @@ jobs:
 
   create-release:
     needs: [build-msdos, build-windows, build-gtk]
-    runs-on: fedora-latest
-    container: 
-      image: fedora:latest
+    runs-on: ubuntu-latest
     permissions:
       contents: write
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev')
+    if: github.event_name == 'push'
     
     steps:
-    - uses: actions/checkout@v4
-
-    - name: Install Release Tools
-      run: |
-        dnf -y update
-        dnf -y install wget unzip
-
     - name: Download MS-DOS Artifacts
       uses: actions/download-artifact@v4
       with:
