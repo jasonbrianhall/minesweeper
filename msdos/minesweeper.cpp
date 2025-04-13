@@ -1,6 +1,6 @@
-// Developed 2025 by Jason Hall
+// Developed 2025 by Jason Hall 
 // https://github.com/jasonbrianhall/minesweeper
-
+// Licenses under the MIT License
 
 #include "highscores.h"
 #include <atomic>
