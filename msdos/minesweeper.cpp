@@ -531,17 +531,17 @@ void updateTitle() {
         mvprintw(0, pos, "%s", title.c_str());
         attroff(COLOR_PAIR(10) | A_BOLD);
 
-        // Calculate the position dynamically based on the grid width
-        int timePos = width;  // Position time at the end of the grid
+        // Print spaces without color
+        mvprintw(0, title.length(), "     ");
 
         if (!firstMove && !checkWin()) {
             timer.update();
-            mvprintw(0, timePos, "Time: %s - Seed: %i",
+            mvprintw(0, title.length() + 5, "Time: %s - Seed: %i",
                      timer.getTimeString().c_str(), currentSeed);
         } else if (firstMove) {
-            mvprintw(0, timePos, "Time: %s", timer.getTimeString().c_str());
+            mvprintw(0, title.length() + 5, "Time: %s", timer.getTimeString().c_str());
         } else {
-            mvprintw(0, timePos, "Time: %s - Seed: %i - You win",
+            mvprintw(0, title.length() + 5, "Time: %s - Seed: %i - You win",
                      timer.getTimeString().c_str(), currentSeed);
             timer.stop();
             if (isHighScore(timer.getElapsedSeconds())) {
