@@ -7,14 +7,13 @@ on:
       - '**.cpp'
       - '**.h'
       - 'Makefile*'
-      - '.github/workflows/build.yml'
   pull_request:
     branches: [ dev, master ]
     paths:
       - '**.cpp'
       - '**.h'
       - 'Makefile*'
-      - '.github/workflows/build.yml'
+
   workflow_dispatch:
 
 jobs:
@@ -31,7 +30,7 @@ jobs:
     - name: Install Dependencies
       run: |
         apt-get update
-        apt-get install -y wget unzip zip
+        apt-get install -y wget unzip
 
     - name: Download CSDPMI
       working-directory: msdos
@@ -170,7 +169,7 @@ jobs:
     - name: Install Dependencies
       run: |
         dnf -y update
-        dnf -y install mingw64-gcc mingw64-gcc-c++ mingw64-gtk3 mingw64-gtkmm30 wine wine-devel wixl binutils zip
+        dnf -y install mingw64-gcc mingw64-gcc-c++ mingw64-gtk3 mingw64-gtkmm30 wine wine-devel wixl binutils
 
     - name: Build GTK Version
       working-directory: gtk
@@ -260,12 +259,21 @@ jobs:
 
   create-release:
     needs: [build-msdos, build-windows, build-gtk]
-    runs-on: ubuntu-latest
+    runs-on: fedora-latest
+    container: 
+      image: fedora:latest
     permissions:
       contents: write
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev')
     
     steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Release Tools
+      run: |
+        dnf -y update
+        dnf -y install wget unzip
+
     - name: Download MS-DOS Artifacts
       uses: actions/download-artifact@v4
       with:
