@@ -158,15 +158,23 @@ void clrtoeol(void) {
 
 // Turn on an attribute
 int attron(int attrs) {
-    current_attr |= attr_to_conio(attrs);
+    // Store the original ncurses attribute in the window structure
     stdscr->attrs |= attrs;
+    
+    // Calculate the corresponding conio attribute
+    current_attr = attr_to_conio(stdscr->attrs);
+    
     return OK;
 }
 
 // Turn off an attribute
 int attroff(int attrs) {
-    current_attr &= ~attr_to_conio(attrs);
+    // Remove the specified attribute from the window's attributes
     stdscr->attrs &= ~attrs;
+    
+    // Recalculate the conio attribute based on the updated window attributes
+    current_attr = attr_to_conio(stdscr->attrs);
+    
     return OK;
 }
 
