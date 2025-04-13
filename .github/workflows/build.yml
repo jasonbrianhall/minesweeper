@@ -1,4 +1,4 @@
-name: Build Minesweeper for MS-DOS and Windows
+name: Build Minesweeper
 
 on:
   push:
@@ -7,12 +7,15 @@ on:
       - '**.cpp'
       - '**.h'
       - 'Makefile*'
+      - '.github/workflows/build.yml'
   pull_request:
     branches: [ dev, master ]
     paths:
       - '**.cpp'
       - '**.h'
       - 'Makefile*'
+      - '.github/workflows/build.yml'
+
 
   workflow_dispatch:
 
@@ -20,7 +23,7 @@ jobs:
   build-msdos:
     runs-on: ubuntu-latest
     container: 
-      image: djfdyuruiry/djgpp
+      image: fedora:latest
     permissions:
       contents: write
 
@@ -29,8 +32,8 @@ jobs:
 
     - name: Install Dependencies
       run: |
-        apt-get update
-        apt-get install -y wget unzip
+        dnf -y update
+        dnf -y install wget unzip gcc-c++ make djgpp-gcc djgpp-binutils zip
 
     - name: Download CSDPMI
       working-directory: msdos
@@ -41,7 +44,7 @@ jobs:
     - name: Build MS-DOS Version
       working-directory: msdos
       run: |
-        g++ minesweeper.cpp highscores.cpp ncurses.cpp -o mnsweep.exe
+        x86_64-pc-linux-gnu-g++ minesweeper.cpp highscores.cpp ncurses.cpp -o mnsweep.exe
         cp csdpmi/bin/CWSDPMI.EXE .
 
     - name: Create MS-DOS Distribution
@@ -259,7 +262,7 @@ jobs:
 
   create-release:
     needs: [build-msdos, build-windows, build-gtk]
-    runs-on: fedora-latest
+    runs-on: ubuntu-latest
     container: 
       image: fedora:latest
     permissions:
