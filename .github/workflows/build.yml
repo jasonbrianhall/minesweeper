@@ -7,7 +7,7 @@ on:
       - '**.cpp'
       - '**.h'
       - 'Makefile*'
-      - '.github/worksflows/build.yml'
+      - '.github/workflows/build.yml'
 
   pull_request:
     branches: [ dev, main ]
@@ -15,7 +15,7 @@ on:
       - '**.cpp'
       - '**.h'
       - 'Makefile*'
-      - '.github/worksflows/build.yml'
+      - '.github/workflows/build.yml'
 
 
   workflow_dispatch:
