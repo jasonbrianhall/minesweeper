@@ -7,13 +7,14 @@ on:
       - '**.cpp'
       - '**.h'
       - 'Makefile*'
+      - '.github/workflows/build.yml'
   pull_request:
     branches: [ dev, master ]
     paths:
       - '**.cpp'
       - '**.h'
       - 'Makefile*'
-
+      - '.github/workflows/build.yml'
   workflow_dispatch:
 
 jobs:
