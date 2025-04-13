@@ -15,7 +15,9 @@
 #endif
 
 Highscores::Highscores() {
-    #ifdef _WIN32
+    #ifdef MSDOS
+        const char* home = ".";
+    #elif defined(_WIN32)
         const char* home = getenv("APPDATA");
     #else
         const char* home = getenv("HOME");
@@ -24,10 +26,8 @@ Highscores::Highscores() {
     if (!home) {
         home = ".";
     }
-
-    std::string dirPath = std::string(home) + PATH_SEP + ".minesweeper";
-    MKDIR(dirPath.c_str());
-    scorePath = dirPath + PATH_SEP + "scores.txt";
+    
+    scorePath = std::string(home) + PATH_SEP + "scores.txt";
     loadScores();
 }
 
