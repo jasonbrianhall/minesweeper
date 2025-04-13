@@ -6,19 +6,76 @@ on:
     paths:
       - '**.cpp'
       - '**.h'
-      - 'Makefile'
-      - '**/Makefile'
+      - 'Makefile*'
   pull_request:
     branches: [ dev, master ]
     paths:
       - '**.cpp'
       - '**.h'
-      - 'Makefile'
-      - '**/Makefile'
+      - 'Makefile*'
 
   workflow_dispatch:
 
 jobs:
+  build-msdos:
+    runs-on: ubuntu-latest
+    container: 
+      image: djfdyuruiry/djgpp
+    permissions:
+      contents: write
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Dependencies
+      run: |
+        apt-get update
+        apt-get install -y wget unzip
+
+    - name: Download CSDPMI
+      working-directory: msdos
+      run: |
+        wget http://na.mirror.garr.it/mirrors/djgpp/current/v2misc/csdpmi7b.zip
+        unzip -o csdpmi7b.zip -d csdpmi
+
+    - name: Build MS-DOS Version
+      working-directory: msdos
+      run: |
+        g++ minesweeper.cpp highscores.cpp ncurses.cpp -o mnsweep.exe
+        cp csdpmi/bin/CWSDPMI.EXE .
+
+    - name: Create MS-DOS Distribution
+      working-directory: msdos
+      run: |
+        mkdir minesweeper-msdos-v1.0
+        cp mnsweep.exe minesweeper-msdos-v1.0/
+        cp CWSDPMI.EXE minesweeper-msdos-v1.0/
+        cp ../README.md minesweeper-msdos-v1.0/
+        cp ../LICENSE.md minesweeper-msdos-v1.0/
+        
+        echo "Minesweeper for MS-DOS
+        Version 1.0
+
+        Installation:
+        1. Ensure CWSDPMI.EXE is in the same directory as mnsweep.exe
+        2. Double-click mnsweep.exe or run from command line
+
+        Requirements:
+        - MS-DOS or compatible OS
+        - 4MB RAM
+        - VGA or better graphics" > minesweeper-msdos-v1.0/README-MSDOS.txt
+        
+        zip -r ../Minesweeper-MSDOS.zip minesweeper-msdos-v1.0
+
+    - name: Upload MS-DOS Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: msdos-artifacts
+        path: |
+          Minesweeper-MSDOS.zip
+          msdos/mnsweep.exe
+          msdos/CWSDPMI.EXE
+
   build-windows:
     runs-on: windows-latest
     permissions:
@@ -201,13 +258,19 @@ jobs:
           Minesweeper-GTK.zip
 
   create-release:
-    needs: [build-windows, build-gtk]
+    needs: [build-msdos, build-windows, build-gtk]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     if: github.event_name == 'push'
     
     steps:
+    - name: Download MS-DOS Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: msdos-artifacts
+        path: msdos-artifacts
+
     - name: Download Windows Artifacts
       uses: actions/download-artifact@v4
       with:
@@ -224,6 +287,9 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: |
+          msdos-artifacts/Minesweeper-MSDOS.zip
+          msdos-artifacts/mnsweep.exe
+          msdos-artifacts/CWSDPMI.EXE
           windows-artifacts/Minesweeper.msi
           windows-artifacts/x64/Release/minesweeper.exe
           gtk-artifacts/Minesweeper-GTK.msi
@@ -238,7 +304,8 @@ jobs:
           Commit: ${{ github.sha }}
           Build number: ${{ github.run_number }}
           
-          This release includes both the standard Windows version and the GTK version:
+          This release includes:
+          - MS-DOS version (mnsweep.exe with CWSDPMI.EXE)
           - Windows version (Minesweeper.msi)
           - GTK version (Minesweeper-GTK.msi)
           - GTK portable version (Minesweeper-GTK.zip)
@@ -246,4 +313,4 @@ jobs:
     - name: Output Release URL
       if: success()
       run: |
-        echo "::notice::Release available at: https://github.com/${{ github.repository }}/releases/tag/${{ github.ref == 'refs/heads/master' && format('v{0}', github.run_number) || format('bleedingedge-v{0}', github.run_number) }}"          
+        echo "::notice::Release available at: https://github.com/${{ github.repository }}/releases/tag/${{ github.ref == 'refs/heads/master' && format('v{0}', github.run_number) || format('bleedingedge-v{0}', github.run_number) }}"

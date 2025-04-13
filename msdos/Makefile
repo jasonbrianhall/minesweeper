@@ -1,4 +1,4 @@
-# Makefile for MS-DOS with DPMI support
+# Makefile for MS-DOS or FreeDOS with DPMI support
 VERSION=1.0
 
 # Source files
