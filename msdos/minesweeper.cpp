@@ -519,41 +519,43 @@ public:
     running = false;
   }
 
-  // Added method to update title from main loop
-  void updateTitle() {
+void updateTitle() {
     const std::string title = "MINESWEEPER";
     int pos = 0;
     
     if (state == GameState::PLAYING) {
-      move(0, 0);
-      clrtoeol();
+        move(0, 0);
+        clrtoeol();
 
-      attron(COLOR_PAIR(10) | A_BOLD);
-      mvprintw(0, pos, "%s", title.c_str());
-      attroff(COLOR_PAIR(10) | A_BOLD);
+        attron(COLOR_PAIR(10) | A_BOLD);
+        mvprintw(0, pos, "%s", title.c_str());
+        attroff(COLOR_PAIR(10) | A_BOLD);
 
-      if (!firstMove && !checkWin()) {
-        timer.update();
-        mvprintw(0, width * 2 + 5, "Time: %s - currentseed: %i",
-                 timer.getTimeString().c_str(), currentSeed);
-      } else if (firstMove) {
-        mvprintw(0, width * 2 + 5, "Time: %s", timer.getTimeString().c_str());
-      } else {
-        mvprintw(0, width * 2 + 5, "Time: %s - currentseed: %i - You win",
-                 timer.getTimeString().c_str(), currentSeed);
-        timer.stop();
-        if (isHighScore(timer.getElapsedSeconds())) {
-          state = GameState::ENTER_NAME;
-          playerName = "";
+        // Calculate the position dynamically based on the grid width
+        int timePos = width;  // Position time at the end of the grid
+
+        if (!firstMove && !checkWin()) {
+            timer.update();
+            mvprintw(0, timePos, "Time: %s - Seed: %i",
+                     timer.getTimeString().c_str(), currentSeed);
+        } else if (firstMove) {
+            mvprintw(0, timePos, "Time: %s", timer.getTimeString().c_str());
         } else {
-          // Just show the high scores without name entry
-          state = GameState::HIGHSCORES;
+            mvprintw(0, timePos, "Time: %s - Seed: %i - You win",
+                     timer.getTimeString().c_str(), currentSeed);
+            timer.stop();
+            if (isHighScore(timer.getElapsedSeconds())) {
+                state = GameState::ENTER_NAME;
+                playerName = "";
+            } else {
+                // Just show the high scores without name entry
+                state = GameState::HIGHSCORES;
+            }
         }
-      }
 
-      refresh();
+        refresh();
     }
-  }
+}
 
   void setDifficulty(Difficulty diff) {
     difficulty = diff;
