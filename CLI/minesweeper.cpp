@@ -44,6 +44,48 @@ const DifficultySettings DIFFICULTY_SETTINGS[] = {
     {16, 30, 99}  // HARD
 };
 
+#ifdef MSDOS
+// For MSDOS, use a simpler Timer class that only uses clock()
+class Timer {
+private:
+  clock_t startTime;
+  bool running;
+  int elapsedSeconds;
+
+public:
+  Timer() : running(false), elapsedSeconds(0) {}
+
+  void start() {
+    startTime = clock();
+    running = true;
+  }
+
+  void stop() {
+    if (running) {
+      update();
+      running = false;
+    }
+  }
+
+  int getElapsedSeconds() const { return elapsedSeconds; }
+
+  void update() {
+    if (running) {
+      clock_t now = clock();
+      elapsedSeconds = (now - startTime) / CLOCKS_PER_SEC;
+    }
+  }
+
+  std::string getTimeString() const {
+    int minutes = elapsedSeconds / 60;
+    int seconds = elapsedSeconds % 60;
+    char buffer[10];
+    snprintf(buffer, sizeof(buffer), "%02d:%02d", minutes, seconds);
+    return std::string(buffer);
+  }
+};
+#else
+// For non-MSDOS, use the chrono-based Timer
 class Timer {
 private:
   std::chrono::steady_clock::time_point startTime;
@@ -84,6 +126,7 @@ public:
     return std::string(buffer);
   }
 };
+#endif
 
 class Minesweeper {
 private:
@@ -307,6 +350,18 @@ private:
       }
 #ifndef MSDOS      
       std::this_thread::sleep_for(std::chrono::milliseconds(500));
+#else
+      // For MSDOS, add a delay mechanism and ensure timer updates
+      // Use a simple busy wait since we don't have std::this_thread
+      clock_t start_time = clock();
+      clock_t end_time = start_time + (CLOCKS_PER_SEC / 2); // Equivalent to 500ms
+      while (clock() < end_time && running) {
+        // Do nothing, just busy-wait
+      }
+      // Ensure timer gets updated even on MSDOS
+      if (state == GameState::PLAYING && !firstMove && !gameOver && !won) {
+        timer.update();
+      }
 #endif
     }
   }
@@ -605,6 +660,12 @@ public:
   }
 
   void draw() {
+#ifdef MSDOS
+  if (state == GameState::PLAYING && !firstMove && !gameOver && !won) {
+    timer.update();
+  }
+#endif
+
     if (state == GameState::ENTER_NAME) {
       drawEnterName();
       // state = GameState::MENU;
