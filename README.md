@@ -13,6 +13,14 @@ A polished, graphical implementation built with GTK and C++, featuring a modern 
 ### Terminal Version
 A classic, ncurses-based implementation perfect for terminal environments and systems without graphical interfaces.
 
+Versions include:
+
+* Linux
+* Windows
+* MS-DOS
+
+For MS-DOS, their are two different versions.  In the msdos folder, their is a fake ncurses that uses conio.h for movement.  In the CLI foloder, their is a ncurses/pdcurses version.  Both are very similar but the pdcurses is larger.
+
 ## ✨ Common Features
 
 All versions include:
