@@ -733,6 +733,9 @@ public:
     // Status and instructions
     mvprintw(height + 3, 0,
              "Press 'h' for help | Space=Reveal | F=Flag | Q=Quit");
+#ifdef MSDOS
+    animateTitle();
+#endif
 
     if (gameOver) {
       mvprintw(height + 4, 0,
@@ -742,7 +745,9 @@ public:
                "You Won! Time: %s | Press 'q' to quit or 'r' to restart.",
                timer.getTimeString().c_str());
     }
-
+#ifdef MSDOS
+    animateTitle();
+#endif
     refresh();
   }
 
