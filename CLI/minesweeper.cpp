@@ -348,13 +348,14 @@ private:
         // This would animate the banner but it's really annoying
         // pos = (pos + direction)%10;
       }
-#ifndef MSDOS      
+#ifndef MSDOS
       std::this_thread::sleep_for(std::chrono::milliseconds(500));
 #else
       // For MSDOS, add a delay mechanism and ensure timer updates
       // Use a simple busy wait since we don't have std::this_thread
       clock_t start_time = clock();
-      clock_t end_time = start_time + (CLOCKS_PER_SEC / 2); // Equivalent to 500ms
+      clock_t end_time =
+          start_time + (CLOCKS_PER_SEC / 2); // Equivalent to 500ms
       while (clock() < end_time && running) {
         // Do nothing, just busy-wait
       }
@@ -661,9 +662,9 @@ public:
 
   void draw() {
 #ifdef MSDOS
-  if (state == GameState::PLAYING && !firstMove && !gameOver && !won) {
-    timer.update();
-  }
+    if (state == GameState::PLAYING && !firstMove && !gameOver && !won) {
+      timer.update();
+    }
 #endif
 
     if (state == GameState::ENTER_NAME) {
