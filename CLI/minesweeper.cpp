@@ -624,6 +624,9 @@ public:
       drawHelp();
       return;
     }
+#ifdef MSDOS
+    drawTitle();
+#endif
 
     for (int y = 0; y < height; y++) {
       for (int x = 0; x < width; x++) {
@@ -763,6 +766,7 @@ public:
       return true;
     }
 
+    drawTitle();
     switch (ch) {
     case KEY_UP:
       if (cursorY > 0)

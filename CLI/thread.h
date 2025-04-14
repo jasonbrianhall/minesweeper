@@ -3,6 +3,7 @@
 #define DOS_THREAD_H
 
 #include <dos.h>
+#include <functional>
 
 // Define a namespace to avoid conflicts with std::chrono
 namespace dos_compat {
@@ -10,15 +11,19 @@ namespace dos_compat {
     class thread {
     private:
         bool is_active;
+        std::function<void()> thread_func; // Store the function to call
         
     public:
         thread() : is_active(false) {}
         
+        // Constructor for regular functions
+        thread(void (*func)()) : is_active(true), thread_func(func) {}
+        
         // Special constructor for member functions
         template<class T>
         thread(void (T::*func)(), T* obj) : is_active(true) {
-            // In MS-DOS, we don't actually create a thread
-            // Just mark as active for compatibility
+            // Store the member function and object to call it on
+            thread_func = [func, obj]() { (obj->*func)(); };
         }
         
         bool joinable() const {
@@ -27,6 +32,13 @@ namespace dos_compat {
         
         void join() {
             is_active = false;
+        }
+        
+        // Execute one "tick" of the thread function
+        void tick() {
+            if (is_active && thread_func) {
+                thread_func();
+            }
         }
         
         ~thread() {
