@@ -2,7 +2,11 @@
 #include <atomic>
 #include <chrono>
 #include <ctime>
+#ifndef _WIN32
 #include <ncurses.h>
+#else
+#include <curses.h>
+#endif
 #include <random>
 #include <set>
 #include <string>
