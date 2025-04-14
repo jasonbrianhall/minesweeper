@@ -171,6 +171,28 @@ make
 ./minesweeper
 ```
 
+### Terminal Version for Windows and MS-DOS
+Requirements:
+- mingw (for windows)
+- docker (for MS-DOS)
+- mingw-pdcurses (for Windows)
+
+```bash
+# Compile for Windows and MS-DOS (also builds Linux)
+cd CLI
+./compile.sh
+```
+
+### CONIO version for MS-DOS
+Requirements:
+- docker
+
+```bash
+cd msdos
+make
+```
+
+
 ## 🎲 Gameplay Tips
 
 1. The first click is always safe - use it strategically!
