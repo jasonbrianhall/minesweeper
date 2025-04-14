@@ -19,7 +19,7 @@ Versions include:
 * Windows
 * MS-DOS
 
-For MS-DOS, their are two different versions.  In the msdos folder, their is a fake ncurses that uses conio.h for movement.  In the CLI foloder, their is a ncurses/pdcurses version.  Both are very similar but the pdcurses is larger.
+For MS-DOS, their are two different versions.  In the msdos folder, their is a fake ncurses that uses conio.h for movement.  In the CLI foloder, their is a ncurses/pdcurses version.  Both are very similar and functionally the same.
 
 ## ✨ Common Features
 
