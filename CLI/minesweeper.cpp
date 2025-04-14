@@ -386,11 +386,21 @@ private:
         std::vector<std::vector<bool>>(height, std::vector<bool>(width, false));
 
     if (seed == -1) {
+#ifdef MSDOS
+      // For MSDOS, use time-based generation with improved distribution
+      unsigned int timeSeed = static_cast<unsigned int>(time(nullptr));
+      currentSeed = timeSeed ^
+                    (timeSeed << 16); // XOR with shifted version to spread bits
+      currentSeed = ((currentSeed * 1103515245 + 12345) * 65535) &
+                    0xFFFFFFFF; // Linear congruential generator
+#else
+      // For Linux/Windows, use random_device as before
       std::random_device rd;
       currentSeed = rd();
       if (currentSeed < 0) {
         currentSeed *= -1;
       }
+#endif
     } else {
       currentSeed = seed;
     }
