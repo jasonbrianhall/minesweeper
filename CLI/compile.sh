@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# Variables
+DJGPP_IMAGE="djfdyuruiry/djgpp"
+PDCURSES_REPO="https://github.com/wmcbrine/PDCurses.git"
+PDCURSES_DIR="pdcurses_build"
+CSDPMI_URL="http://na.mirror.garr.it/mirrors/djgpp/current/v2misc/csdpmi7b.zip"
+USER_ID=$(id -u)
+GROUP_ID=$(id -g)
+DOS_TARGET="mnsweep.exe"
+
 # Check and compile Linux version if g++ is available
 if command -v g++ &> /dev/null; then
     echo "Compiling Linux version..."
@@ -10,13 +19,149 @@ fi
 
 # Check and compile Windows version if cross-compiler is available
 if command -v x86_64-w64-mingw32-g++ &> /dev/null; then
-    mkdir win_minesweeper -p
+    mkdir -p win_minesweeper
 
     echo "Compiling Windows version (PDCurses) ..."
     x86_64-w64-mingw32-g++ minesweeper.cpp highscores.cpp -lpdcurses -std=c++14 -o win_minesweeper/minesweepr_pdcurses.exe
     ./collect_dlls.sh win_minesweeper/minesweepr_pdcurses.exe /usr/x86_64-w64-mingw32/sys-root/mingw/bin win_minesweeper
-
 else
     echo "Windows cross-compiler not found - skipping Windows build"
 fi
 
+# Build MSDOS version with PDCurses using Docker
+echo "Building MSDOS version with PDCurses..."
+
+# Pull the DJGPP Docker image
+echo "Pulling DJGPP Docker image..."
+docker pull ${DJGPP_IMAGE}
+
+# Download CSDPMI if needed
+if [ ! -d "csdpmi" ]; then
+    echo "Downloading CSDPMI..."
+    wget ${CSDPMI_URL}
+    mkdir -p csdpmi
+    unzip -o csdpmi7b.zip -d csdpmi
+fi
+
+# Clone PDCurses if needed
+if [ ! -d "${PDCURSES_DIR}" ]; then
+    echo "Cloning PDCurses repository..."
+    git clone ${PDCURSES_REPO} ${PDCURSES_DIR}
+fi
+
+# Create a script to run inside Docker for building PDCurses and the application
+cat > build_msdos.sh << 'EOF'
+#!/bin/bash
+set -e
+
+# Build PDCurses for MSDOS
+cd /src/pdcurses_build/dos
+echo "Building PDCurses for MSDOS..."
+# First clean any existing build artifacts to ensure a fresh build
+make -f Makefile clean PDCURSES_SRCDIR=/src/pdcurses_build PLATFORM=djgpp
+# Now build PDCurses
+make -f Makefile PDCURSES_SRCDIR=/src/pdcurses_build PLATFORM=djgpp
+
+# Move PDCurses library to a location we can reference
+mkdir -p /src/lib /src/include
+cp pdcurses.a /src/lib/libpdcurses.a
+cp /src/pdcurses_build/curses.h /src/include/
+cp /src/pdcurses_build/panel.h /src/include/
+
+# Create an empty term.h if needed by your code
+# (term.h is not part of PDCurses but might be referenced by your code)
+touch /src/include/term.h
+
+# Build the minesweeper application
+cd /src
+echo "Building minesweeper for MSDOS..."
+# Add preprocessor define for MSDOS to handle any platform-specific code
+g++ minesweeper.cpp highscores.cpp -o mnsweep.exe -I/src/include -L/src/lib -lpdcurses -DMSDOS
+
+echo "Build complete!"
+EOF
+
+# Make the script executable
+chmod +x build_msdos.sh
+
+# Create a temporary directory to avoid symlink issues
+TEMP_BUILD_DIR=$(mktemp -d)
+echo "Created temporary build directory: ${TEMP_BUILD_DIR}"
+
+# Resolve symbolic links for source files
+echo "Resolving symbolic links for source files..."
+
+# For highscores.cpp - follow the symlink to get the actual file
+HIGHSCORES_CPP_REAL=$(readlink -f highscores.cpp)
+if [ -f "$HIGHSCORES_CPP_REAL" ]; then
+    echo "Found real highscores.cpp at: $HIGHSCORES_CPP_REAL"
+    cp "$HIGHSCORES_CPP_REAL" "${TEMP_BUILD_DIR}/highscores.cpp"
+else
+    echo "Error: Could not resolve symlink for highscores.cpp"
+    exit 1
+fi
+
+# For highscores.h - if it exists and is a symlink
+if [ -f "highscores.h" ]; then
+    HIGHSCORES_H_REAL=$(readlink -f highscores.h)
+    if [ -f "$HIGHSCORES_H_REAL" ]; then
+        echo "Found real highscores.h at: $HIGHSCORES_H_REAL"
+        cp "$HIGHSCORES_H_REAL" "${TEMP_BUILD_DIR}/highscores.h"
+    else
+        echo "Warning: Could not resolve symlink for highscores.h"
+    fi
+fi
+
+# Copy thread.h - your custom file
+if [ -f "thread.h" ]; then
+    THREAD_H_REAL=$(readlink -f thread.h)
+    if [ -f "$THREAD_H_REAL" ]; then
+        echo "Found real thread.h at: $THREAD_H_REAL"
+        cp "$THREAD_H_REAL" "${TEMP_BUILD_DIR}/thread.h"
+    else
+        # If it's not a symlink, just copy it directly
+        cp -f thread.h "${TEMP_BUILD_DIR}/thread.h"
+        echo "Copied thread.h to build directory"
+    fi
+else
+    echo "Warning: thread.h not found"
+fi
+
+# Copy minesweeper.cpp directly
+cp -L minesweeper.cpp "${TEMP_BUILD_DIR}/"
+
+# Copy PDCurses and build script
+cp -r "${PDCURSES_DIR}" "${TEMP_BUILD_DIR}/"
+cp build_msdos.sh "${TEMP_BUILD_DIR}/"
+
+# List files in the temporary directory for verification
+echo "Files in temporary build directory:"
+ls -la "${TEMP_BUILD_DIR}"
+
+# Run the Docker container with the temporary directory
+echo "Starting Docker build process..."
+docker run --rm -v "${TEMP_BUILD_DIR}:/src:z" -u ${USER_ID}:${GROUP_ID} ${DJGPP_IMAGE} /src/build_msdos.sh
+
+# Copy back the built files
+echo "Copying built files from temporary directory..."
+cp "${TEMP_BUILD_DIR}/${DOS_TARGET}" ./ 2>/dev/null || echo "Failed to copy executable"
+cp "${TEMP_BUILD_DIR}/lib/libpdcurses.a" ./ 2>/dev/null || echo "Failed to copy PDCurses library"
+
+# Clean up
+echo "Cleaning up temporary directory..."
+rm -rf "${TEMP_BUILD_DIR}"
+
+# Ensure we have the CSDPMI executable in the current directory
+if [ -f "csdpmi/bin/CWSDPMI.EXE" ]; then
+    cp csdpmi/bin/CWSDPMI.EXE .
+fi
+
+# Check if build was successful
+if [ -f "${DOS_TARGET}" ]; then
+    echo "MSDOS build successful! Files created:"
+    echo "- ${DOS_TARGET}"
+    echo "- CWSDPMI.EXE"
+    echo "To run in DOSBox, execute: dosbox ${DOS_TARGET}"
+else
+    echo "MSDOS build failed."
+fi

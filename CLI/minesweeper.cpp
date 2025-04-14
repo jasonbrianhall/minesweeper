@@ -14,7 +14,11 @@
 #include <random>
 #include <set>
 #include <string>
+#ifndef MSDOS
 #include <thread>
+#else
+#include "thread.h"
+#endif
 #include <vector>
 
 #define MAX_SCORES 10
@@ -301,7 +305,9 @@ private:
         // This would animate the banner but it's really annoying
         // pos = (pos + direction)%10;
       }
+#ifndef MSDOS      
       std::this_thread::sleep_for(std::chrono::milliseconds(500));
+#endif
     }
   }
 
