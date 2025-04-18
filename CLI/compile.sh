@@ -8,6 +8,7 @@ CSDPMI_URL="http://na.mirror.garr.it/mirrors/djgpp/current/v2misc/csdpmi7b.zip"
 USER_ID=$(id -u)
 GROUP_ID=$(id -g)
 DOS_TARGET="mnsweep.exe"
+CWSDSTUB_URL="http://na.mirror.garr.it/mirrors/djgpp/current/v2/djdev205.zip"
 
 # Check and compile Linux version if g++ is available
 if command -v g++ &> /dev/null; then
@@ -28,13 +29,6 @@ else
     echo "Windows cross-compiler not found - skipping Windows build"
 fi
 
-# Build MSDOS version with PDCurses using Docker
-echo "Building MSDOS version with PDCurses..."
-
-# Pull the DJGPP Docker image
-echo "Pulling DJGPP Docker image..."
-docker pull ${DJGPP_IMAGE}
-
 # Download CSDPMI if needed
 if [ ! -d "csdpmi" ]; then
     echo "Downloading CSDPMI..."
@@ -43,11 +37,26 @@ if [ ! -d "csdpmi" ]; then
     unzip -o csdpmi7b.zip -d csdpmi
 fi
 
+# Download CWSDSTUB if needed
+# CWSDSTUB.EXE should be in the csdpmi/bin directory along with CWSDPMI.EXE
+if [ ! -f "csdpmi/bin/CWSDSTUB.EXE" ]; then
+    echo "CWSDSTUB.EXE not found in csdpmi/bin directory"
+    echo "Make sure you have the complete CSDPMI package"
+    exit 1
+fi
+
 # Clone PDCurses if needed
 if [ ! -d "${PDCURSES_DIR}" ]; then
     echo "Cloning PDCurses repository..."
     git clone ${PDCURSES_REPO} ${PDCURSES_DIR}
 fi
+
+# Build MSDOS version with PDCurses using Docker
+echo "Building MSDOS version with PDCurses..."
+
+# Pull the DJGPP Docker image
+echo "Pulling DJGPP Docker image..."
+docker pull ${DJGPP_IMAGE}
 
 # Create a script to run inside Docker for building PDCurses and the application
 cat > build_msdos.sh << 'EOF'
@@ -78,7 +87,19 @@ echo "Building minesweeper for MSDOS..."
 # Add preprocessor define for MSDOS to handle any platform-specific code
 g++ minesweeper.cpp highscores.cpp -o mnsweep.exe -I/src/include -L/src/lib -lpdcurses -DMSDOS
 
-echo "Build complete!"
+# Now embed CWSDPMI directly into the executable
+echo "Embedding CWSDPMI into executable..."
+# First convert the EXE to COFF format
+exe2coff mnsweep.exe
+cp mnsweep mnsweep.coff
+# Then combine CWSDSTUB with our program
+cat /src/CWSDSTUB.EXE mnsweep.coff > embedded.exe
+# Rename the embedded executable to our target name
+mv embedded.exe mnsweep.exe
+# Make sure it's executable
+chmod +x mnsweep.exe
+
+echo "Build complete with embedded DPMI!"
 EOF
 
 # Make the script executable
@@ -134,6 +155,15 @@ cp -L minesweeper.cpp "${TEMP_BUILD_DIR}/"
 cp -r "${PDCURSES_DIR}" "${TEMP_BUILD_DIR}/"
 cp build_msdos.sh "${TEMP_BUILD_DIR}/"
 
+# Copy CWSDSTUB.EXE to the build directory
+if [ -f "csdpmi/bin/CWSDSTUB.EXE" ]; then
+    cp csdpmi/bin/CWSDSTUB.EXE "${TEMP_BUILD_DIR}/"
+    echo "Copied CWSDSTUB.EXE to build directory"
+else
+    echo "Error: CWSDSTUB.EXE not found in csdpmi/bin directory"
+    exit 1
+fi
+
 # List files in the temporary directory for verification
 echo "Files in temporary build directory:"
 ls -la "${TEMP_BUILD_DIR}"
@@ -151,16 +181,11 @@ cp "${TEMP_BUILD_DIR}/lib/libpdcurses.a" ./ 2>/dev/null || echo "Failed to copy 
 echo "Cleaning up temporary directory..."
 rm -rf "${TEMP_BUILD_DIR}"
 
-# Ensure we have the CSDPMI executable in the current directory
-if [ -f "csdpmi/bin/CWSDPMI.EXE" ]; then
-    cp csdpmi/bin/CWSDPMI.EXE .
-fi
-
 # Check if build was successful
 if [ -f "${DOS_TARGET}" ]; then
     echo "MSDOS build successful! Files created:"
-    echo "- ${DOS_TARGET}"
-    echo "- CWSDPMI.EXE"
+    echo "- ${DOS_TARGET} (with embedded DPMI extender)"
+    echo "The executable should now run without requiring CWSDPMI.EXE"
     echo "To run in DOSBox, execute: dosbox ${DOS_TARGET}"
 else
     echo "MSDOS build failed."
