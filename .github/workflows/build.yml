@@ -45,8 +45,10 @@ jobs:
     - name: Build MS-DOS Version
       working-directory: msdos
       run: |
-        make
-
+        g++ minesweeper.cpp highscores.cpp ncurses.cpp -o mnsweep.exe
+        exe2coff mnsweep.exe
+        cat csdpmi/bin/CWSDSTUB.EXE mnsweep > mnsweep.exe
+        
     - name: Create MS-DOS Distribution
       working-directory: msdos
       run: |
@@ -59,7 +61,7 @@ jobs:
         Version 1.0
 
         Installation:
-        1. Run mnsweep.exe from dosbox
+        1. dosbox mnsweep.exe
 
         Requirements:
         - MS-DOS or compatible OS
@@ -75,7 +77,6 @@ jobs:
         path: |
           Minesweeper-MSDOS.zip
           msdos/mnsweep.exe
-          msdos/CWSDPMI.EXE
 
   build-windows:
     runs-on: windows-latest
@@ -290,7 +291,6 @@ jobs:
         files: |
           msdos-artifacts/Minesweeper-MSDOS.zip
           msdos-artifacts/mnsweep.exe
-          msdos-artifacts/CWSDPMI.EXE
           windows-artifacts/Minesweeper.msi
           windows-artifacts/x64/Release/minesweeper.exe
           gtk-artifacts/Minesweeper-GTK.msi
@@ -306,7 +306,7 @@ jobs:
           Build number: ${{ github.run_number }}
           
           This release includes:
-          - MS-DOS version (mnsweep.exe with CWSDPMI.EXE)
+          - MS-DOS version (mnsweep.exe)
           - Windows version (Minesweeper.msi)
           - GTK version (Minesweeper-GTK.msi)
           - GTK portable version (Minesweeper-GTK.zip)
