@@ -161,7 +161,7 @@ jobs:
   build-gtk:
     runs-on: ubuntu-latest
     container: 
-      image: fedora:latest
+      image: fedora:41
     permissions:
       contents: write
 
