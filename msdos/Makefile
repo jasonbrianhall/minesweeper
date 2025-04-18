@@ -6,6 +6,9 @@ SRCS = minesweeper.cpp highscores.cpp ncurses.cpp
 
 # Output executable
 DOS_TARGET = mnsweep.exe
+DOS_COFF = mnsweep
+COFF_TARGET = mnsweep.coff
+EMBEDDED_TARGET = embedded.exe
 
 # Docker image for DJGPP
 DJGPP_IMAGE = djfdyuruiry/djgpp
@@ -18,7 +21,7 @@ USER_ID = $(shell id -u)
 GROUP_ID = $(shell id -g)
 
 # Default target
-all: msdos
+all: msdos_embedded
 
 # Target to pull the DJGPP Docker image
 pull-djgpp:
@@ -26,25 +29,45 @@ pull-djgpp:
 
 # Target to download CSDPMI
 get-csdpmi:
-	wget $(CSDPMI_URL)
-	unzip -o csdpmi7b.zip -d csdpmi
+	@if [ ! -d "csdpmi" ]; then \
+		wget $(CSDPMI_URL); \
+		unzip -o csdpmi7b.zip -d csdpmi; \
+	fi
 
-# Target to build for MS-DOS using DJGPP in Docker
-msdos: pull-djgpp get-csdpmi
+# Original MSDOS build target that requires separate CWSDPMI.EXE
+msdos_original: pull-djgpp get-csdpmi
 	docker run --rm -v $(PWD):/src:z -u $(USER_ID):$(GROUP_ID) $(DJGPP_IMAGE) /bin/sh -c "cd /src && g++ $(SRCS) -o $(DOS_TARGET)"
 	cp csdpmi/bin/CWSDPMI.EXE .
 
+# Target to build for MS-DOS with embedded CWSDPMI
+msdos_embedded: pull-djgpp get-csdpmi
+	@if [ ! -f "csdpmi/bin/CWSDSTUB.EXE" ]; then \
+		echo "ERROR: CWSDSTUB.EXE not found in csdpmi/bin directory!"; \
+		echo "Make sure you have the complete CSDPMI package."; \
+		exit 1; \
+	fi
+	docker run --rm -v $(PWD):/src:z -u $(USER_ID):$(GROUP_ID) $(DJGPP_IMAGE) /bin/sh -c "\
+		cd /src && \
+		g++ $(SRCS) -o $(DOS_TARGET) && \
+		exe2coff $(DOS_TARGET) && \
+		cp $(DOS_COFF) $(COFF_TARGET) && \
+		cat csdpmi/bin/CWSDSTUB.EXE $(COFF_TARGET) > $(EMBEDDED_TARGET) && \
+		mv $(EMBEDDED_TARGET) $(DOS_TARGET) && \
+		chmod +x $(DOS_TARGET) && \
+		rm -f $(COFF_TARGET)"
+	@echo "Created $(DOS_TARGET) with embedded DPMI extender"
+
+# Alias for backward compatibility
+msdos: msdos_embedded
+
 # Target to run the MS-DOS executable using DOSBox
-run: msdos
+run: msdos_embedded
 	dosbox $(DOS_TARGET)
 
 # Clean target to remove generated files
 clean:
-	rm -f $(DOS_TARGET) csdpmi7b.zip || true
+	rm -f $(DOS_TARGET) $(COFF_TARGET) $(EMBEDDED_TARGET) csdpmi7b.zip || true
 	rm -rf csdpmi || true
-	rm *.exe || true
-	rm *.EXE || true
-	rm *.zip || true
-	rm *.zip.* || true
+	rm -f *.exe *.EXE *.zip *.zip.* || true
 
-.PHONY: all pull-djgpp get-csdpmi msdos run clean
+.PHONY: all pull-djgpp get-csdpmi msdos msdos_original msdos_embedded run clean
