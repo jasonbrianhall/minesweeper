@@ -48,7 +48,7 @@ msdos_embedded: pull-djgpp get-csdpmi
 	fi
 	docker run --rm -v $(PWD):/src:z -u $(USER_ID):$(GROUP_ID) $(DJGPP_IMAGE) /bin/sh -c "\
 		cd /src && \
-		g++ -Os -s -ffunction-sections -fdata-sections -Wl,--gc-sections $(SRCS) -o $(DOS_TARGET) && \
+		g++ -Os -s -ffunction-sections -fdata-sections -Wl,--gc-sections -Wl,--no-keep-memory $(SRCS) -o $(DOS_TARGET) && \
 		exe2coff $(DOS_TARGET) && \
 		cp $(DOS_COFF) $(COFF_TARGET) && \
 		cat csdpmi/bin/CWSDSTUB.EXE $(COFF_TARGET) > $(EMBEDDED_TARGET) && \
