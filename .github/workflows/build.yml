@@ -68,7 +68,8 @@ jobs:
 
         cd "$mycwd"
 
-        g++ minesweeper_gui.cpp minesweeper_main.cpp minesweeper_game.cpp highscores.cpp -lalleg -lm -I/workspace/source-install/include/ -L/workspace/source-install/lib -fpermissive -w -o minesweeper_msdos_allegro
+        CFLAGS="-O3 -march=i586 -fomit-frame-pointer -ffast-math -funroll-loops -fpermissive -w -std=c++11"
+        g++ $CFLAGS minesweeper_gui.cpp minesweeper_main.cpp minesweeper_game.cpp highscores.cpp -lalleg -lm -I/workspace/source-install/include/ -L/workspace/source-install/lib -o minesweeper_msdos_allegro
         exe2coff minesweeper_msdos_allegro.exe
         cat csdpmi/bin/CWSDSTUB.EXE minesweeper_msdos_allegro > minesweeper_msdos_allegro.exe
         
