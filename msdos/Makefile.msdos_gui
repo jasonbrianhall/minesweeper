@@ -108,7 +108,7 @@ compile: allegro
 		/bin/sh -c " \
 			cd /src && \
 			echo 'Linking executable...' && \
-			g++ minesweeper_gui.cpp minesweeper_main.cpp minesweeper_game.cpp highscores.cpp -L$(BUILD_DIR)/source-install/lib -lalleg -lm $(CFLAGS) -s -o $(BUILD_DIR)/minesweeper.exe && \
+			g++ minesweeper_gui.cpp minesweeper_main.cpp minesweeper_game.cpp highscores.cpp -I$(BUILD_DIR)/source-install/include -L$(BUILD_DIR)/source-install/lib -lalleg -lm $(CFLAGS) -s -o $(BUILD_DIR)/minesweeper.exe && \
 			echo 'Converting to COFF format...' && \
 			exe2coff $(BUILD_DIR)/minesweeper.exe && \
 			echo 'Adding DPMI stub...' && \
