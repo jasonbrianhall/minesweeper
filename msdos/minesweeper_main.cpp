@@ -532,10 +532,12 @@ int main() {
             
             if (game->won) {
                 game->state = GameState::GAME_OVER;
+                game->timer.stop();  /* Stop timer when winning */
                 display_status("You won! Press any key...");
                 mark_screen_dirty();
             } else if (game->gameOver) {
                 game->state = GameState::GAME_OVER;
+                game->timer.stop();  /* Stop timer when losing */
                 display_status("Game Over! Press any key...");
                 mark_screen_dirty();
             }
@@ -601,10 +603,12 @@ int main() {
                         /* Check for win/loss after revealing */
                         if (game->won) {
                             game->state = GameState::GAME_OVER;
+                            game->timer.stop();  /* Stop timer when winning */
                             display_status("You won! Press any key...");
                             mark_screen_dirty();
                         } else if (game->gameOver) {
                             game->state = GameState::GAME_OVER;
+                            game->timer.stop();  /* Stop timer when losing */
                             display_status("Game Over! Press any key...");
                             mark_screen_dirty();
                         }
@@ -634,10 +638,12 @@ int main() {
                             /* Check for win/loss after revealing adjacent */
                             if (game->won) {
                                 game->state = GameState::GAME_OVER;
+                                game->timer.stop();  /* Stop timer when winning */
                                 display_status("You won! Press any key...");
                                 mark_screen_dirty();
                             } else if (game->gameOver) {
                                 game->state = GameState::GAME_OVER;
+                                game->timer.stop();  /* Stop timer when losing */
                                 display_status("Game Over! Press any key...");
                                 mark_screen_dirty();
                             }
@@ -676,6 +682,7 @@ int main() {
         /* NOW change state to GAME_OVER after drawing */
         if (game->state == GameState::PLAYING && (game->gameOver || game->won)) {
             game->state = GameState::GAME_OVER;
+            game->timer.stop();  /* Ensure timer is stopped */
         }
         
         /* Always mark dirty to ensure updates */
