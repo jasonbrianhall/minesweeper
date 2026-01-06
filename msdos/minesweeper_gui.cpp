@@ -20,8 +20,6 @@ MinesweeperGUI minesweeper_gui;
 /* File menu items */
 const char *file_menu_items[] = {
     "New Game      N",
-    "Load Game     L",
-    "Save Game     S",
     "",  /* separator */
     "Exit          Q"
 };
@@ -155,10 +153,10 @@ void draw_menu_bar() {
         int menu_y = MENU_BAR_HEIGHT;
         int menu_w = 200;
         int item_h = 20;
-        int menu_h = NUM_FILE_MENU_ITEMS * item_h + 10;
+        int menu_h = NUM_FILE_MENU_ITEMS * item_h;
         
         /* Ensure menu is on top - draw with solid background */
-        rectfill(active_buffer, menu_x, menu_y, menu_x + menu_w, menu_y + menu_h + 50, COLOR_BLUE);
+        rectfill(active_buffer, menu_x, menu_y, menu_x + menu_w, menu_y + menu_h, COLOR_BLUE);
         rect(active_buffer, menu_x, menu_y, menu_x + menu_w, menu_y + menu_h, COLOR_WHITE);
         
         /* Menu items */
@@ -189,10 +187,10 @@ void draw_menu_bar() {
         int menu_y = MENU_BAR_HEIGHT;
         int menu_w = 200;
         int item_h = 20;
-        int menu_h = NUM_GAME_MENU_ITEMS * item_h + 10;
+        int menu_h = NUM_GAME_MENU_ITEMS * item_h;
         
         /* Ensure menu is on top - draw with solid background */
-        rectfill(active_buffer, menu_x, menu_y, menu_x + menu_w, menu_y + menu_h + 50, COLOR_BLUE);
+        rectfill(active_buffer, menu_x, menu_y, menu_x + menu_w, menu_y + menu_h, COLOR_BLUE);
         rect(active_buffer, menu_x, menu_y, menu_x + menu_w, menu_y + menu_h, COLOR_WHITE);
         
         /* Menu items */

@@ -113,17 +113,14 @@ void handle_file_menu_click(int item_index) {
     switch (item_index) {
         case 0:  /* New Game */
             if (game) {
-                game->state = GameState::MENU;
-                mark_screen_dirty();
-            }
-            break;
-        case 1:  /* Reset */
-            if (game) {
+                game->setDifficulty(Difficulty::EASY);
                 game->reset();
+                game->state = GameState::PLAYING;
+                display_status("Minesweeper - Left click to reveal, Right click to flag");
                 mark_screen_dirty();
             }
             break;
-        case 3:  /* Exit */
+        case 2:  /* Exit (was case 3 with old menu) */
             allegro_exit();
             exit(0);
             break;
