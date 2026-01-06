@@ -1,0 +1,180 @@
+# Makefile for minesweeper DOS with Allegro 4 and DPMI support
+VERSION=1.0
+
+# Output files
+DOS_TARGET = minesweeper.exe
+DOS_COFF = minesweeper
+
+# Build directories
+BUILD_DIR = build/dos
+OBJ_DIR = $(BUILD_DIR)/obj
+
+# Docker image for DJGPP
+DJGPP_IMAGE = djfdyuruiry/djgpp
+
+# Allegro paths
+ALLEGRO_URL = https://github.com/superjamie/allegro-4.2.3.1-xc/archive/refs/heads/master.tar.gz
+ALLEGRO_BUILD = $(BUILD_DIR)/source-install
+
+# CSDPMI URL and paths
+CSDPMI_URL = http://na.mirror.garr.it/mirrors/djgpp/current/v2misc/csdpmi7b.zip
+CSDPMI_DIR = $(BUILD_DIR)/csdpmi
+
+# Get current user and group IDs for Docker
+USER_ID = $(shell id -u)
+GROUP_ID = $(shell id -g)
+
+# Compiler flags
+CFLAGS = -O3 -march=i586 -fomit-frame-pointer -ffast-math -funroll-loops -fpermissive -w -std=c++11
+
+# Default target
+all: dos
+
+# Help target
+help:
+	@echo "minesweeper DOS Makefile"
+	@echo "===================="
+	@echo "Targets:"
+	@echo "  make dos          - Build for DOS (full build)"
+	@echo "  make setup        - Setup DJGPP environment and CSDPMI"
+	@echo "  make allegro      - Build Allegro 4 library"
+	@echo "  make compile      - Quick compile (assumes Allegro is built)"
+	@echo "  make run          - Run in DOSBox"
+	@echo "  make clean        - Clean all build files"
+	@echo "  make clean-obj    - Clean only object files"
+	@echo "  make clean-allegro - Clean Allegro build"
+	@echo "  make status       - Show build status"
+
+# Setup DJGPP environment
+setup: pull-djgpp get-csdpmi
+	@echo "Setup complete"
+
+# Pull DJGPP Docker image
+pull-djgpp:
+	@echo "Pulling DJGPP Docker image..."
+	docker pull $(DJGPP_IMAGE)
+
+# Download and extract CSDPMI
+get-csdpmi:
+	@if [ ! -d "$(CSDPMI_DIR)" ]; then \
+		echo "Downloading CSDPMI..."; \
+		mkdir -p $(BUILD_DIR); \
+		cd $(BUILD_DIR) && \
+		curl -L -o csdpmi7b.zip $(CSDPMI_URL) && \
+		unzip -o -q csdpmi7b.zip -d csdpmi && \
+		rm csdpmi7b.zip && \
+		cd ../..; \
+	else \
+		echo "CSDPMI already downloaded"; \
+	fi
+
+# Build Allegro 4 library
+allegro: pull-djgpp get-csdpmi
+	@if [ ! -d "$(ALLEGRO_BUILD)" ]; then \
+		echo "Building Allegro 4 for DJGPP..."; \
+		mkdir -p $(BUILD_DIR); \
+		cd $(BUILD_DIR) && \
+		curl -L -o allegro-4.2.3.1-xc.tar.gz $(ALLEGRO_URL) && \
+		docker run --rm \
+			-v $(PWD)/$(BUILD_DIR):/workspace:z \
+			-w /workspace \
+			--user root \
+			$(DJGPP_IMAGE) \
+			/bin/bash -c " \
+				tar xzf allegro-4.2.3.1-xc.tar.gz && \
+				cd allegro-4.2.3.1-xc-master && \
+				chmod +x xmake.sh && \
+				./xmake.sh lib && \
+				mkdir -p /workspace/source-install/include && \
+				mkdir -p /workspace/source-install/lib && \
+				cp -r include/* /workspace/source-install/include/ && \
+				cp lib/djgpp/liballeg.a /workspace/source-install/lib/ && \
+				chown -R $(USER_ID):$(GROUP_ID) /workspace && \
+				echo 'Allegro 4 built successfully' \
+			" && \
+		cd ../..; \
+	else \
+		echo "Allegro 4 already built"; \
+	fi
+
+# Quick compile (assumes Allegro is already built)
+compile: allegro
+	@echo "Compiling minesweeper with DJGPP and Allegro 4..."
+	@mkdir -p $(OBJ_DIR)
+	@docker run --rm \
+		-v $(PWD):/src:z \
+		-u $(USER_ID):$(GROUP_ID) \
+		$(DJGPP_IMAGE) \
+		/bin/sh -c " \
+			cd /src && \
+			echo 'Linking executable...' && \
+			g++ minesweeper_gui.cpp minesweeper_main.cpp minesweeper_game.cpp highscores.cpp -L$(BUILD_DIR)/source-install/lib -lalleg -lm $(CFLAGS) -s -o $(BUILD_DIR)/minesweeper.exe && \
+			echo 'Converting to COFF format...' && \
+			exe2coff $(BUILD_DIR)/minesweeper.exe && \
+			echo 'Adding DPMI stub...' && \
+			cat $(CSDPMI_DIR)/bin/CWSDSTUB.EXE $(BUILD_DIR)/minesweeper > $(BUILD_DIR)/$(DOS_TARGET) && \
+			echo 'DOS build complete!' && \
+			rm $(BUILD_DIR)/minesweeper \
+		"
+	@echo "✅ Build successful!"
+	@echo "📁 Output: $(BUILD_DIR)/$(DOS_TARGET)"
+
+# Full DOS build
+dos: compile
+
+# Run in DOSBox
+run: dos
+	@echo "Running minesweeper in DOSBox..."
+	@if [ -f "$(BUILD_DIR)/$(DOS_TARGET)" ]; then \
+		if command -v dosbox >/dev/null 2>&1; then \
+			cd $(BUILD_DIR) && dosbox $(DOS_TARGET); \
+		else \
+			echo "DOSBox not found. Install with: sudo apt-get install dosbox"; \
+			echo "Download from: https://www.dosbox.com/"; \
+			exit 1; \
+		fi \
+	else \
+		echo "ERROR: $(BUILD_DIR)/$(DOS_TARGET) not found. Build first with: make -f Makefile.dos dos"; \
+		exit 1; \
+	fi
+
+# Clean all build files
+clean:
+	@echo "Cleaning build files..."
+	@rm -rf $(BUILD_DIR)
+	@rm -f $(DOS_TARGET)
+	@echo "✅ Clean complete"
+
+# Clean only object files
+clean-obj:
+	@echo "Cleaning object files..."
+	@rm -rf $(OBJ_DIR)
+	@echo "✅ Object files cleaned"
+
+# Clean Allegro build only
+clean-allegro:
+	@echo "Cleaning Allegro build..."
+	@rm -rf $(ALLEGRO_BUILD)
+	@echo "✅ Allegro cleaned"
+
+# Status target - show build status
+status:
+	@echo "Build Status:"
+	@echo "============"
+	@if [ -d "$(CSDPMI_DIR)" ]; then \
+		echo "✅ CSDPMI: Downloaded"; \
+	else \
+		echo "❌ CSDPMI: Not downloaded"; \
+	fi
+	@if [ -d "$(ALLEGRO_BUILD)" ]; then \
+		echo "✅ Allegro 4: Built"; \
+	else \
+		echo "❌ Allegro 4: Not built"; \
+	fi
+	@if [ -f "$(BUILD_DIR)/$(DOS_TARGET)" ]; then \
+		echo "✅ Executable: $(BUILD_DIR)/$(DOS_TARGET) ($(shell ls -lh $(BUILD_DIR)/$(DOS_TARGET) 2>/dev/null | awk '{print $$5}'))"; \
+	else \
+		echo "❌ Executable: Not built"; \
+	fi
+
+.PHONY: all help setup pull-djgpp get-csdpmi allegro compile dos run clean clean-obj clean-allegro status
