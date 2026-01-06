@@ -213,25 +213,35 @@ void process_input(Minesweeper *game, bool &running) {
         key=key/256;
     }
     if (key == KEY_UP) {
-        printf("Key up\n");
         if (minesweeper_gui.selected_row > 0) {
             minesweeper_gui.selected_row--;
             mark_screen_dirty();
+        }
+        else {
+             minesweeper_gui.selected_row=game->height-1;
         }
     } else if (key == KEY_DOWN) {
         if (minesweeper_gui.selected_row < game->height - 1) {
             minesweeper_gui.selected_row++;
             mark_screen_dirty();
         }
+        else {
+            minesweeper_gui.selected_row=0;
+        }
     } else if (key == KEY_LEFT) {
         if (minesweeper_gui.selected_col > 0) {
             minesweeper_gui.selected_col--;
             mark_screen_dirty();
+        } else {
+            minesweeper_gui.selected_col=game->width - 1;
         }
+        
     } else if (key == KEY_RIGHT) {
         if (minesweeper_gui.selected_col < game->width - 1) {
             minesweeper_gui.selected_col++;
             mark_screen_dirty();
+        } else {
+            minesweeper_gui.selected_col=0;
         }
     } 
     
@@ -267,9 +277,16 @@ void process_input(Minesweeper *game, bool &running) {
         case GameState::PLAYING:
             /* FIXED: Handle arrow keys and game mechanics FIRST */
             if (key == ' ' || key == KEY_ENTER) {
-               /* Reveal cell */
-               game->reveal(minesweeper_gui.selected_col, minesweeper_gui.selected_row);
-               mark_screen_dirty();
+               /* Check if cell is already revealed and has matching flags */
+               if (game->revealed[minesweeper_gui.selected_row][minesweeper_gui.selected_col]) {
+                   /* Chord click: reveal adjacent cells if flags match adjacent mines */
+                   game->revealAdjacentCells(minesweeper_gui.selected_row, minesweeper_gui.selected_col);
+                   mark_screen_dirty();
+               } else {
+                   /* Normal reveal: click unrevealed cell */
+                   game->reveal(minesweeper_gui.selected_col, minesweeper_gui.selected_row);
+                   mark_screen_dirty();
+               }
             } else if (ascii == 'f' || ascii == 'F') {
                 /* Toggle flag */
                 game->toggleFlag(minesweeper_gui.selected_col, minesweeper_gui.selected_row);
