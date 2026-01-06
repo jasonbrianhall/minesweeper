@@ -251,7 +251,7 @@ void draw_game_board() {
     if (!game) return;
     
     /* Only draw board during gameplay */
-    if (game->state != GameState::PLAYING) {
+    if (!(game->state == GameState::PLAYING || game->state == GameState::GAME_OVER)) {
         return;
     }
     
@@ -359,13 +359,13 @@ void draw_name_input_dialog() {
         return;
     }
     
-    int box_x = 150;
-    int box_y = 150;
+    int box_x = 342;
+    int box_y = 324;
     int box_w = 340;
     int box_h = 120;
     
-    /* Semi-transparent overlay */
-    rectfill(active_buffer, 0, 0, 640, 480, COLOR_BLACK);
+    /* Semi-transparent overlay - cover entire 1024x768 screen */
+    rectfill(active_buffer, 0, 0, 1024, 768, COLOR_BLACK);
     
     /* Dialog box */
     rectfill(active_buffer, box_x, box_y, box_x + box_w, box_y + box_h, COLOR_BLUE);
@@ -399,7 +399,6 @@ void draw_name_input_dialog() {
  */
 void draw_minesweeper_screen() {
     clear_to_color(active_buffer, COLOR_WHITE);
-    
     /* Handle different game states */
     if (game->state == GameState::MENU) {
         /* Main menu display */
@@ -434,7 +433,7 @@ void draw_minesweeper_screen() {
         
         textout_centre_ex(active_buffer, font, "Press any key to return to menu", 512, 700, COLOR_DARK_GRAY, COLOR_WHITE);
     } else {
-        /* Normal gameplay display */
+        /* Normal gameplay display - including GAME_OVER state to show board with mines */
         draw_game_board();
         draw_button_panel();
         draw_name_input_dialog();
@@ -449,14 +448,14 @@ void draw_minesweeper_screen() {
     }
     
     /* Timer display */
-    if (game && game->state == GameState::PLAYING) {
+    if (game && (game->state == GameState::PLAYING || game->state == GameState::GAME_OVER)) {
         char timer_str[30];
         sprintf(timer_str, "Time: %d sec", game->timer.getElapsedSeconds());
         textout_ex(active_buffer, font, timer_str, TIMER_DISPLAY_X, 730, COLOR_BLACK, -1);
     }
     
     /* Mine counter */
-    if (game && game->state == GameState::PLAYING) {
+    if (game && (game->state == GameState::PLAYING || game->state == GameState::GAME_OVER)) {
         int flags = 0;
         for (int y = 0; y < game->height; y++) {
             for (int x = 0; x < game->width; x++) {
@@ -477,22 +476,23 @@ void draw_minesweeper_screen() {
  */
 void handle_minesweeper_input(int key) {
     if (minesweeper_gui.entering_name) {
-        /* Name input mode */
-        if (key == KEY_BACKSPACE) {
+        /* Name input mode - key is ASCII character */
+        if (key == 8 || key == 127) {  /* Backspace */
             if (minesweeper_gui.player_name_length > 0) {
                 minesweeper_gui.player_name[--minesweeper_gui.player_name_length] = '\0';
                 mark_screen_dirty();
             }
-        } else if (key == KEY_ENTER) {
+        } else if (key == '\n' || key == '\r' || key == 10) {  /* Enter */
             if (minesweeper_gui.player_name_length > 0) {
                 /* Copy name to game's playerName, then save */
                 game->playerName = minesweeper_gui.player_name;
                 game->saveHighscore();
                 minesweeper_gui.entering_name = false;
+                game->state = GameState::HIGHSCORES;
                 display_status("High score saved!");
                 mark_screen_dirty();
             }
-        } else if (isprint(key) && minesweeper_gui.player_name_length < 20) {
+        } else if (key >= 32 && key < 127 && minesweeper_gui.player_name_length < 20) {  /* Printable ASCII */
             minesweeper_gui.player_name[minesweeper_gui.player_name_length++] = (char)key;
             minesweeper_gui.player_name[minesweeper_gui.player_name_length] = '\0';
             mark_screen_dirty();

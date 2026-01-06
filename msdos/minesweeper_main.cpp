@@ -227,22 +227,26 @@ void process_input(Minesweeper *game, bool &running) {
             break;
             
         case GameState::GAME_OVER:
-            /* Return to menu on any key */
-            if (game->won && game->isHighScore(game->timer.getElapsedSeconds())) {
+            /* On any key/click: start new game on same difficulty */
+            if (!game->gameOver && game->won && game->isHighScore(game->timer.getElapsedSeconds())) {
                 game->state = GameState::ENTER_NAME;
                 minesweeper_gui.entering_name = true;
                 minesweeper_gui.player_name_length = 0;
                 memset(minesweeper_gui.player_name, 0, sizeof(minesweeper_gui.player_name));
             } else {
-                game->state = GameState::MENU;
-                display_status("Returning to menu...");
+                /* Just reset the game state flags, go back to playing. Board stays visible. */
+                game->gameOver = false;
+                game->won = false;
+                game->firstMove = true;
+                game->state = GameState::PLAYING;
+                display_status("Minesweeper - Left click to reveal, Right click to flag");
             }
             mark_screen_dirty();
             break;
             
         case GameState::ENTER_NAME:
             /* High score name entry */
-            handle_minesweeper_input(key);
+            handle_minesweeper_input(ascii);
             mark_screen_dirty();
             break;
             
@@ -315,27 +319,11 @@ int main() {
             break;
         }
         
-        /* Check for win/lose conditions at start of frame */
-        if (game->state == GameState::PLAYING) {
-            if (game->gameOver) {
-                game->state = GameState::GAME_OVER;
-                display_status("Game Over! Press any key...");
-                mark_screen_dirty();
-            } else if (game->won) {
-                game->state = GameState::GAME_OVER;
-                display_status("You won! Press any key...");
-                mark_screen_dirty();
-            }
-        }
-        
         /* Get next buffer for drawing */
         get_next_buffer_and_swap();
         
         /* Show mouse cursor after buffer operations */
         show_mouse(screen);
-        
-        /* Handle keyboard input */
-        process_input(game, running);
         
         /* Handle mouse clicks - only register when button is PRESSED, not held */
         if ((mouse_b & 1) && !(prev_mouse_b & 1)) {  /* Left click - button pressed */
@@ -428,17 +416,35 @@ int main() {
         /* Store previous mouse button state for next frame */
         prev_mouse_b = mouse_b;
         
+        /* Check for win/lose conditions - just flag it, don't change state yet */
+        if (game->state == GameState::PLAYING) {
+            if (game->gameOver || game->won) {
+                display_status(game->gameOver ? "Game Over! Press any key..." : "You won! Press any key...");
+                mark_screen_dirty();
+            }
+        }
+        
         /* Update game logic */
         if (game->state == GameState::PLAYING) {
             game->timer.update();
             mark_screen_dirty();  /* Redraw every frame during gameplay for timer */
+        } else if (game->state == GameState::GAME_OVER) {
+            mark_screen_dirty();  /* Keep redrawing board in GAME_OVER to show mines/mistakes */
         }
         
         /* Draw screen */
         draw_minesweeper_screen();
         
+        /* NOW change state to GAME_OVER after drawing */
+        if (game->state == GameState::PLAYING && (game->gameOver || game->won)) {
+            game->state = GameState::GAME_OVER;
+        }
+        
         /* Always mark dirty to ensure updates */
         mark_screen_dirty();
+        
+        /* Handle keyboard input - AFTER drawing so board displays before state change */
+        process_input(game, running);
         
         /* 30 FPS frame rate cap (33ms per frame) */
         rest(33);
