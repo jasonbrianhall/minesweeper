@@ -63,29 +63,6 @@ void close_button_callback() {
 /* Forward declarations */
 void handle_file_menu_click(int item_index);
 
-/* Allegro keyboard constants */
-#ifndef KEY_UP
-    #define KEY_UP 0x48
-#endif
-#ifndef KEY_DOWN
-    #define KEY_DOWN 0x50
-#endif
-#ifndef KEY_LEFT
-    #define KEY_LEFT 0x4B
-#endif
-#ifndef KEY_RIGHT
-    #define KEY_RIGHT 0x4D
-#endif
-#ifndef KEY_ESC
-    #define KEY_ESC 0x01
-#endif
-#ifndef KEY_ENTER
-    #define KEY_ENTER 0x1C
-#endif
-#ifndef KEY_BACKSPACE
-    #define KEY_BACKSPACE 0x0E
-#endif
-
 /**
  * Initialize double buffering with dynamic buffer sizes based on actual screen
  */
@@ -231,9 +208,37 @@ void process_input(Minesweeper *game, bool &running) {
     }
     
     /* Game state input */
+    if (key>256)
+    {
+        key=key/256;
+    }
+    if (key == KEY_UP) {
+        printf("Key up\n");
+        if (minesweeper_gui.selected_row > 0) {
+            minesweeper_gui.selected_row--;
+            mark_screen_dirty();
+        }
+    } else if (key == KEY_DOWN) {
+        if (minesweeper_gui.selected_row < game->height - 1) {
+            minesweeper_gui.selected_row++;
+            mark_screen_dirty();
+        }
+    } else if (key == KEY_LEFT) {
+        if (minesweeper_gui.selected_col > 0) {
+            minesweeper_gui.selected_col--;
+            mark_screen_dirty();
+        }
+    } else if (key == KEY_RIGHT) {
+        if (minesweeper_gui.selected_col < game->width - 1) {
+            minesweeper_gui.selected_col++;
+            mark_screen_dirty();
+        }
+    } 
+    
     switch (game->state) {
         case GameState::MENU:
             /* Menu input */
+
             if (ascii == 'e' || ascii == 'E' || ascii == '1') {
                 game->currentSeed = -1;  /* Generate new seed */
                 game->setDifficulty(Difficulty::EASY);
@@ -260,8 +265,16 @@ void process_input(Minesweeper *game, bool &running) {
             break;
             
         case GameState::PLAYING:
-            /* Check for menu/difficulty shortcuts first */
-            if (ascii == 'n' || ascii == 'N') {
+            /* FIXED: Handle arrow keys and game mechanics FIRST */
+            if (key == ' ' || key == KEY_ENTER) {
+               /* Reveal cell */
+               game->reveal(minesweeper_gui.selected_col, minesweeper_gui.selected_row);
+               mark_screen_dirty();
+            } else if (ascii == 'f' || ascii == 'F') {
+                /* Toggle flag */
+                game->toggleFlag(minesweeper_gui.selected_col, minesweeper_gui.selected_row);
+                mark_screen_dirty();
+            } else if (ascii == 'n' || ascii == 'N') {
                 /* New Game */
                 game->currentSeed = -1;  /* Generate new seed */
                 game->setDifficulty(Difficulty::EASY);
@@ -302,10 +315,6 @@ void process_input(Minesweeper *game, bool &running) {
             } else if (ascii == 'k' || ascii == 'K') {
                 /* High Scores */
                 game->state = GameState::HIGHSCORES;
-                mark_screen_dirty();
-            } else {
-                /* Regular gameplay input */
-                handle_minesweeper_input(key);
                 mark_screen_dirty();
             }
             

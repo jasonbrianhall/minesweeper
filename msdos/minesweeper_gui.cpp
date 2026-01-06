@@ -254,6 +254,16 @@ void draw_game_board() {
                 rectfill(active_buffer, cell_x + 2, cell_y + 2, 
                         cell_x + CELL_SIZE - 2, cell_y + CELL_SIZE - 2, COLOR_DARK_GRAY);
             }
+            
+            /* FIXED: Draw cursor highlighting for selected cell */
+            if (y == minesweeper_gui.selected_row && x == minesweeper_gui.selected_col) {
+                /* Draw yellow border to highlight selected cell */
+                rect(active_buffer, cell_x, cell_y, 
+                     cell_x + CELL_SIZE - 1, cell_y + CELL_SIZE - 1, COLOR_YELLOW);
+                /* Draw thicker border for better visibility */
+                rect(active_buffer, cell_x + 1, cell_y + 1, 
+                     cell_x + CELL_SIZE - 2, cell_y + CELL_SIZE - 2, COLOR_YELLOW);
+            }
         }
     }
 }
@@ -414,7 +424,11 @@ void handle_minesweeper_input(int key) {
         }
     } else {
         /* Game mode input */
+        if (key) {
+            printf("GUI key is %i\n");
+        }
         if (key == KEY_UP) {
+            printf("Key up\n");
             if (minesweeper_gui.selected_row > 0) {
                 minesweeper_gui.selected_row--;
                 mark_screen_dirty();
