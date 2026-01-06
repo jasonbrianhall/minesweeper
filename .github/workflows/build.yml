@@ -49,9 +49,9 @@ jobs:
         exe2coff mnsweep.exe
         cat csdpmi/bin/CWSDSTUB.EXE mnsweep > mnsweep.exe
 
-        curl -L -o allegro-4.2.3.1-xc.tar.gz https://github.com/superjamie/allegro-4.2.3.1-xc/archive/refs/heads/master.tar.gz
+        curl -L -o allegro-4.2.3.1-xc.tar.gz https://github.com/superjamie/allegro-4.2.3.1-xc/archive/refs/heads/master.tar.gz && \
         tar xzf allegro-4.2.3.1-xc.tar.gz && \
-        pushd allegro-4.2.3.1-xc-master && \
+        cd allegro-4.2.3.1-xc-master && \
         chmod +x xmake.sh && \
         ./xmake.sh lib && \
         mkdir -p /workspace/source-install/include && \
@@ -59,8 +59,7 @@ jobs:
         cp -r include/* /workspace/source-install/include/ && \
         cp lib/djgpp/liballeg.a /workspace/source-install/lib/ && \
         chown -R $(USER_ID):$(GROUP_ID) /workspace && \
-        echo 'Allegro 4 built successfully' \
-        popd
+        echo 'Allegro 4 built successfully'
 
         g++ minesweeper_game.cpp minesweeper_gui.cpp highscores.cpp minesweeper_main.cpp -lalleg -lm -o minesweeper_msdos_allegro
         exe2coff minesweeper_msdos_allegro.exe
