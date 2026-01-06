@@ -68,7 +68,7 @@ jobs:
 
         cd "$mycwd"
 
-        g++ minesweeper_game.cpp minesweeper_gui.cpp highscores.cpp minesweeper_main.cpp -lalleg -lm -I/workspace/source-install/include/ -L/workspace/source-install/lib -o minesweeper_msdos_allegro
+        g++ minesweeper_gui.cpp minesweeper_main.cpp minesweeper_game.cpp highscores.cpp -lalleg -lm -I/workspace/source-install/include/ -L/workspace/source-install/lib -o minesweeper_msdos_allegro
         exe2coff minesweeper_msdos_allegro.exe
         cat csdpmi/bin/CWSDSTUB.EXE minesweeper_msdos_allegro > minesweeper_msdos_allegro.exe
         
