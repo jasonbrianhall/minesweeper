@@ -422,44 +422,5 @@ void handle_minesweeper_input(int key) {
             minesweeper_gui.player_name[minesweeper_gui.player_name_length] = '\0';
             mark_screen_dirty();
         }
-    } else {
-        /* Game mode input */
-        if (key) {
-            printf("GUI key is %i\n");
-        }
-        if (key == KEY_UP) {
-            printf("Key up\n");
-            if (minesweeper_gui.selected_row > 0) {
-                minesweeper_gui.selected_row--;
-                mark_screen_dirty();
-            }
-        } else if (key == KEY_DOWN) {
-            if (minesweeper_gui.selected_row < game->height - 1) {
-                minesweeper_gui.selected_row++;
-                mark_screen_dirty();
-            }
-        } else if (key == KEY_LEFT) {
-            if (minesweeper_gui.selected_col > 0) {
-                minesweeper_gui.selected_col--;
-                mark_screen_dirty();
-            }
-        } else if (key == KEY_RIGHT) {
-            if (minesweeper_gui.selected_col < game->width - 1) {
-                minesweeper_gui.selected_col++;
-                mark_screen_dirty();
-            }
-        } else if (key == ' ' || key == KEY_ENTER) {
-            /* Reveal cell */
-            game->reveal(minesweeper_gui.selected_col, minesweeper_gui.selected_row);
-            mark_screen_dirty();
-        } else if (key == 'f' || key == 'F') {
-            /* Toggle flag */
-            game->toggleFlag(minesweeper_gui.selected_col, minesweeper_gui.selected_row);
-            mark_screen_dirty();
-        } else if (key == 27) {  /* ESC to close menus */
-            minesweeper_gui.show_file_menu = false;
-            minesweeper_gui.show_help_menu = false;
-            mark_screen_dirty();
-        }
-    }
+    } 
 }
