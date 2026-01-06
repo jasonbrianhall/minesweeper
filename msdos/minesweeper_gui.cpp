@@ -72,10 +72,10 @@ void init_minesweeper_gui() {
     minesweeper_gui.status_timer = 0;
     
     minesweeper_gui.show_file_menu = false;
-    minesweeper_gui.file_menu_selected = 0;
+    minesweeper_gui.file_menu_selected = -1;
     
     minesweeper_gui.show_help_menu = false;
-    minesweeper_gui.help_menu_selected = 0;
+    minesweeper_gui.help_menu_selected = -1;
     
     minesweeper_gui.entering_name = false;
     minesweeper_gui.player_name_length = 0;
@@ -134,7 +134,6 @@ void draw_menu_bar() {
     
     /* Menu buttons */
     textout_ex(active_buffer, font, "File", 5, 5, COLOR_WHITE, -1);
-    textout_ex(active_buffer, font, "Help", 95, 5, COLOR_WHITE, -1);
     
     /* Title */
     textout_ex(active_buffer, font, "Minesweeper - Allegro Edition", 200, 5, COLOR_YELLOW, -1);
@@ -174,32 +173,7 @@ void draw_menu_bar() {
     }
     
     /* Draw Help dropdown menu if active */
-    if (minesweeper_gui.show_help_menu) {
-        int menu_x = 95;
-        int menu_y = MENU_BAR_HEIGHT;
-        int menu_w = 200;
-        int item_h = 20;
-        int menu_h = NUM_HELP_MENU_ITEMS * item_h + 10;
-        
-        /* Ensure menu is on top - draw with solid background */
-        rectfill(active_buffer, menu_x, menu_y, menu_x + menu_w, menu_y + menu_h + 50, COLOR_BLUE);
-        rect(active_buffer, menu_x, menu_y, menu_x + menu_w, menu_y + menu_h, COLOR_WHITE);
-        
-        /* Menu items */
-        for (int i = 0; i < NUM_HELP_MENU_ITEMS; i++) {
-            int item_y = menu_y + 5 + i * item_h;
-            
-            /* Highlight selected */
-            if (i == minesweeper_gui.help_menu_selected) {
-                rectfill(active_buffer, menu_x + 2, item_y + 2, 
-                        menu_x + menu_w - 2, item_y + item_h - 2, COLOR_CYAN);
-            }
-            
-            /* Draw menu item text */
-            int text_color = (i == minesweeper_gui.help_menu_selected) ? COLOR_BLACK : COLOR_WHITE;
-            textout_ex(active_buffer, font, help_menu_items[i], menu_x + 10, item_y + 3, text_color, -1);
-        }
-    }
+    /* REMOVED - Help menu not needed */
 }
 
 /**
@@ -277,36 +251,8 @@ void draw_game_board() {
  * Draw the button panel
  */
 void draw_button_panel() {
-    /* Only show buttons during gameplay */
-    if (!game || game->state != GameState::PLAYING) {
-        return;
-    }
-    
-    /* Panel background */
-    rectfill(active_buffer, BUTTON_PANEL_X - 10, BUTTON_PANEL_Y - 10, 
-             BUTTON_PANEL_X + BUTTON_WIDTH + 10, 
-             BUTTON_PANEL_Y + (NUM_BUTTONS + 1) * (BUTTON_HEIGHT + BUTTON_SPACING) + 10, 
-             COLOR_LIGHT_GRAY);
-    
-    /* Border */
-    rect(active_buffer, BUTTON_PANEL_X - 10, BUTTON_PANEL_Y - 10, 
-         BUTTON_PANEL_X + BUTTON_WIDTH + 10, 
-         BUTTON_PANEL_Y + (NUM_BUTTONS + 1) * (BUTTON_HEIGHT + BUTTON_SPACING) + 10, 
-         COLOR_BLACK);
-    
-    /* Draw buttons */
-    for (int i = 0; i < NUM_BUTTONS; i++) {
-        Button *btn = &buttons[i];
-        
-        /* Button background */
-        rectfill(active_buffer, btn->x, btn->y, btn->x + btn->width, btn->y + btn->height, COLOR_BLUE);
-        
-        /* Button border */
-        rect(active_buffer, btn->x, btn->y, btn->x + btn->width, btn->y + btn->height, COLOR_BLACK);
-        
-        /* Button text */
-        textout_ex(active_buffer, font, btn->label, btn->x + 5, btn->y + 5, COLOR_WHITE, -1);
-    }
+    /* Button panel disabled */
+    return;
 }
 
 /**
@@ -409,7 +355,7 @@ void draw_minesweeper_screen() {
     if (game && (game->state == GameState::PLAYING || game->state == GameState::GAME_OVER)) {
         char timer_str[30];
         sprintf(timer_str, "Time: %d sec", game->timer.getElapsedSeconds());
-        textout_ex(active_buffer, font, timer_str, TIMER_DISPLAY_X, 730, COLOR_BLACK, -1);
+        textout_ex(active_buffer, font, timer_str, 400, 730, COLOR_BLACK, -1);
     }
     
     /* Mine counter */
@@ -422,7 +368,7 @@ void draw_minesweeper_screen() {
         }
         char mine_str[30];
         sprintf(mine_str, "Mines: %d/%d", flags, game->mines);
-        textout_ex(active_buffer, font, mine_str, TIMER_DISPLAY_X + 250, 730, COLOR_BLACK, -1);
+        textout_ex(active_buffer, font, mine_str, 650, 730, COLOR_BLACK, -1);
     }
     
     /* Draw menu bar LAST so it appears on top */

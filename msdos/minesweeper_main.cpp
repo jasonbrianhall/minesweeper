@@ -10,6 +10,12 @@
 #include "minesweeper.h"
 #include "minesweeper_gui.h"
 
+/* Extern declarations for menu items */
+extern const char *file_menu_items[];
+extern const int NUM_FILE_MENU_ITEMS;
+extern const char *help_menu_items[];
+extern const int NUM_HELP_MENU_ITEMS;
+
 /* Platform detection */
 #if defined(__linux__) || defined(__unix__) || defined(__APPLE__)
     #define LINUX_BUILD 1
@@ -194,7 +200,6 @@ void process_input(Minesweeper *game, bool &running) {
     /* Menu bar keyboard shortcut: A to toggle File menu */
     if (ascii == 'a' || ascii == 'A') {
         minesweeper_gui.show_file_menu = !minesweeper_gui.show_file_menu;
-        minesweeper_gui.show_help_menu = false;
         mark_screen_dirty();
         return;
     }
@@ -229,9 +234,54 @@ void process_input(Minesweeper *game, bool &running) {
             break;
             
         case GameState::PLAYING:
-            /* Gameplay input */
-            handle_minesweeper_input(key);
-            mark_screen_dirty();
+            /* Check for menu/difficulty shortcuts first */
+            if (ascii == 'n' || ascii == 'N') {
+                /* New Game */
+                game->currentSeed = -1;  /* Generate new seed */
+                game->setDifficulty(Difficulty::EASY);
+                game->reset();
+                game->state = GameState::PLAYING;
+                display_status("New Game - Easy Mode");
+                mark_screen_dirty();
+            } else if (ascii == '1') {
+                /* Easy */
+                game->currentSeed = -1;  /* Generate new seed */
+                game->setDifficulty(Difficulty::EASY);
+                game->reset();
+                game->state = GameState::PLAYING;
+                display_status("Easy Mode");
+                mark_screen_dirty();
+            } else if (ascii == '2') {
+                /* Medium */
+                game->currentSeed = -1;  /* Generate new seed */
+                game->setDifficulty(Difficulty::MEDIUM);
+                game->reset();
+                game->state = GameState::PLAYING;
+                display_status("Medium Mode");
+                mark_screen_dirty();
+            } else if (ascii == '3') {
+                /* Hard */
+                game->currentSeed = -1;  /* Generate new seed */
+                game->setDifficulty(Difficulty::HARD);
+                game->reset();
+                game->state = GameState::PLAYING;
+                display_status("Hard Mode");
+                mark_screen_dirty();
+            } else if (ascii == 'r' || ascii == 'R') {
+                /* Reset */
+                game->reset();
+                game->state = GameState::PLAYING;
+                display_status("Game reset");
+                mark_screen_dirty();
+            } else if (ascii == 'k' || ascii == 'K') {
+                /* High Scores */
+                game->state = GameState::HIGHSCORES;
+                mark_screen_dirty();
+            } else {
+                /* Regular gameplay input */
+                handle_minesweeper_input(key);
+                mark_screen_dirty();
+            }
             
             /* Game state checks */
             if (game->won) {
@@ -250,7 +300,6 @@ void process_input(Minesweeper *game, bool &running) {
             if (ascii == 'a' || ascii == 'A') {
                 /* Toggle File menu */
                 minesweeper_gui.show_file_menu = !minesweeper_gui.show_file_menu;
-                minesweeper_gui.show_help_menu = false;
                 mark_screen_dirty();
             } else if (ascii == 'n' || ascii == 'N') {
                 /* New Game */
@@ -399,6 +448,26 @@ int main() {
         /* Show mouse cursor after buffer operations */
         show_mouse(screen);
         
+        /* Update menu hover states based on mouse position */
+        if (minesweeper_gui.show_file_menu) {
+            int menu_y = MENU_BAR_HEIGHT;
+            int item_h = 20;
+            
+            if (mouse_x >= 0 && mouse_x <= 200 && mouse_y >= menu_y) {
+                int item_index = (mouse_y - menu_y) / item_h;
+                if (item_index >= 0 && item_index < NUM_FILE_MENU_ITEMS && strlen(file_menu_items[item_index]) > 0) {
+                    minesweeper_gui.file_menu_selected = item_index;
+                    mark_screen_dirty();
+                } else {
+                    minesweeper_gui.file_menu_selected = -1;
+                }
+            } else {
+                minesweeper_gui.file_menu_selected = -1;
+            }
+        } else {
+            minesweeper_gui.file_menu_selected = -1;
+        }
+        
         /* Handle mouse clicks - only register when button is PRESSED, not held */
         if ((mouse_b & 1) && !(prev_mouse_b & 1)) {  /* Left click - button pressed */
             int mx = mouse_x;
@@ -409,13 +478,6 @@ int main() {
                 /* File menu at x=5-40 */
                 if (mx >= 5 && mx <= 40) {
                     minesweeper_gui.show_file_menu = !minesweeper_gui.show_file_menu;
-                    minesweeper_gui.show_help_menu = false;
-                    mark_screen_dirty();
-                }
-                /* Help menu at x=95-140 */
-                else if (mx >= 95 && mx <= 140) {
-                    minesweeper_gui.show_help_menu = !minesweeper_gui.show_help_menu;
-                    minesweeper_gui.show_file_menu = false;
                     mark_screen_dirty();
                 }
             }
@@ -439,6 +501,17 @@ int main() {
                     if (col >= 0 && col < game->width && row >= 0 && row < game->height) {
                         game->reveal(col, row);
                         mark_screen_dirty();
+                        
+                        /* Check for win/loss after revealing */
+                        if (game->won) {
+                            game->state = GameState::GAME_OVER;
+                            display_status("You won! Press any key...");
+                            mark_screen_dirty();
+                        } else if (game->gameOver) {
+                            game->state = GameState::GAME_OVER;
+                            display_status("Game Over! Press any key...");
+                            mark_screen_dirty();
+                        }
                     }
                 }
             }
@@ -460,11 +533,23 @@ int main() {
                         /* If cell is already revealed, do chord click (reveal adjacent) */
                         if (game->revealed[row][col]) {
                             game->revealAdjacentCells(row, col);
+                            mark_screen_dirty();
+                            
+                            /* Check for win/loss after revealing adjacent */
+                            if (game->won) {
+                                game->state = GameState::GAME_OVER;
+                                display_status("You won! Press any key...");
+                                mark_screen_dirty();
+                            } else if (game->gameOver) {
+                                game->state = GameState::GAME_OVER;
+                                display_status("Game Over! Press any key...");
+                                mark_screen_dirty();
+                            }
                         } else {
                             /* Otherwise toggle flag */
                             game->toggleFlag(col, row);
+                            mark_screen_dirty();
                         }
-                        mark_screen_dirty();
                     }
                 }
             }
