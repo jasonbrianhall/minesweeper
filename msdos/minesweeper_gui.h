@@ -5,8 +5,19 @@
 #ifndef MINESWEEPER_GUI_H
 #define MINESWEEPER_GUI_H
 
-#include <allegro.h>
+/* Declare far pointer functions BEFORE including allegro.h */
+#ifdef __DJGPP__
+extern int _farsetsel(unsigned short selector);
+extern void _farnspokeb(unsigned long addr, unsigned char val);
+extern unsigned char _farnspeekb(unsigned long addr);
+extern void _farnspokew(unsigned long addr, unsigned short val);
+extern unsigned short _farnspeekw(unsigned long addr);
+extern void _farnspokel(unsigned long addr, unsigned long val);
+extern unsigned long _farnspeekl(unsigned long addr);
+#endif
+
 #include "minesweeper.h"
+#include <allegro.h>
 
 /* UI Layout */
 #define MENU_BAR_HEIGHT 25

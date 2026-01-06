@@ -3,12 +3,23 @@
  * Handles all window, input, and rendering
  */
 
+/* Declare far pointer functions BEFORE including allegro.h */
+#ifdef __DJGPP__
+extern int _farsetsel(unsigned short selector);
+extern void _farnspokeb(unsigned long addr, unsigned char val);
+extern unsigned char _farnspeekb(unsigned long addr);
+extern void _farnspokew(unsigned long addr, unsigned short val);
+extern unsigned short _farnspeekw(unsigned long addr);
+extern void _farnspokel(unsigned long addr, unsigned long val);
+extern unsigned long _farnspeekl(unsigned long addr);
+#endif
+
+#include "minesweeper.h"
+#include "minesweeper_gui.h"
 #include <allegro.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "minesweeper.h"
-#include "minesweeper_gui.h"
 
 /* Extern declarations for menu items */
 extern const char *file_menu_items[];

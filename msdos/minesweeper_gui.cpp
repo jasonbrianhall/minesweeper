@@ -2,6 +2,17 @@
  * minesweeper_gui.cpp - Minesweeper GUI using Allegro 4 (like sudoku_main.cpp)
  */
 
+/* Declare far pointer functions BEFORE including allegro.h */
+#ifdef __DJGPP__
+extern int _farsetsel(unsigned short selector);
+extern void _farnspokeb(unsigned long addr, unsigned char val);
+extern unsigned char _farnspeekb(unsigned long addr);
+extern void _farnspokew(unsigned long addr, unsigned short val);
+extern unsigned short _farnspeekw(unsigned long addr);
+extern void _farnspokel(unsigned long addr, unsigned long val);
+extern unsigned long _farnspeekl(unsigned long addr);
+#endif
+
 #include "minesweeper_gui.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -335,7 +346,7 @@ void draw_minesweeper_screen() {
             y_pos += 130;
         }
         
-        textout_centre_ex(active_buffer, font, "Press any key to start a new game", 512, 700, COLOR_DARK_GRAY, COLOR_WHITE);
+        textout_centre_ex(active_buffer, font, "Press any key to return to menu", 512, 700, COLOR_DARK_GRAY, COLOR_WHITE);
     } else {
         /* Normal gameplay display - including GAME_OVER state to show board with mines */
         draw_game_board();
