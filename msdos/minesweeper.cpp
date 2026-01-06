@@ -9,7 +9,9 @@
 #include <random>
 #include <set>
 #include <string>
+#ifdef MSDOS
 #include "thread.h"
+#endif
 #include <vector>
 
 #define TRUE 1

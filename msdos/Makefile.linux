@@ -1,0 +1,118 @@
+# Makefile for Minesweeper on Linux with Allegro 4
+# Based on Sudoku makefile structure for consistency
+
+CXX = g++
+CXXFLAGS = -O3 -Wall -Wextra -fomit-frame-pointer -fpermissive -std=c++11 -s
+CXXFLAGS_DEBUG = -g -Wall -Wextra -fpermissive -std=c++11
+
+# Source files - NO minesweeper.cpp, use Allegro-based files only
+SRCS = minesweeper_game.cpp minesweeper_gui.cpp highscores.cpp minesweeper_main.cpp
+OBJS = $(SRCS:.cpp=.o)
+TARGET = minesweeper
+
+# Allegro 4 configuration
+ALLEGRO_CFLAGS = 
+ALLEGRO_LIBS = -lalleg -lm
+
+# Build directories
+BUILD_DIR = build
+OBJ_DIR = $(BUILD_DIR)/obj
+
+# ============================================================================
+# TARGETS
+# ============================================================================
+
+# Default target - build release version
+all: $(TARGET)
+	@echo "✅ Build complete: ./$(TARGET)"
+
+# Release build
+release: CXXFLAGS = -O3 -Wall -Wextra -fomit-frame-pointer -fpermissive -std=c++11 -s
+release: clean $(TARGET)
+	@echo "✅ Release build complete: ./$(TARGET)"
+
+# Debug build
+debug: CXXFLAGS = $(CXXFLAGS_DEBUG)
+debug: clean $(TARGET)
+	@echo "✅ Debug build complete: ./$(TARGET)"
+
+# Link target
+$(TARGET): $(OBJ_DIR)/minesweeper_game.o $(OBJ_DIR)/minesweeper_gui.o $(OBJ_DIR)/highscores.o $(OBJ_DIR)/minesweeper_main.o
+	@mkdir -p $(BUILD_DIR)
+	@echo "Linking executable..."
+	$(CXX) $^ $(ALLEGRO_LIBS) -o $@
+
+# Compile minesweeper_game.cpp (game logic only, no UI)
+$(OBJ_DIR)/minesweeper_game.o: minesweeper_game.cpp minesweeper.h highscores.h
+	@mkdir -p $(OBJ_DIR)
+	@echo "Compiling minesweeper_game.cpp..."
+	$(CXX) $(CXXFLAGS) $(ALLEGRO_CFLAGS) -c minesweeper_game.cpp -o $@
+
+# Compile minesweeper_gui.cpp
+$(OBJ_DIR)/minesweeper_gui.o: minesweeper_gui.cpp minesweeper_gui.h minesweeper.h
+	@mkdir -p $(OBJ_DIR)
+	@echo "Compiling minesweeper_gui.cpp..."
+	$(CXX) $(CXXFLAGS) $(ALLEGRO_CFLAGS) -c minesweeper_gui.cpp -o $@
+
+# Compile highscores.cpp
+$(OBJ_DIR)/highscores.o: highscores.cpp highscores.h
+	@mkdir -p $(OBJ_DIR)
+	@echo "Compiling highscores.cpp..."
+	$(CXX) $(CXXFLAGS) $(ALLEGRO_CFLAGS) -c highscores.cpp -o $@
+
+# Compile minesweeper_main.cpp
+$(OBJ_DIR)/minesweeper_main.o: minesweeper_main.cpp minesweeper.h minesweeper_gui.h highscores.h
+	@mkdir -p $(OBJ_DIR)
+	@echo "Compiling minesweeper_main.cpp..."
+	$(CXX) $(CXXFLAGS) $(ALLEGRO_CFLAGS) -c minesweeper_main.cpp -o $@
+
+# Run the program
+run: $(TARGET)
+	@echo "Running Minesweeper..."
+	@./$(TARGET)
+
+# Check dependencies
+check-deps:
+	@echo "Checking for required dependencies..."
+	@command -v g++ >/dev/null 2>&1 || { echo "❌ g++ not found. Install with: sudo apt-get install build-essential"; exit 1; }
+	@pkg-config --exists allegro || { echo "❌ Allegro 4 not found. Install with: sudo apt-get install liballegro4-dev"; exit 1; }
+	@echo "✅ All dependencies found"
+
+# Clean build artifacts
+clean:
+	@echo "Cleaning build artifacts..."
+	@rm -rf $(BUILD_DIR)
+	@rm -f $(TARGET)
+	@echo "✅ Clean complete"
+
+# Clean object files only
+clean-obj:
+	@echo "Cleaning object files..."
+	@rm -rf $(OBJ_DIR)
+	@echo "✅ Object files cleaned"
+
+# Show build information
+info:
+	@echo "Minesweeper Build Configuration (Linux)"
+	@echo "========================================"
+	@echo "Compiler: $(CXX)"
+	@echo "Flags: $(CXXFLAGS)"
+	@echo "Target: $(TARGET)"
+	@echo "Source files: $(SRCS)"
+	@echo "Build directory: $(BUILD_DIR)"
+	@echo ""
+	@echo "Available targets:"
+	@echo "  make                - Build release executable"
+	@echo "  make release        - Build optimized release"
+	@echo "  make debug          - Build with debug symbols"
+	@echo "  make run            - Build and run the program"
+	@echo "  make clean          - Remove all build artifacts"
+	@echo "  make clean-obj      - Remove only object files"
+	@echo "  make check-deps     - Verify dependencies are installed"
+	@echo "  make info           - Show this information"
+
+# Help target
+help: info
+
+# Mark these as phony targets
+.PHONY: all release debug run check-deps clean clean-obj info help
