@@ -27,11 +27,12 @@ extern const int NUM_FILE_MENU_ITEMS;
 extern const char *help_menu_items[];
 extern const int NUM_HELP_MENU_ITEMS;
 
-/* Platform detection */
+/* Platform detection - consistent with sudoku project */
 #if defined(__linux__) || defined(__unix__) || defined(__APPLE__)
     #define LINUX_BUILD 1
 #else
     #define DOS_BUILD 1
+    #define MSDOS 1  /* Also define for compatibility */
 #endif
 
 /* Double buffering setup */
@@ -86,14 +87,19 @@ void handle_file_menu_click(int item_index);
 #endif
 
 /**
- * Initialize double buffering
+ * Initialize double buffering with dynamic buffer sizes based on actual screen
  */
 void init_double_buffers() {
+    int buf_width = SCREEN_W;   /* Use actual screen width set by graphics mode */
+    int buf_height = SCREEN_H;  /* Use actual screen height set by graphics mode */
+    
+    fprintf(stderr, "Initializing buffers for %dx%d screen\n", buf_width, buf_height);
+    
     for (int i = 0; i < NUM_BUFFERS; i++) {
-        buffers[i] = create_bitmap(1024, 768);
+        buffers[i] = create_bitmap(buf_width, buf_height);
         if (!buffers[i]) {
             allegro_exit();
-            fprintf(stderr, "Failed to allocate buffer %d\n", i);
+            fprintf(stderr, "Failed to allocate buffer %d (size: %dx%d)\n", i, buf_width, buf_height);
             exit(1);
         }
         /* Initialize buffers to white */
@@ -101,6 +107,8 @@ void init_double_buffers() {
     }
     current_buffer = 0;
     active_buffer = buffers[0];
+    
+    fprintf(stderr, "Buffers initialized successfully\n");
 }
 
 /**
@@ -111,7 +119,7 @@ BITMAP* get_next_buffer_and_swap() {
     /* Only update screen if it's marked as dirty */
     if (screen_dirty) {
         vsync();  /* Wait for vertical sync */
-        blit(active_buffer, screen, 0, 0, 0, 0, 1024, 768);
+        blit(active_buffer, screen, 0, 0, 0, 0, SCREEN_W, SCREEN_H);
         screen_dirty = 0;  /* Mark screen as clean after update */
     }
     
@@ -411,16 +419,48 @@ int main() {
     install_timer();
     install_mouse();  /* Install mouse driver */
     
-    /* Set up window close button callback */
+    /* Set up window close button callback - Linux only */
+    #ifdef LINUX_BUILD
     set_close_button_callback(close_button_callback);
+    #endif
     
-    /* Set graphics mode - WINDOWED, not fullscreen */
-    set_color_depth(8);
-    if (set_gfx_mode(GFX_SAFE, 1024, 768, 0, 0) != 0) {
-        allegro_exit();
-        fprintf(stderr, "Failed to set graphics mode\n");
-        return 1;
+    /* Set graphics mode - windowed on Linux, fullscreen on DOS */
+    set_color_depth(8);  /* 256-color mode */
+    
+    int gfx_result = -1;
+    
+    #ifdef LINUX_BUILD
+    /* On Linux, try windowed mode first */
+    gfx_result = set_gfx_mode(GFX_AUTODETECT_WINDOWED, 1024, 768, 0, 0);
+    if (gfx_result != 0) {
+        /* Fallback to autodetect if windowed fails */
+        gfx_result = set_gfx_mode(GFX_AUTODETECT, 1024, 768, 0, 0);
     }
+    #else
+    /* On DOS, use fullscreen autodetect - will find best available mode */
+    gfx_result = set_gfx_mode(GFX_AUTODETECT, 640, 480, 0, 0);
+    #endif
+    
+    if (gfx_result != 0) {
+        allegro_exit();
+        fprintf(stderr, "Error setting graphics mode: %s\n", allegro_error);
+        fprintf(stderr, "Attempting fallback to 640x480...\n");
+        
+        /* Final fallback for DOS systems */
+        #ifdef __DJGPP__
+        gfx_result = set_gfx_mode(GFX_SAFE, 640, 480, 0, 0);
+        #else
+        gfx_result = set_gfx_mode(GFX_SAFE, 1024, 768, 0, 0);
+        #endif
+        
+        if (gfx_result != 0) {
+            allegro_exit();
+            fprintf(stderr, "Fatal: Could not set any graphics mode\n");
+            return 1;
+        }
+    }
+    
+    fprintf(stderr, "Graphics mode set: %dx%d\n", SCREEN_W, SCREEN_H);
     
     /* Initialize double buffering */
     init_double_buffers();
