@@ -420,7 +420,7 @@ int main() {
                 }
             }
             /* Check if click is on menu items when menu is open */
-            if (minesweeper_gui.show_file_menu && mx >= 0 && mx <= 180) {
+            if (minesweeper_gui.show_file_menu && mx >= 0 && mx <= 180 && my >= 30) {
                 int item_index = (my - 30) / 20;
                 if (item_index >= 0 && item_index < NUM_FILE_MENU_ITEMS) {
                     handle_file_menu_click(item_index);
