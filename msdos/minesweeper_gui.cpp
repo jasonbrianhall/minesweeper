@@ -153,17 +153,17 @@ void draw_menu_bar() {
     if (minesweeper_gui.show_file_menu) {
         int menu_x = 0;
         int menu_y = MENU_BAR_HEIGHT;
-        int menu_w = 180;
-        int item_h = 18;
-        int menu_h = NUM_FILE_MENU_ITEMS * item_h;
+        int menu_w = 200;
+        int item_h = 20;
+        int menu_h = NUM_FILE_MENU_ITEMS * item_h + 10;
         
-        /* Menu background with border */
-        rectfill(active_buffer, menu_x, menu_y, menu_x + menu_w, menu_y + menu_h, COLOR_BLUE);
+        /* Ensure menu is on top - draw with solid background */
+        rectfill(active_buffer, menu_x, menu_y, menu_x + menu_w, menu_y + menu_h + 50, COLOR_BLUE);
         rect(active_buffer, menu_x, menu_y, menu_x + menu_w, menu_y + menu_h, COLOR_WHITE);
         
         /* Menu items */
         for (int i = 0; i < NUM_FILE_MENU_ITEMS; i++) {
-            int item_y = menu_y + i * item_h;
+            int item_y = menu_y + 5 + i * item_h;
             
             /* Separator */
             if (strlen(file_menu_items[i]) == 0) {
@@ -187,17 +187,17 @@ void draw_menu_bar() {
     if (minesweeper_gui.show_game_menu) {
         int menu_x = 50;
         int menu_y = MENU_BAR_HEIGHT;
-        int menu_w = 180;
-        int item_h = 18;
-        int menu_h = NUM_GAME_MENU_ITEMS * item_h;
+        int menu_w = 200;
+        int item_h = 20;
+        int menu_h = NUM_GAME_MENU_ITEMS * item_h + 10;
         
-        /* Menu background with border */
-        rectfill(active_buffer, menu_x, menu_y, menu_x + menu_w, menu_y + menu_h, COLOR_BLUE);
+        /* Ensure menu is on top - draw with solid background */
+        rectfill(active_buffer, menu_x, menu_y, menu_x + menu_w, menu_y + menu_h + 50, COLOR_BLUE);
         rect(active_buffer, menu_x, menu_y, menu_x + menu_w, menu_y + menu_h, COLOR_WHITE);
         
         /* Menu items */
         for (int i = 0; i < NUM_GAME_MENU_ITEMS; i++) {
-            int item_y = menu_y + i * item_h;
+            int item_y = menu_y + 5 + i * item_h;
             
             /* Separator */
             if (strlen(game_menu_items[i]) == 0) {
@@ -221,17 +221,17 @@ void draw_menu_bar() {
     if (minesweeper_gui.show_help_menu) {
         int menu_x = 125;
         int menu_y = MENU_BAR_HEIGHT;
-        int menu_w = 180;
-        int item_h = 18;
-        int menu_h = NUM_HELP_MENU_ITEMS * item_h;
+        int menu_w = 200;
+        int item_h = 20;
+        int menu_h = NUM_HELP_MENU_ITEMS * item_h + 10;
         
-        /* Menu background with border */
-        rectfill(active_buffer, menu_x, menu_y, menu_x + menu_w, menu_y + menu_h, COLOR_BLUE);
+        /* Ensure menu is on top - draw with solid background */
+        rectfill(active_buffer, menu_x, menu_y, menu_x + menu_w, menu_y + menu_h + 50, COLOR_BLUE);
         rect(active_buffer, menu_x, menu_y, menu_x + menu_w, menu_y + menu_h, COLOR_WHITE);
         
         /* Menu items */
         for (int i = 0; i < NUM_HELP_MENU_ITEMS; i++) {
-            int item_y = menu_y + i * item_h;
+            int item_y = menu_y + 5 + i * item_h;
             
             /* Highlight selected */
             if (i == minesweeper_gui.help_menu_selected) {
@@ -254,27 +254,6 @@ void draw_game_board() {
     
     /* Only draw board during gameplay */
     if (game->state != GameState::PLAYING) {
-        /* Draw simple menu text for non-playing states */
-        if (game->state == GameState::MENU) {
-            int y = 100;
-            textout_ex(active_buffer, font, "MINESWEEPER", 250, y, COLOR_BLUE, -1);
-            y += 50;
-            textout_ex(active_buffer, font, "Select Difficulty:", 180, y, COLOR_BLACK, -1);
-            y += 40;
-            textout_ex(active_buffer, font, "E - Easy   (9x9, 10 mines)", 100, y, COLOR_BLACK, -1);
-            y += 30;
-            textout_ex(active_buffer, font, "M - Medium (16x16, 40 mines)", 100, y, COLOR_BLACK, -1);
-            y += 30;
-            textout_ex(active_buffer, font, "H - Hard   (16x30, 99 mines)", 100, y, COLOR_BLACK, -1);
-            y += 30;
-            textout_ex(active_buffer, font, "C - Custom", 100, y, COLOR_BLACK, -1);
-            y += 30;
-            textout_ex(active_buffer, font, "S - Seed", 100, y, COLOR_BLACK, -1);
-            y += 30;
-            textout_ex(active_buffer, font, "K - Highscores", 100, y, COLOR_BLACK, -1);
-            y += 30;
-            textout_ex(active_buffer, font, "Q - Quit", 100, y, COLOR_BLACK, -1);
-        }
         return;
     }
     
@@ -423,7 +402,6 @@ void draw_name_input_dialog() {
 void draw_minesweeper_screen() {
     clear_to_color(active_buffer, COLOR_WHITE);
     
-    draw_menu_bar();
     draw_game_board();
     draw_button_panel();
     draw_name_input_dialog();
@@ -455,6 +433,9 @@ void draw_minesweeper_screen() {
         sprintf(mine_str, "Mines: %d/%d", flags, game->mines);
         textout_ex(active_buffer, font, mine_str, TIMER_DISPLAY_X + 200, TIMER_DISPLAY_Y, COLOR_BLACK, -1);
     }
+    
+    /* Draw menu bar LAST so it appears on top */
+    draw_menu_bar();
 }
 
 /**
@@ -512,20 +493,10 @@ void handle_minesweeper_input(int key) {
             /* Toggle flag */
             game->toggleFlag(minesweeper_gui.selected_col, minesweeper_gui.selected_row);
             mark_screen_dirty();
-        } else if (key == 'f' || key == 'F') {
-            minesweeper_gui.show_file_menu = !minesweeper_gui.show_file_menu;
-            minesweeper_gui.show_game_menu = false;
-            minesweeper_gui.show_help_menu = false;
-            mark_screen_dirty();
-        } else if (key == 'g' || key == 'G') {
-            minesweeper_gui.show_game_menu = !minesweeper_gui.show_game_menu;
-            minesweeper_gui.show_file_menu = false;
-            minesweeper_gui.show_help_menu = false;
-            mark_screen_dirty();
-        } else if (key == 'h' || key == 'H') {
-            minesweeper_gui.show_help_menu = !minesweeper_gui.show_help_menu;
+        } else if (key == 27) {  /* ESC to close menus */
             minesweeper_gui.show_file_menu = false;
             minesweeper_gui.show_game_menu = false;
+            minesweeper_gui.show_help_menu = false;
             mark_screen_dirty();
         }
     }

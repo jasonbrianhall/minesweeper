@@ -1,6 +1,6 @@
 /*
  * minesweeper_main.cpp - Minesweeper Allegro 4 GUI Main Entry Point
- * Replaces the ncurses-based main with Allegro 4 graphics
+ * Handles all window, input, and rendering
  */
 
 #include <allegro.h>
@@ -28,6 +28,13 @@ Minesweeper *game = NULL;
 
 /* Screen dirty tracking */
 int screen_dirty = 1;
+
+/* Global mouse button state to prevent multiple clicks */
+static int prev_mouse_b = 0;
+
+/* Forward declarations */
+void handle_file_menu_click(int item_index);
+void handle_game_menu_click(int item_index);
 
 /* Allegro keyboard constants */
 #ifndef KEY_UP
@@ -90,6 +97,58 @@ BITMAP* get_next_buffer_and_swap() {
 }
 
 /**
+ * Handle File menu item clicks
+ */
+void handle_file_menu_click(int item_index) {
+    switch (item_index) {
+        case 0:  /* New Game */
+            if (game) {
+                game->state = GameState::MENU;
+                mark_screen_dirty();
+            }
+            break;
+        case 1:  /* Reset */
+            if (game) {
+                game->reset();
+                mark_screen_dirty();
+            }
+            break;
+        case 3:  /* Exit */
+            allegro_exit();
+            exit(0);
+            break;
+    }
+}
+
+/**
+ * Handle Game menu item clicks
+ */
+void handle_game_menu_click(int item_index) {
+    if (!game) return;
+    
+    switch (item_index) {
+        case 0:  /* Easy */
+            game->setDifficulty(Difficulty::EASY);
+            game->reset();
+            mark_screen_dirty();
+            break;
+        case 1:  /* Medium */
+            game->setDifficulty(Difficulty::MEDIUM);
+            game->reset();
+            mark_screen_dirty();
+            break;
+        case 2:  /* Hard */
+            game->setDifficulty(Difficulty::HARD);
+            game->reset();
+            mark_screen_dirty();
+            break;
+        case 4:  /* Pause */
+            /* TODO: Implement pause */
+            break;
+    }
+}
+
+/**
  * Handle keyboard input and game state transitions
  */
 void process_input(Minesweeper *game, bool &running) {
@@ -104,30 +163,39 @@ void process_input(Minesweeper *game, bool &running) {
         return;
     }
     
+    /* Menu bar keyboard shortcut: A to toggle File menu */
+    if (ascii == 'a' || ascii == 'A') {
+        minesweeper_gui.show_file_menu = !minesweeper_gui.show_file_menu;
+        minesweeper_gui.show_game_menu = false;
+        minesweeper_gui.show_help_menu = false;
+        mark_screen_dirty();
+        return;
+    }
+    
     /* Game state input */
     switch (game->state) {
         case GameState::MENU:
             /* Menu input */
-            if (ascii == 'e' || ascii == 'E') {
+            if (ascii == 'e' || ascii == 'E' || ascii == '1') {
                 game->setDifficulty(Difficulty::EASY);
                 game->reset();
                 game->state = GameState::PLAYING;
                 mark_screen_dirty();
-            } else if (ascii == 'm' || ascii == 'M') {
+            } else if (ascii == 'm' || ascii == 'M' || ascii == '2') {
                 game->setDifficulty(Difficulty::MEDIUM);
                 game->reset();
                 game->state = GameState::PLAYING;
                 mark_screen_dirty();
-            } else if (ascii == 'h' || ascii == 'H') {
+            } else if (ascii == 'h' || ascii == 'H' || ascii == '3') {
                 game->setDifficulty(Difficulty::HARD);
                 game->reset();
                 game->state = GameState::PLAYING;
                 mark_screen_dirty();
-            } else if (ascii == 'c' || ascii == 'C') {
+            } else if (ascii == 'c' || ascii == 'C' || ascii == '4') {
                 game->state = GameState::PLAYING;
                 game->enteringCustom = true;
                 mark_screen_dirty();
-            } else if (ascii == 's' || ascii == 'S') {
+            } else if (ascii == 's' || ascii == 'S' || ascii == 'k' || ascii == 'K') {
                 game->state = GameState::HIGHSCORES;
                 mark_screen_dirty();
             }
@@ -195,6 +263,7 @@ int main() {
     allegro_init();
     install_keyboard();
     install_timer();
+    install_mouse();  /* Install mouse driver */
     
     /* Set graphics mode - WINDOWED, not fullscreen */
     set_color_depth(8);
@@ -222,16 +291,113 @@ int main() {
     bool running = true;
     int frame_count = 0;
     
-    display_status("Welcome to Minesweeper! Select difficulty...");
-    game->state = GameState::MENU;
+    /* Start game directly on Easy difficulty */
+    game->setDifficulty(Difficulty::EASY);
+    game->reset();
+    game->state = GameState::PLAYING;
+    display_status("Minesweeper - Left click to reveal, Right click to flag");
     mark_screen_dirty();  /* Force initial draw */
     
     while (running) {
         /* Get next buffer for drawing */
-        BITMAP *buffer = get_next_buffer_and_swap();
+        get_next_buffer_and_swap();
         
-        /* Handle input */
+        /* Show mouse cursor after buffer operations */
+        show_mouse(screen);
+        
+        /* Handle keyboard input */
         process_input(game, running);
+        
+        /* Handle mouse clicks - only register when button is PRESSED, not held */
+        if ((mouse_b & 1) && !(prev_mouse_b & 1)) {  /* Left click - button pressed */
+            int mx = mouse_x;
+            int my = mouse_y;
+            
+            /* Check if click is on menu bar */
+            if (my >= 0 && my < 30) {
+                /* File menu at x=5-40 */
+                if (mx >= 5 && mx <= 40) {
+                    minesweeper_gui.show_file_menu = !minesweeper_gui.show_file_menu;
+                    minesweeper_gui.show_game_menu = false;
+                    minesweeper_gui.show_help_menu = false;
+                    mark_screen_dirty();
+                }
+                /* Game menu at x=50-125 */
+                else if (mx >= 50 && mx <= 125) {
+                    minesweeper_gui.show_game_menu = !minesweeper_gui.show_game_menu;
+                    minesweeper_gui.show_file_menu = false;
+                    minesweeper_gui.show_help_menu = false;
+                    mark_screen_dirty();
+                }
+                /* Help menu at x=125-160 */
+                else if (mx >= 125 && mx <= 160) {
+                    minesweeper_gui.show_help_menu = !minesweeper_gui.show_help_menu;
+                    minesweeper_gui.show_file_menu = false;
+                    minesweeper_gui.show_game_menu = false;
+                    mark_screen_dirty();
+                }
+            }
+            /* Check if click is on menu items when menu is open */
+            else if (game->state == GameState::PLAYING) {
+                if (minesweeper_gui.show_file_menu && mx >= 0 && mx <= 180) {
+                    int item_index = (my - 30) / 18;
+                    if (item_index >= 0 && item_index < NUM_FILE_MENU_ITEMS) {
+                        handle_file_menu_click(item_index);
+                        minesweeper_gui.show_file_menu = false;
+                        mark_screen_dirty();
+                    }
+                }
+                if (minesweeper_gui.show_game_menu && mx >= 50 && mx <= 230) {
+                    int item_index = (my - 30) / 18;
+                    if (item_index >= 0 && item_index < NUM_GAME_MENU_ITEMS) {
+                        handle_game_menu_click(item_index);
+                        minesweeper_gui.show_game_menu = false;
+                        mark_screen_dirty();
+                    }
+                }
+                /* Check if click is on game board during gameplay */
+                else if (mx >= BOARD_START_X && mx < BOARD_START_X + (game->width * CELL_SIZE) &&
+                         my >= BOARD_START_Y && my < BOARD_START_Y + (game->height * CELL_SIZE)) {
+                    
+                    int col = (mx - BOARD_START_X) / CELL_SIZE;
+                    int row = (my - BOARD_START_Y) / CELL_SIZE;
+                    
+                    if (col >= 0 && col < game->width && row >= 0 && row < game->height) {
+                        game->reveal(col, row);
+                        mark_screen_dirty();
+                    }
+                }
+            }
+        }
+        
+        /* Handle right mouse button - flag or chord */
+        if ((mouse_b & 2) && !(prev_mouse_b & 2)) {  /* Right click - button pressed */
+            int mx = mouse_x;
+            int my = mouse_y;
+            
+            if (game->state == GameState::PLAYING) {
+                if (mx >= BOARD_START_X && mx < BOARD_START_X + (game->width * CELL_SIZE) &&
+                    my >= BOARD_START_Y && my < BOARD_START_Y + (game->height * CELL_SIZE)) {
+                    
+                    int col = (mx - BOARD_START_X) / CELL_SIZE;
+                    int row = (my - BOARD_START_Y) / CELL_SIZE;
+                    
+                    if (col >= 0 && col < game->width && row >= 0 && row < game->height) {
+                        /* If cell is already revealed, do chord click (reveal adjacent) */
+                        if (game->revealed[row][col]) {
+                            game->revealAdjacentCells(row, col);
+                        } else {
+                            /* Otherwise toggle flag */
+                            game->toggleFlag(col, row);
+                        }
+                        mark_screen_dirty();
+                    }
+                }
+            }
+        }
+        
+        /* Store previous mouse button state for next frame */
+        prev_mouse_b = mouse_b;
         
         /* Update game logic */
         if (game->state == GameState::PLAYING) {
@@ -242,11 +408,11 @@ int main() {
         /* Draw screen */
         draw_minesweeper_screen();
         
-        /* Always mark dirty to ensure updates - comment out if you want more efficient rendering */
+        /* Always mark dirty to ensure updates */
         mark_screen_dirty();
         
-        /* Frame rate cap (~60 FPS) */
-        rest(16);
+        /* 30 FPS frame rate cap (33ms per frame) */
+        rest(33);
         
         frame_count++;
     }
