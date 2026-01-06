@@ -32,6 +32,16 @@ int screen_dirty = 1;
 /* Global mouse button state to prevent multiple clicks */
 static int prev_mouse_b = 0;
 
+/* Window close button flag */
+static volatile int want_to_quit = 0;
+
+/**
+ * Callback for window close button
+ */
+void close_button_callback() {
+    want_to_quit = 1;
+}
+
 /* Forward declarations */
 void handle_file_menu_click(int item_index);
 void handle_game_menu_click(int item_index);
@@ -265,6 +275,9 @@ int main() {
     install_timer();
     install_mouse();  /* Install mouse driver */
     
+    /* Set up window close button callback */
+    set_close_button_callback(close_button_callback);
+    
     /* Set graphics mode - WINDOWED, not fullscreen */
     set_color_depth(8);
     if (set_gfx_mode(GFX_SAFE, 640, 480, 0, 0) != 0) {
@@ -299,6 +312,12 @@ int main() {
     mark_screen_dirty();  /* Force initial draw */
     
     while (running) {
+        /* Check if window close button (X) was pressed */
+        if (want_to_quit) {
+            running = false;
+            break;
+        }
+        
         /* Get next buffer for drawing */
         get_next_buffer_and_swap();
         
