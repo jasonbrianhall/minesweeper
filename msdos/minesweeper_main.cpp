@@ -44,7 +44,6 @@ void close_button_callback() {
 
 /* Forward declarations */
 void handle_file_menu_click(int item_index);
-void handle_game_menu_click(int item_index);
 
 /* Allegro keyboard constants */
 #ifndef KEY_UP
@@ -110,47 +109,51 @@ BITMAP* get_next_buffer_and_swap() {
  * Handle File menu item clicks
  */
 void handle_file_menu_click(int item_index) {
-    switch (item_index) {
-        case 0:  /* New Game */
-            if (game) {
-                game->setDifficulty(Difficulty::EASY);
-                game->reset();
-                game->state = GameState::PLAYING;
-                display_status("Minesweeper - Left click to reveal, Right click to flag");
-                mark_screen_dirty();
-            }
-            break;
-        case 2:  /* Exit (was case 3 with old menu) */
-            allegro_exit();
-            exit(0);
-            break;
-    }
-}
-
-/**
- * Handle Game menu item clicks
- */
-void handle_game_menu_click(int item_index) {
     if (!game) return;
     
     switch (item_index) {
-        case 0:  /* Easy */
+        case 0:  /* New Game */
             game->setDifficulty(Difficulty::EASY);
             game->reset();
+            game->state = GameState::PLAYING;
+            display_status("New Game - Easy Mode");
             mark_screen_dirty();
             break;
-        case 1:  /* Medium */
+        case 2:  /* Easy */
+            game->setDifficulty(Difficulty::EASY);
+            game->reset();
+            game->state = GameState::PLAYING;
+            display_status("Easy Mode - Left click to reveal, Right click to flag");
+            mark_screen_dirty();
+            break;
+        case 3:  /* Medium */
             game->setDifficulty(Difficulty::MEDIUM);
             game->reset();
+            game->state = GameState::PLAYING;
+            display_status("Medium Mode - Left click to reveal, Right click to flag");
             mark_screen_dirty();
             break;
-        case 2:  /* Hard */
+        case 4:  /* Hard */
             game->setDifficulty(Difficulty::HARD);
             game->reset();
+            game->state = GameState::PLAYING;
+            display_status("Hard Mode - Left click to reveal, Right click to flag");
             mark_screen_dirty();
             break;
-        case 4:  /* Pause */
-            /* TODO: Implement pause */
+        case 6:  /* Reset */
+            game->reset();
+            game->state = GameState::PLAYING;
+            display_status("Game reset - Left click to reveal, Right click to flag");
+            mark_screen_dirty();
+            break;
+        case 7:  /* High Scores */
+            game->state = GameState::HIGHSCORES;
+            display_status("Viewing high scores");
+            mark_screen_dirty();
+            break;
+        case 9:  /* Exit */
+            allegro_exit();
+            exit(0);
             break;
     }
 }
@@ -170,10 +173,21 @@ void process_input(Minesweeper *game, bool &running) {
         return;
     }
     
+    /* New Game shortcut */
+    if (ascii == 'n' || ascii == 'N') {
+        if (game->state == GameState::PLAYING || game->state == GameState::GAME_OVER) {
+            game->setDifficulty(Difficulty::EASY);
+            game->reset();
+            game->state = GameState::PLAYING;
+            display_status("New Game - Easy Mode");
+            mark_screen_dirty();
+        }
+        return;
+    }
+    
     /* Menu bar keyboard shortcut: A to toggle File menu */
     if (ascii == 'a' || ascii == 'A') {
         minesweeper_gui.show_file_menu = !minesweeper_gui.show_file_menu;
-        minesweeper_gui.show_game_menu = false;
         minesweeper_gui.show_help_menu = false;
         mark_screen_dirty();
         return;
@@ -197,10 +211,6 @@ void process_input(Minesweeper *game, bool &running) {
                 game->setDifficulty(Difficulty::HARD);
                 game->reset();
                 game->state = GameState::PLAYING;
-                mark_screen_dirty();
-            } else if (ascii == 'c' || ascii == 'C' || ascii == '4') {
-                game->state = GameState::PLAYING;
-                game->enteringCustom = true;
                 mark_screen_dirty();
             } else if (ascii == 's' || ascii == 'S' || ascii == 'k' || ascii == 'K') {
                 game->state = GameState::HIGHSCORES;
@@ -335,40 +345,23 @@ int main() {
                 /* File menu at x=5-40 */
                 if (mx >= 5 && mx <= 40) {
                     minesweeper_gui.show_file_menu = !minesweeper_gui.show_file_menu;
-                    minesweeper_gui.show_game_menu = false;
                     minesweeper_gui.show_help_menu = false;
                     mark_screen_dirty();
                 }
-                /* Game menu at x=50-125 */
-                else if (mx >= 50 && mx <= 125) {
-                    minesweeper_gui.show_game_menu = !minesweeper_gui.show_game_menu;
-                    minesweeper_gui.show_file_menu = false;
-                    minesweeper_gui.show_help_menu = false;
-                    mark_screen_dirty();
-                }
-                /* Help menu at x=125-160 */
-                else if (mx >= 125 && mx <= 160) {
+                /* Help menu at x=95-140 */
+                else if (mx >= 95 && mx <= 140) {
                     minesweeper_gui.show_help_menu = !minesweeper_gui.show_help_menu;
                     minesweeper_gui.show_file_menu = false;
-                    minesweeper_gui.show_game_menu = false;
                     mark_screen_dirty();
                 }
             }
             /* Check if click is on menu items when menu is open */
             else if (game->state == GameState::PLAYING) {
                 if (minesweeper_gui.show_file_menu && mx >= 0 && mx <= 180) {
-                    int item_index = (my - 30) / 18;
+                    int item_index = (my - 30) / 20;
                     if (item_index >= 0 && item_index < NUM_FILE_MENU_ITEMS) {
                         handle_file_menu_click(item_index);
                         minesweeper_gui.show_file_menu = false;
-                        mark_screen_dirty();
-                    }
-                }
-                if (minesweeper_gui.show_game_menu && mx >= 50 && mx <= 230) {
-                    int item_index = (my - 30) / 18;
-                    if (item_index >= 0 && item_index < NUM_GAME_MENU_ITEMS) {
-                        handle_game_menu_click(item_index);
-                        minesweeper_gui.show_game_menu = false;
                         mark_screen_dirty();
                     }
                 }

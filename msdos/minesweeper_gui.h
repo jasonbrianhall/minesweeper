@@ -41,9 +41,6 @@
 extern const char *file_menu_items[];
 extern const int NUM_FILE_MENU_ITEMS;
 
-extern const char *game_menu_items[];
-extern const int NUM_GAME_MENU_ITEMS;
-
 extern const char *help_menu_items[];
 extern const int NUM_HELP_MENU_ITEMS;
 
@@ -72,9 +69,6 @@ struct MinesweeperGUI {
     /* Menu state */
     bool show_file_menu;
     int file_menu_selected;
-    
-    bool show_game_menu;
-    int game_menu_selected;
     
     bool show_help_menu;
     int help_menu_selected;

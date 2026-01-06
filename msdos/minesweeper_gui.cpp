@@ -21,23 +21,17 @@ MinesweeperGUI minesweeper_gui;
 const char *file_menu_items[] = {
     "New Game      N",
     "",  /* separator */
+    "Easy          1",
+    "Medium        2",
+    "Hard          3",
+    "",  /* separator */
+    "Reset         R",
+    "High Scores   K",
+    "",  /* separator */
     "Exit          Q"
 };
 
 const int NUM_FILE_MENU_ITEMS = (sizeof(file_menu_items) / sizeof(file_menu_items[0]));
-
-/* Game menu items */
-const char *game_menu_items[] = {
-    "Easy          E",
-    "Medium        M",
-    "Hard          H",
-    "Custom        C",
-    "",  /* separator */
-    "Pause         P",
-    "Reset         R",
-};
-
-const int NUM_GAME_MENU_ITEMS = (sizeof(game_menu_items) / sizeof(game_menu_items[0]));
 
 /* Help menu items */
 const char *help_menu_items[] = {
@@ -79,8 +73,7 @@ void init_minesweeper_gui() {
     
     minesweeper_gui.show_file_menu = false;
     minesweeper_gui.file_menu_selected = 0;
-    minesweeper_gui.show_game_menu = false;
-    minesweeper_gui.game_menu_selected = 0;
+    
     minesweeper_gui.show_help_menu = false;
     minesweeper_gui.help_menu_selected = 0;
     
@@ -133,7 +126,7 @@ int get_button_at(int x, int y) {
 }
 
 /**
- * Draw the menu bar with File, Game, Help menus
+ * Draw the menu bar with File and Help menus
  */
 void draw_menu_bar() {
     /* Menu bar background */
@@ -141,8 +134,7 @@ void draw_menu_bar() {
     
     /* Menu buttons */
     textout_ex(active_buffer, font, "File", 5, 5, COLOR_WHITE, -1);
-    textout_ex(active_buffer, font, "Game", 50, 5, COLOR_WHITE, -1);
-    textout_ex(active_buffer, font, "Help", 125, 5, COLOR_WHITE, -1);
+    textout_ex(active_buffer, font, "Help", 95, 5, COLOR_WHITE, -1);
     
     /* Title */
     textout_ex(active_buffer, font, "Minesweeper - Allegro Edition", 200, 5, COLOR_YELLOW, -1);
@@ -181,43 +173,9 @@ void draw_menu_bar() {
         }
     }
     
-    /* Draw Game dropdown menu if active */
-    if (minesweeper_gui.show_game_menu) {
-        int menu_x = 50;
-        int menu_y = MENU_BAR_HEIGHT;
-        int menu_w = 200;
-        int item_h = 20;
-        int menu_h = NUM_GAME_MENU_ITEMS * item_h;
-        
-        /* Ensure menu is on top - draw with solid background */
-        rectfill(active_buffer, menu_x, menu_y, menu_x + menu_w, menu_y + menu_h, COLOR_BLUE);
-        rect(active_buffer, menu_x, menu_y, menu_x + menu_w, menu_y + menu_h, COLOR_WHITE);
-        
-        /* Menu items */
-        for (int i = 0; i < NUM_GAME_MENU_ITEMS; i++) {
-            int item_y = menu_y + 5 + i * item_h;
-            
-            /* Separator */
-            if (strlen(game_menu_items[i]) == 0) {
-                hline(active_buffer, menu_x + 5, item_y + item_h/2, menu_x + menu_w - 5, COLOR_DARK_GRAY);
-                continue;
-            }
-            
-            /* Highlight selected */
-            if (i == minesweeper_gui.game_menu_selected) {
-                rectfill(active_buffer, menu_x + 2, item_y + 2, 
-                        menu_x + menu_w - 2, item_y + item_h - 2, COLOR_CYAN);
-            }
-            
-            /* Draw menu item text */
-            int text_color = (i == minesweeper_gui.game_menu_selected) ? COLOR_BLACK : COLOR_WHITE;
-            textout_ex(active_buffer, font, game_menu_items[i], menu_x + 10, item_y + 3, text_color, -1);
-        }
-    }
-    
     /* Draw Help dropdown menu if active */
     if (minesweeper_gui.show_help_menu) {
-        int menu_x = 125;
+        int menu_x = 95;
         int menu_y = MENU_BAR_HEIGHT;
         int menu_w = 200;
         int item_h = 20;
@@ -529,7 +487,6 @@ void handle_minesweeper_input(int key) {
             mark_screen_dirty();
         } else if (key == 27) {  /* ESC to close menus */
             minesweeper_gui.show_file_menu = false;
-            minesweeper_gui.show_game_menu = false;
             minesweeper_gui.show_help_menu = false;
             mark_screen_dirty();
         }
