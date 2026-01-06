@@ -178,6 +178,13 @@ void process_input(Minesweeper *game, bool &running) {
     int key = readkey();
     int ascii = key & 0xFF;
     
+    /* If entering name, skip all shortcuts and go directly to name input */
+    if (game->state == GameState::ENTER_NAME) {
+        handle_minesweeper_input(ascii);
+        mark_screen_dirty();
+        return;
+    }
+    
     /* Global quit */
     if (ascii == 'q' || ascii == 'Q') {
         running = false;
@@ -363,12 +370,6 @@ void process_input(Minesweeper *game, bool &running) {
             }
             break;
             
-        case GameState::ENTER_NAME:
-            /* High score name entry */
-            handle_minesweeper_input(ascii);
-            mark_screen_dirty();
-            break;
-            
         case GameState::HIGHSCORES:
             /* Return to playing */
             game->currentSeed = -1;  /* Generate new seed */
@@ -444,6 +445,24 @@ int main() {
         
         /* Get next buffer for drawing */
         get_next_buffer_and_swap();
+        
+        /* Check for win/loss at the start of each frame (independent of input) */
+        if (game && game->state == GameState::PLAYING) {
+            /* Actually check the win condition (in case flagging changed the state) */
+            if (game->checkWin()) {
+                game->won = true;
+            }
+            
+            if (game->won) {
+                game->state = GameState::GAME_OVER;
+                display_status("You won! Press any key...");
+                mark_screen_dirty();
+            } else if (game->gameOver) {
+                game->state = GameState::GAME_OVER;
+                display_status("Game Over! Press any key...");
+                mark_screen_dirty();
+            }
+        }
         
         /* Show mouse cursor after buffer operations */
         show_mouse(screen);

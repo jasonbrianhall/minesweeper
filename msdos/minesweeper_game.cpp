@@ -182,6 +182,7 @@ void Minesweeper::revealAllMines() {
 bool Minesweeper::checkWin() {
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
+            /* Win condition: all non-mine cells must be REVEALED */
             if (!minefield[y][x] && !revealed[y][x]) {
                 return false;
             }

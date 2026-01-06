@@ -335,7 +335,7 @@ void draw_minesweeper_screen() {
             y_pos += 130;
         }
         
-        textout_centre_ex(active_buffer, font, "Press any key to return to menu", 512, 700, COLOR_DARK_GRAY, COLOR_WHITE);
+        textout_centre_ex(active_buffer, font, "Press any key to start a new game", 512, 700, COLOR_DARK_GRAY, COLOR_WHITE);
     } else {
         /* Normal gameplay display - including GAME_OVER state to show board with mines */
         draw_game_board();
