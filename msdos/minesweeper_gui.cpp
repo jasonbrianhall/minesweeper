@@ -400,36 +400,72 @@ void draw_name_input_dialog() {
 void draw_minesweeper_screen() {
     clear_to_color(active_buffer, COLOR_WHITE);
     
-    draw_game_board();
-    draw_button_panel();
-    draw_name_input_dialog();
+    /* Handle different game states */
+    if (game->state == GameState::MENU) {
+        /* Main menu display */
+        textout_centre_ex(active_buffer, font, "MINESWEEPER", 512, 50, COLOR_BLUE, COLOR_WHITE);
+        textout_centre_ex(active_buffer, font, "Select Difficulty:", 512, 120, COLOR_BLACK, COLOR_WHITE);
+        textout_centre_ex(active_buffer, font, "1 - Easy (9x9, 10 mines)", 512, 160, COLOR_BLACK, COLOR_WHITE);
+        textout_centre_ex(active_buffer, font, "2 - Medium (16x16, 40 mines)", 512, 190, COLOR_BLACK, COLOR_WHITE);
+        textout_centre_ex(active_buffer, font, "3 - Hard (16x30, 99 mines)", 512, 220, COLOR_BLACK, COLOR_WHITE);
+        textout_centre_ex(active_buffer, font, "Use File menu for New Game", 512, 280, COLOR_DARK_GRAY, COLOR_WHITE);
+    } else if (game->state == GameState::HIGHSCORES) {
+        /* Highscores display */
+        textout_centre_ex(active_buffer, font, "HIGH SCORES", 512, 40, COLOR_BLUE, COLOR_WHITE);
+        
+        /* Show scores by difficulty */
+        int y_pos = 100;
+        
+        std::vector<std::string> difficulties = {"Easy", "Medium", "Hard"};
+        for (const auto& diff : difficulties) {
+            textout_ex(active_buffer, font, (diff + ":").c_str(), 150, y_pos, COLOR_BLUE, COLOR_WHITE);
+            
+            auto scores = game->highscores.getScoresByDifficulty(diff);
+            int rank = 1;
+            for (const auto& score : scores) {
+                if (rank > 5) break;  /* Show top 5 per difficulty */
+                char score_str[64];
+                sprintf(score_str, "%d. %s - %d sec", rank, score.name.c_str(), score.time);
+                textout_ex(active_buffer, font, score_str, 170, y_pos + (rank * 20), COLOR_BLACK, COLOR_WHITE);
+                rank++;
+            }
+            y_pos += 130;
+        }
+        
+        textout_centre_ex(active_buffer, font, "Press any key to return to menu", 512, 700, COLOR_DARK_GRAY, COLOR_WHITE);
+    } else {
+        /* Normal gameplay display */
+        draw_game_board();
+        draw_button_panel();
+        draw_name_input_dialog();
+    }
     
     /* Status bar */
-    rectfill(active_buffer, 0, STATUS_BAR_Y, 640, STATUS_BAR_Y + 30, COLOR_LIGHT_GRAY);
+    rectfill(active_buffer, 0, 720, 1024, 768, COLOR_LIGHT_GRAY);
     
     if (minesweeper_gui.status_timer > 0) {
-        textout_ex(active_buffer, font, minesweeper_gui.status_message, 10, STATUS_BAR_Y + 8, COLOR_BLACK, -1);
+        textout_ex(active_buffer, font, minesweeper_gui.status_message, 10, 730, COLOR_BLACK, -1);
         minesweeper_gui.status_timer--;
     }
     
     /* Timer display */
-    if (game && game->isRunning()) {
-        char timer_str[20];
-        sprintf(timer_str, "Time: %s", game->getTimeString().c_str());
-        textout_ex(active_buffer, font, timer_str, TIMER_DISPLAY_X, TIMER_DISPLAY_Y, COLOR_BLACK, -1);
+    if (game && game->state == GameState::PLAYING) {
+        char timer_str[30];
+        sprintf(timer_str, "Time: %d sec", game->timer.getElapsedSeconds());
+        textout_ex(active_buffer, font, timer_str, TIMER_DISPLAY_X, 730, COLOR_BLACK, -1);
     }
     
     /* Mine counter */
-    if (game) {
+    if (game && game->state == GameState::PLAYING) {
         int flags = 0;
         for (int y = 0; y < game->height; y++) {
             for (int x = 0; x < game->width; x++) {
                 if (game->flagged[y][x]) flags++;
             }
         }
-        char mine_str[20];
+        char mine_str[30];
         sprintf(mine_str, "Mines: %d/%d", flags, game->mines);
-        textout_ex(active_buffer, font, mine_str, TIMER_DISPLAY_X + 200, TIMER_DISPLAY_Y, COLOR_BLACK, -1);
+        textout_ex(active_buffer, font, mine_str, TIMER_DISPLAY_X + 250, 730, COLOR_BLACK, -1);
     }
     
     /* Draw menu bar LAST so it appears on top */

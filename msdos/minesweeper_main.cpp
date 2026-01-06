@@ -74,7 +74,7 @@ void handle_game_menu_click(int item_index);
  */
 void init_double_buffers() {
     for (int i = 0; i < NUM_BUFFERS; i++) {
-        buffers[i] = create_bitmap(640, 480);
+        buffers[i] = create_bitmap(1024, 768);
         if (!buffers[i]) {
             allegro_exit();
             fprintf(stderr, "Failed to allocate buffer %d\n", i);
@@ -95,7 +95,7 @@ BITMAP* get_next_buffer_and_swap() {
     /* Only update screen if it's marked as dirty */
     if (screen_dirty) {
         vsync();  /* Wait for vertical sync */
-        blit(active_buffer, screen, 0, 0, 0, 0, 640, 480);
+        blit(active_buffer, screen, 0, 0, 0, 0, 1024, 768);
         screen_dirty = 0;  /* Mark screen as clean after update */
     }
     
@@ -277,7 +277,7 @@ int main() {
     
     /* Set graphics mode - WINDOWED, not fullscreen */
     set_color_depth(8);
-    if (set_gfx_mode(GFX_SAFE, 640, 480, 0, 0) != 0) {
+    if (set_gfx_mode(GFX_SAFE, 1024, 768, 0, 0) != 0) {
         allegro_exit();
         fprintf(stderr, "Failed to set graphics mode\n");
         return 1;
@@ -313,6 +313,19 @@ int main() {
         if (want_to_quit) {
             running = false;
             break;
+        }
+        
+        /* Check for win/lose conditions at start of frame */
+        if (game->state == GameState::PLAYING) {
+            if (game->gameOver) {
+                game->state = GameState::GAME_OVER;
+                display_status("Game Over! Press any key...");
+                mark_screen_dirty();
+            } else if (game->won) {
+                game->state = GameState::GAME_OVER;
+                display_status("You won! Press any key...");
+                mark_screen_dirty();
+            }
         }
         
         /* Get next buffer for drawing */

@@ -1,162 +1,156 @@
-/*
- * minesweeper.h - Minesweeper game class header
- * Defines GameState, Difficulty, Timer, and Minesweeper class
- */
+#pragma once
 
-#ifndef MINESWEEPER_H
-#define MINESWEEPER_H
-
-#include "highscores.h"
-#include <atomic>
-#include <ctime>
-#include <random>
-#include <set>
 #include <string>
 #include <vector>
+#include <map>
+#include <ctime>
+#include "highscores.h"
 
-#define MAX_SCORES 10
-
-enum class GameState { MENU, PLAYING, HELP, GAME_OVER, HIGHSCORES, ENTER_NAME };
-
-enum class Difficulty {
-    EASY,    // 9x9, 10 mines
-    MEDIUM,  // 16x16, 40 mines
-    HARD,    // 16x30, 99 mines
-    CUSTOM   // User-defined
+/* Game state enum */
+enum class GameState {
+    MENU,
+    PLAYING,
+    GAME_OVER,
+    HELP,
+    HIGHSCORES,
+    ENTER_NAME
 };
 
+/* Difficulty enum */
+enum class Difficulty {
+    EASY = 0,
+    MEDIUM = 1,
+    HARD = 2,
+    CUSTOM = 3
+};
+
+/* Difficulty settings structure */
 struct DifficultySettings {
     int height;
     int width;
     int mines;
 };
 
-extern const DifficultySettings DIFFICULTY_SETTINGS[];
-
-/* Timer class for tracking game time */
+/* Timer class */
 class Timer {
-private:
-    clock_t startTime;
-    bool running;
-    int elapsedSeconds;
-
 public:
-    Timer() : running(false), elapsedSeconds(0) {}
-
+    Timer() : startTime(0), stopTime(0), isRunning(false) {}
+    
     void start() {
-        startTime = clock();
-        running = true;
+        startTime = time(nullptr);
+        isRunning = true;
+        stopTime = 0;
     }
-
+    
     void stop() {
-        if (running) {
-            update();
-            running = false;
-        }
+        stopTime = time(nullptr);
+        isRunning = false;
     }
-
-    int getElapsedSeconds() const { return elapsedSeconds; }
-
+    
     void update() {
-        if (running) {
-            clock_t now = clock();
-            elapsedSeconds = (now - startTime) / CLOCKS_PER_SEC;
-        }
+        /* Timer updates itself via system time */
+    }
+    
+    int getElapsedSeconds() const {
+        if (startTime == 0) return 0;
+        time_t current = stopTime > 0 ? stopTime : time(nullptr);
+        return static_cast<int>(difftime(current, startTime));
+    }
+    
+    std::string getTimeString() const {
+        int elapsed = getElapsedSeconds();
+        int minutes = elapsed / 60;
+        int seconds = elapsed % 60;
+        char buf[32];
+        sprintf(buf, "%d:%02d", minutes, seconds);
+        return std::string(buf);
     }
 
-    std::string getTimeString() const {
-        int minutes = elapsedSeconds / 60;
-        int seconds = elapsedSeconds % 60;
-        char buffer[10];
-        snprintf(buffer, sizeof(buffer), "%02d:%02d", minutes, seconds);
-        return std::string(buffer);
-    }
+private:
+    time_t startTime;
+    time_t stopTime;
+    bool isRunning;
 };
 
-/* Main Minesweeper game class */
+/* Main Minesweeper Game Class */
 class Minesweeper {
 public:
-    /* Public game state */
+    Minesweeper();
+    ~Minesweeper();
+    
+    /* Game state */
     GameState state;
     Difficulty difficulty;
-    Timer timer;
     bool gameOver;
     bool won;
     bool firstMove;
     
-    /* Board dimensions and content */
+    /* Board dimensions */
     int height;
     int width;
     int mines;
+    
+    /* Board state */
+    std::vector<std::vector<bool>> minefield;
+    std::vector<std::vector<bool>> revealed;
+    std::vector<std::vector<bool>> flagged;
+    
+    /* Cursor position */
     int cursorY;
     int cursorX;
     int currentSeed;
     
-    /* Game board arrays - accessible to GUI */
-    std::vector<std::vector<bool>> minefield;   // true = mine
-    std::vector<std::vector<bool>> revealed;    // true = revealed
-    std::vector<std::vector<bool>> flagged;     // true = flagged
-    
-    /* Input and state flags */
-    bool enteringCustom;
-    bool enteringName;
-    bool enteringSeed;
-    
-    /* Text input buffers */
-    std::string playerName;
-    std::string customWidth;
-    std::string customHeight;
-    std::string customMines;
-    std::string seedInput;
-    int customStep;
-    
-    /* High score management */
-    Highscores highscores;
-    
-    /* Constructor and destructor */
-    Minesweeper();
-    ~Minesweeper();
-    
-    /* Game initialization and reset */
+    /* Game mechanics */
     void setDifficulty(Difficulty diff);
     void reset();
     void initializeMinefield(int firstY, int firstX, int seed = -1);
-    
-    /* Game state queries */
-    bool isGameOver() const { return gameOver || won; }
-    bool isHighScore(int time) const;
-    bool isRunning() const { return state == GameState::PLAYING && !gameOver && !won; }
-    
-    /* Cell operations */
     void reveal(int x, int y);
     void toggleFlag(int x, int y);
     void revealCell(int y, int x);
     void revealAdjacentCells(int y, int x);
     void revealAllMines();
+    bool checkWin();
     int countAdjacentMines(int x, int y);
     int countAdjacentFlags(int y, int x);
-    bool checkWin();
-    
-    /* Drawing and display (stubs for Allegro GUI) */
-    void draw();
-    void updateTitle();
-    void drawMenu();
-    void drawHelp();
-    void drawHighscores();
-    void drawEnterName();
-    void drawTitle();
-    void setupColors();
     
     /* Input handling */
     bool handleInput(int ch);
     void handleNameEntry(int ch);
     void handleCustomDifficulty(int ch);
     
-    /* High score management */
+    /* High scores */
+    bool isHighScore(int time) const;
     void saveHighscore();
     
-    /* Utility */
-    std::string getTimeString() const { return timer.getTimeString(); }
+    /* Drawing (handled by GUI) */
+    void draw();
+    void drawTitle();
+    void drawMenu();
+    void drawHelp();
+    void drawHighscores();
+    void drawEnterName();
+    void setupColors();
+    void updateTitle();
+    
+    /* Timing */
+    Timer timer;
+    
+    /* Player name for high score entry */
+    std::string playerName;
+    
+    /* Custom game input */
+    bool enteringCustom;
+    bool enteringName;
+    bool enteringSeed;
+    int customStep;
+    std::string customWidth;
+    std::string customHeight;
+    std::string customMines;
+    std::string seedInput;
+    
+    /* Highscores */
+    Highscores highscores;
+    
+    /* Constants */
+    static const int MAX_SCORES = 10;
 };
-
-#endif /* MINESWEEPER_H */
