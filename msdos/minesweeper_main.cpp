@@ -113,6 +113,7 @@ void handle_file_menu_click(int item_index) {
     
     switch (item_index) {
         case 0:  /* New Game */
+            game->currentSeed = -1;  /* Generate new seed */
             game->setDifficulty(Difficulty::EASY);
             game->reset();
             game->state = GameState::PLAYING;
@@ -120,6 +121,7 @@ void handle_file_menu_click(int item_index) {
             mark_screen_dirty();
             break;
         case 2:  /* Easy */
+            game->currentSeed = -1;  /* Generate new seed */
             game->setDifficulty(Difficulty::EASY);
             game->reset();
             game->state = GameState::PLAYING;
@@ -127,6 +129,7 @@ void handle_file_menu_click(int item_index) {
             mark_screen_dirty();
             break;
         case 3:  /* Medium */
+            game->currentSeed = -1;  /* Generate new seed */
             game->setDifficulty(Difficulty::MEDIUM);
             game->reset();
             game->state = GameState::PLAYING;
@@ -134,6 +137,7 @@ void handle_file_menu_click(int item_index) {
             mark_screen_dirty();
             break;
         case 4:  /* Hard */
+            game->currentSeed = -1;  /* Generate new seed */
             game->setDifficulty(Difficulty::HARD);
             game->reset();
             game->state = GameState::PLAYING;
@@ -141,6 +145,7 @@ void handle_file_menu_click(int item_index) {
             mark_screen_dirty();
             break;
         case 6:  /* Reset */
+            /* Keep currentSeed the same - replay same board */
             game->reset();
             game->state = GameState::PLAYING;
             display_status("Game reset - Left click to reveal, Right click to flag");
@@ -176,6 +181,7 @@ void process_input(Minesweeper *game, bool &running) {
     /* New Game shortcut */
     if (ascii == 'n' || ascii == 'N') {
         if (game->state == GameState::PLAYING || game->state == GameState::GAME_OVER) {
+            game->currentSeed = -1;  /* Generate new seed */
             game->setDifficulty(Difficulty::EASY);
             game->reset();
             game->state = GameState::PLAYING;
@@ -198,16 +204,19 @@ void process_input(Minesweeper *game, bool &running) {
         case GameState::MENU:
             /* Menu input */
             if (ascii == 'e' || ascii == 'E' || ascii == '1') {
+                game->currentSeed = -1;  /* Generate new seed */
                 game->setDifficulty(Difficulty::EASY);
                 game->reset();
                 game->state = GameState::PLAYING;
                 mark_screen_dirty();
             } else if (ascii == 'm' || ascii == 'M' || ascii == '2') {
+                game->currentSeed = -1;  /* Generate new seed */
                 game->setDifficulty(Difficulty::MEDIUM);
                 game->reset();
                 game->state = GameState::PLAYING;
                 mark_screen_dirty();
             } else if (ascii == 'h' || ascii == 'H' || ascii == '3') {
+                game->currentSeed = -1;  /* Generate new seed */
                 game->setDifficulty(Difficulty::HARD);
                 game->reset();
                 game->state = GameState::PLAYING;
@@ -237,21 +246,72 @@ void process_input(Minesweeper *game, bool &running) {
             break;
             
         case GameState::GAME_OVER:
-            /* On any key/click: start new game on same difficulty */
-            if (!game->gameOver && game->won && game->isHighScore(game->timer.getElapsedSeconds())) {
-                game->state = GameState::ENTER_NAME;
-                minesweeper_gui.entering_name = true;
-                minesweeper_gui.player_name_length = 0;
-                memset(minesweeper_gui.player_name, 0, sizeof(minesweeper_gui.player_name));
-            } else {
-                /* Just reset the game state flags, go back to playing. Board stays visible. */
-                game->gameOver = false;
-                game->won = false;
-                game->firstMove = true;
+            /* Allow menu interaction in GAME_OVER state */
+            if (ascii == 'a' || ascii == 'A') {
+                /* Toggle File menu */
+                minesweeper_gui.show_file_menu = !minesweeper_gui.show_file_menu;
+                minesweeper_gui.show_help_menu = false;
+                mark_screen_dirty();
+            } else if (ascii == 'n' || ascii == 'N') {
+                /* New Game */
+                game->currentSeed = -1;  /* Generate new seed */
+                game->setDifficulty(Difficulty::EASY);
+                game->reset();
                 game->state = GameState::PLAYING;
-                display_status("Minesweeper - Left click to reveal, Right click to flag");
+                display_status("New Game - Easy Mode");
+                mark_screen_dirty();
+            } else if (ascii == '1') {
+                /* Easy */
+                game->currentSeed = -1;  /* Generate new seed */
+                game->setDifficulty(Difficulty::EASY);
+                game->reset();
+                game->state = GameState::PLAYING;
+                display_status("Easy Mode");
+                mark_screen_dirty();
+            } else if (ascii == '2') {
+                /* Medium */
+                game->currentSeed = -1;  /* Generate new seed */
+                game->setDifficulty(Difficulty::MEDIUM);
+                game->reset();
+                game->state = GameState::PLAYING;
+                display_status("Medium Mode");
+                mark_screen_dirty();
+            } else if (ascii == '3') {
+                /* Hard */
+                game->currentSeed = -1;  /* Generate new seed */
+                game->setDifficulty(Difficulty::HARD);
+                game->reset();
+                game->state = GameState::PLAYING;
+                display_status("Hard Mode");
+                mark_screen_dirty();
+            } else if (ascii == 'r' || ascii == 'R') {
+                /* Reset */
+                /* Keep currentSeed the same - replay same board */
+                game->reset();
+                game->state = GameState::PLAYING;
+                display_status("Game reset");
+                mark_screen_dirty();
+            } else if (ascii == 'k' || ascii == 'K') {
+                /* High Scores */
+                game->state = GameState::HIGHSCORES;
+                mark_screen_dirty();
+            } else {
+                /* Any other key: go back to playing (old behavior) */
+                if (!game->gameOver && game->won && game->isHighScore(game->timer.getElapsedSeconds())) {
+                    game->state = GameState::ENTER_NAME;
+                    minesweeper_gui.entering_name = true;
+                    minesweeper_gui.player_name_length = 0;
+                    memset(minesweeper_gui.player_name, 0, sizeof(minesweeper_gui.player_name));
+                } else {
+                    /* Just reset the game state flags, go back to playing. Board stays visible. */
+                    game->gameOver = false;
+                    game->won = false;
+                    game->firstMove = true;
+                    game->state = GameState::PLAYING;
+                    display_status("Minesweeper - Left click to reveal, Right click to flag");
+                }
+                mark_screen_dirty();
             }
-            mark_screen_dirty();
             break;
             
         case GameState::ENTER_NAME:
@@ -261,16 +321,20 @@ void process_input(Minesweeper *game, bool &running) {
             break;
             
         case GameState::HIGHSCORES:
-            /* Return to menu */
-            game->state = GameState::MENU;
-            display_status("Menu");
+            /* Return to playing */
+            game->currentSeed = -1;  /* Generate new seed */
+            game->state = GameState::PLAYING;
+            game->reset();
+            display_status("Press N for new game or use File menu");
             mark_screen_dirty();
             break;
             
         case GameState::HELP:
-            /* Return to menu */
-            game->state = GameState::MENU;
-            display_status("Menu");
+            /* Return to playing */
+            game->currentSeed = -1;  /* Generate new seed */
+            game->state = GameState::PLAYING;
+            game->reset();
+            display_status("Press N for new game or use File menu");
             mark_screen_dirty();
             break;
     }
@@ -356,18 +420,18 @@ int main() {
                 }
             }
             /* Check if click is on menu items when menu is open */
-            else if (game->state == GameState::PLAYING) {
-                if (minesweeper_gui.show_file_menu && mx >= 0 && mx <= 180) {
-                    int item_index = (my - 30) / 20;
-                    if (item_index >= 0 && item_index < NUM_FILE_MENU_ITEMS) {
-                        handle_file_menu_click(item_index);
-                        minesweeper_gui.show_file_menu = false;
-                        mark_screen_dirty();
-                    }
+            if (minesweeper_gui.show_file_menu && mx >= 0 && mx <= 180) {
+                int item_index = (my - 30) / 20;
+                if (item_index >= 0 && item_index < NUM_FILE_MENU_ITEMS) {
+                    handle_file_menu_click(item_index);
+                    minesweeper_gui.show_file_menu = false;
+                    mark_screen_dirty();
                 }
-                /* Check if click is on game board during gameplay */
-                else if (mx >= BOARD_START_X && mx < BOARD_START_X + (game->width * CELL_SIZE) &&
-                         my >= BOARD_START_Y && my < BOARD_START_Y + (game->height * CELL_SIZE)) {
+            }
+            /* Check if click is on game board during gameplay (only in PLAYING state) */
+            else if (game->state == GameState::PLAYING) {
+                if (mx >= BOARD_START_X && mx < BOARD_START_X + (game->width * CELL_SIZE) &&
+                    my >= BOARD_START_Y && my < BOARD_START_Y + (game->height * CELL_SIZE)) {
                     
                     int col = (mx - BOARD_START_X) / CELL_SIZE;
                     int row = (my - BOARD_START_Y) / CELL_SIZE;
