@@ -2,6 +2,8 @@
 #include <sstream>
 #include <iomanip>
 #include <random>
+#include <algorithm>
+#include <cmath>
 
 // GameTimer implementation
 void GameTimer::start() {
@@ -21,8 +23,8 @@ void GameTimer::stop() {
 int GameTimer::getElapsedSeconds() const {
     if (running) {
         auto now = std::chrono::steady_clock::now();
-        return std::chrono::duration_cast<std::chrono::seconds>(
-            now - startTime).count();
+        return static_cast<int>(std::chrono::duration_cast<std::chrono::seconds>(
+            now - startTime).count());
     }
     return elapsedSeconds;
 }
@@ -59,6 +61,83 @@ void Minesweeper::reset() {
     won = false;
     firstMove = true;
     timer.stop();
+    initializeHeatTimers();
+}
+
+void Minesweeper::initializeHeatTimers() {
+    heatTimers = std::vector<std::vector<std::chrono::steady_clock::time_point>>(
+        height, std::vector<std::chrono::steady_clock::time_point>(width)
+    );
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            heatTimers[i][j] = std::chrono::steady_clock::now();
+        }
+    }
+}
+
+void Minesweeper::resetCellHeat(int row, int col) {
+    if (row >= 0 && row < height && col >= 0 && col < width) {
+        if (!heatTimers.empty() && row < (int)heatTimers.size() && col < (int)heatTimers[row].size()) {
+            heatTimers[row][col] = std::chrono::steady_clock::now();
+        }
+    }
+}
+
+int Minesweeper::getHeatIntensity(int row, int col) const {
+    if (row < 0 || row >= height || col < 0 || col >= width) {
+        return 0;
+    }
+    
+    // Check if heatTimers is initialized
+    if (heatTimers.empty() || row >= (int)heatTimers.size() || col >= (int)heatTimers[row].size()) {
+        return 0;
+    }
+    
+    // Only show heat for unrevealed, unflagged cells that contain mines
+    if (revealed[row][col] || flagged[row][col] || !minefield[row][col]) {
+        return 0;
+    }
+    
+    // Find minimum distance to any revealed cell
+    int minDistance = width + height; // Start with large value
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            if (revealed[i][j]) {
+                // Calculate Chebyshev distance (max of absolute differences)
+                int dx = std::abs(j - col);
+                int dy = std::abs(i - row);
+                int distance = std::max(dx, dy);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                }
+            }
+        }
+    }
+    
+    // If no revealed cells, no heat
+    if (minDistance == width + height) {
+        return 0;
+    }
+    
+    auto now = std::chrono::steady_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(
+        now - heatTimers[row][col]
+    ).count();
+    
+    // Heat delay based on distance from revealed cells
+    // Distance 1: starts showing after 3 seconds
+    // Distance 2: starts showing after 6 seconds
+    // Distance 3+: starts showing after 10+ seconds
+    int baseDelay = (minDistance - 1) * 3; // 0, 3, 6, 9, 12... seconds
+    
+    if (elapsed < baseDelay) {
+        return 0;
+    }
+    
+    // Gradually increase intensity (0-255 scale)
+    // After baseDelay: intensity = (elapsed - baseDelay) * 12.75, capped at 255
+    int intensity = static_cast<int>((elapsed - baseDelay) * 12.75);
+    return intensity > 255 ? 255 : intensity;
 }
 
 void Minesweeper::initializeMinefield(int firstY, int firstX, int seed) {
@@ -158,7 +237,7 @@ void Minesweeper::saveHighscore() {
         case 9: difficultyStr = "Easy"; break;
         case 16: difficultyStr = "Medium"; break;
         case 30: difficultyStr = "Hard"; break;
-        default: difficultyStr = "Unknown"; break;  // Handle custom board sizes (should never hit this)
+        default: difficultyStr = "Unknown"; break;
     }
     
     Score score;

@@ -2,6 +2,7 @@
 #include "win_minesweeper.h"
 #include "highscores.h"
 #include <msclr/marshal_cppstd.h>
+#include <cmath>
 
 using namespace System;
 using namespace System::ComponentModel;
@@ -151,6 +152,7 @@ public:
       void RevealCell(int row, int col) {
     if (nativeMinesweeper->firstMove) {
       nativeMinesweeper->initializeMinefield(row, col, getSeed());
+      nativeMinesweeper->initializeHeatTimers(); // Initialize heat on first move
       nativeMinesweeper->firstMove = false;
       nativeMinesweeper->timer.start();
     }
@@ -224,7 +226,172 @@ public:
     }
     return true;
   }
+
+  // NEW FEATURE 1 & 3: Game end detection and heat system
+  bool IsGameEnded() {
+    return nativeMinesweeper->gameOver || nativeMinesweeper->won;
+  }
+
+  int GetCellHeatIntensity(int row, int col) {
+    return nativeMinesweeper->getHeatIntensity(row, col);
+  }
+
+  void ResetCellHeat(int row, int col) {
+    nativeMinesweeper->resetCellHeat(row, col);
+  }
+
 };
+
+// NEW FEATURE 2: Sound generation helper functions
+void GenerateWaveHeader(System::IO::Stream ^ stream, int sampleRate, int numSamples, int numChannels) {
+  System::IO::BinaryWriter ^ writer = gcnew System::IO::BinaryWriter(stream);
+  int byteRate = sampleRate * numChannels * 2; // 16-bit
+  int blockAlign = numChannels * 2;
+  int dataSize = numSamples * blockAlign;
+  
+  // RIFF header
+  writer->Write(System::Text::Encoding::ASCII->GetBytes("RIFF"));
+  writer->Write((int)(36 + dataSize)); // Chunk size
+  writer->Write(System::Text::Encoding::ASCII->GetBytes("WAVE"));
+  
+  // fmt subchunk
+  writer->Write(System::Text::Encoding::ASCII->GetBytes("fmt "));
+  writer->Write((int)16); // Subchunk1Size
+  writer->Write((short)1); // AudioFormat (PCM)
+  writer->Write((short)numChannels); // NumChannels
+  writer->Write((int)sampleRate); // SampleRate
+  writer->Write((int)byteRate); // ByteRate
+  writer->Write((short)blockAlign); // BlockAlign
+  writer->Write((short)16); // BitsPerSample
+  
+  // data subchunk
+  writer->Write(System::Text::Encoding::ASCII->GetBytes("data"));
+  writer->Write((int)dataSize);
+}
+
+// Bomb explosion sound - harsh burst with heavy bass
+void GenerateBombSound(System::IO::Stream ^ stream) {
+  int sampleRate = 44100;
+  int numSamples = (sampleRate * 800) / 1000; // 800ms
+  GenerateWaveHeader(stream, sampleRate, numSamples, 1);
+  
+  System::IO::BinaryWriter ^ writer = gcnew System::IO::BinaryWriter(stream);
+  double sampleDuration = 1.0 / sampleRate;
+  
+  for (int i = 0; i < numSamples; i++) {
+    double t = i * sampleDuration;
+    double progress = t / 0.8;
+    
+    // Initial loud low frequency burst
+    double lowFreq = 150.0 - (100.0 * progress);
+    double highFreq = 600.0 - (400.0 * progress);
+    
+    // Mix of low and high frequencies for "boom" effect
+    double angle1 = 2.0 * 3.14159265359 * lowFreq * t;
+    double angle2 = 2.0 * 3.14159265359 * highFreq * t;
+    
+    // Heavy amplitude that decays
+    double amplitude = 0.5 * (1.0 - progress) * (1.0 - progress);
+    
+    // Add some noise for realism
+    double noise = (System::Math::Sin(angle1 * 3.7) + System::Math::Cos(angle2 * 2.3)) / 2.0;
+    double sample = amplitude * (System::Math::Sin(angle1) * 0.6 + System::Math::Sin(angle2) * 0.4 + noise * 0.3);
+    
+    short intSample = (short)(sample * 32767);
+    writer->Write(intSample);
+  }
+}
+
+// Happy sound - rising musical notes
+void GenerateHappySound(System::IO::Stream ^ stream) {
+  int sampleRate = 44100;
+  int numSamples = (sampleRate * 600) / 1000; // 600ms
+  GenerateWaveHeader(stream, sampleRate, numSamples, 1);
+  
+  System::IO::BinaryWriter ^ writer = gcnew System::IO::BinaryWriter(stream);
+  double sampleDuration = 1.0 / sampleRate;
+  
+  for (int i = 0; i < numSamples; i++) {
+    double t = i * sampleDuration;
+    double progress = t / 0.6;
+    
+    // Three ascending notes: C (262Hz), E (330Hz), G (392Hz)
+    int freq = 262;
+    if (progress > 0.33 && progress < 0.66) {
+      freq = 330;
+    } else if (progress > 0.66) {
+      freq = 392;
+    }
+    
+    double angle = 2.0 * 3.14159265359 * freq * t;
+    
+    // Smooth amplitude envelope
+    double amplitude = 0.35;
+    double localProgress = fmod(progress * 3.0, 1.0); // Repeats for each note
+    if (localProgress > 0.8) {
+      amplitude *= (1.0 - localProgress) / 0.2; // Fade out each note
+    }
+    
+    double sample = amplitude * System::Math::Sin(angle);
+    short intSample = (short)(sample * 32767);
+    writer->Write(intSample);
+  }
+}
+
+// Flag placement sound - simple beep
+void GenerateFlagSound(System::IO::Stream ^ stream) {
+  int sampleRate = 44100;
+  int numSamples = (sampleRate * 150) / 1000; // 150ms
+  GenerateWaveHeader(stream, sampleRate, numSamples, 1);
+  
+  System::IO::BinaryWriter ^ writer = gcnew System::IO::BinaryWriter(stream);
+  double sampleDuration = 1.0 / sampleRate;
+  
+  for (int i = 0; i < numSamples; i++) {
+    double t = i * sampleDuration;
+    double progress = t / 0.15;
+    
+    double freq = 800.0;
+    double angle = 2.0 * 3.14159265359 * freq * t;
+    
+    // Quick fade in and out
+    double amplitude = 0.3;
+    if (progress < 0.1) {
+      amplitude *= progress / 0.1; // Fade in
+    } else if (progress > 0.8) {
+      amplitude *= (1.0 - progress) / 0.2; // Fade out
+    }
+    
+    double sample = amplitude * System::Math::Sin(angle);
+    short intSample = (short)(sample * 32767);
+    writer->Write(intSample);
+  }
+}
+
+// Clear cell sound - ascending beep
+void GenerateClearSound(System::IO::Stream ^ stream) {
+  int sampleRate = 44100;
+  int numSamples = (sampleRate * 200) / 1000; // 200ms
+  GenerateWaveHeader(stream, sampleRate, numSamples, 1);
+  
+  System::IO::BinaryWriter ^ writer = gcnew System::IO::BinaryWriter(stream);
+  double sampleDuration = 1.0 / sampleRate;
+  
+  for (int i = 0; i < numSamples; i++) {
+    double t = i * sampleDuration;
+    double progress = t / 0.2;
+    
+    // Ascending frequency
+    double freq = 600.0 + (200.0 * progress);
+    double angle = 2.0 * 3.14159265359 * freq * t;
+    
+    double amplitude = 0.3 * (1.0 - progress);
+    
+    double sample = amplitude * System::Math::Sin(angle);
+    short intSample = (short)(sample * 32767);
+    writer->Write(intSample);
+  }
+}
 
 public
 ref class MainForm : public System::Windows::Forms::Form {
@@ -246,6 +413,15 @@ private:
   bool gameEndHandled = false;
   Label ^ flagCounterBox;
   Label ^ timerBox;
+
+  // NEW FEATURE 2: Sound effects
+  System::Media::SoundPlayer ^ explosionSound;
+  System::Media::SoundPlayer ^ flagSound;
+  System::Media::SoundPlayer ^ clearSound;
+  System::Media::SoundPlayer ^ happySound;
+  bool soundEnabled = true;
+  bool heatEnabled = false; // Heat system OFF by default (NEW FEATURE 3)
+  int currentDifficulty = 0; // 0=Easy, 1=Medium, 2=Hard (NEW FEATURE 1)
 
   Image ^ flagImage;
   Image ^ bombImage;
@@ -353,9 +529,21 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         "Custom... (F4)", nullptr,
         gcnew EventHandler(this, &MainForm::ShowCustomGame_Click)));
 
+    // NEW FEATURE 2: Add sound toggle menu item
+    ToolStripMenuItem ^ settingsMenu = gcnew ToolStripMenuItem("Settings");
+    settingsMenu->DropDownItems->Add(gcnew ToolStripMenuItem(
+        "Sound Enabled", nullptr,
+        gcnew EventHandler(this, &MainForm::ToggleSound_Click)));
+    
+    // NEW FEATURE 3: Add heat toggle menu item
+    settingsMenu->DropDownItems->Add(gcnew ToolStripMenuItem(
+        "Heat Hint System", nullptr,
+        gcnew EventHandler(this, &MainForm::ToggleHeat_Click)));
+
     menuStrip->Items->Add(fileMenu);
     menuStrip->Items->Add(gameMenu);
     menuStrip->Items->Add(difficultyMenu);
+    menuStrip->Items->Add(settingsMenu);
     menuStrip->Items->Add(helpMenu);
 
     timerBox = gcnew Label();
@@ -427,6 +615,8 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         String ^ time = minesweeper->GetTime();
         timerBox->Text = time;
         timeLabel->Text = "Time: " + time;
+        // NEW FEATURE 3: Update all cells to show heat progression
+        UpdateAllCells();
       } else {
         timerBox->Text = "00:00";
         timeLabel->Text = "Time: 00:00";
@@ -757,8 +947,25 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
     int row = position[0];
     int col = position[1];
 
+    // NEW FEATURE 1: If game ended, clicking any cell starts new game at same difficulty
     if (minesweeper->IsGameOver() || minesweeper->HasWon()) {
+      minesweeper->SetDifficulty(currentDifficulty);
+      InitializeGrid();
+      gameEndHandled = false;
+      UpdateStatus("New game started at same difficulty");
+      gameTimer->Start();
+      timerBox->Text = "00:00";
+      timeLabel->Text = "Time: 00:00";
       return;
+    }
+
+    // NEW FEATURE 3: Reset heat timer for ALL cells on any click
+    for (int i = 0; i < minesweeper->GetHeight(); i++) {
+      for (int j = 0; j < minesweeper->GetWidth(); j++) {
+        if (!minesweeper->IsRevealed(i, j) && !minesweeper->IsFlagged(i, j)) {
+          minesweeper->ResetCellHeat(i, j);
+        }
+      }
     }
 
     if (e->Button == System::Windows::Forms::MouseButtons::Left ||
@@ -769,16 +976,26 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         int adjacentMines = minesweeper->GetAdjacentMines(row, col);
         if (adjacentMines > 0 &&
             minesweeper->GetAdjacentFlags(row, col) == adjacentMines) {
+          // Correct flags placed around this number - play happy sound
+          if (soundEnabled && happySound) happySound->Play();
           minesweeper->RevealAdjacent(row, col);
           UpdateAllCells();
         }
-      } else {
+      } else if (minesweeper->IsMine(row, col)) {
+        // Clicking on unrevealed mine - play bomb sound
+        if (soundEnabled && explosionSound) explosionSound->Play();
         minesweeper->RevealCell(row, col);
+        UpdateAllCells();
+      } else {
+        // Safe cell - play clear sound
+        minesweeper->RevealCell(row, col);
+        if (soundEnabled && clearSound) clearSound->Play();
         UpdateAllCells();
       }
 
     } else if (e->Button == System::Windows::Forms::MouseButtons::Right) {
       minesweeper->ToggleFlag(row, col);
+      if (soundEnabled && flagSound) flagSound->Play(); // NEW FEATURE 2
       UpdateCell(row, col);
     }
   }
@@ -797,6 +1014,17 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         if (bombImage) {
           cell->Image = bombImage;
           cell->ImageAlign = ContentAlignment::MiddleCenter;
+        }
+        
+        // NEW FEATURE 3: Apply heat tint to revealed mines (if enabled)
+        if (heatEnabled) {
+          int heat = minesweeper->GetCellHeatIntensity(row, col);
+          if (heat > 0) {
+            int r = Math::Min(255, (int)cell->BackColor.R + heat);
+            int g = cell->BackColor.G;
+            int b = cell->BackColor.B;
+            cell->BackColor = Color::FromArgb(r, g, b);
+          }
         }
       } else {
         int count = minesweeper->GetAdjacentMines(row, col);
@@ -834,6 +1062,21 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
       cell->FlatAppearance->BorderColor =
           Color::FromArgb(212, 212, 212); // #D4D4D4
       cell->FlatAppearance->BorderSize = 2;
+      
+      // NEW FEATURE 3: Show heat for unrevealed mines (if enabled)
+      if (heatEnabled) {
+        int heat = minesweeper->GetCellHeatIntensity(row, col);
+        if (heat > 0) {
+          int baseR = 240;
+          int baseG = 240;
+          int baseB = 240;
+          int r = Math::Min(255, baseR + heat);
+          int g = Math::Max(0, baseG - (heat / 3));
+          int b = Math::Max(0, baseB - (heat / 3));
+          cell->BackColor = Color::FromArgb(r, g, b);
+        }
+      }
+      
       // Use BorderStyle property to create the raised effect
       cell->FlatAppearance->BorderColor = SystemColors::ButtonHighlight;
       cell->FlatAppearance->MouseOverBackColor = cell->BackColor;
@@ -996,7 +1239,36 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
 
   void Exit_Click(Object ^ sender, EventArgs ^ e) { Application::Exit(); }
 
+  // NEW FEATURE 2: Toggle sound on/off
+  void ToggleSound_Click(Object ^ sender, EventArgs ^ e) {
+    soundEnabled = !soundEnabled;
+    ToolStripMenuItem ^ menuItem = safe_cast<ToolStripMenuItem ^>(sender);
+    if (soundEnabled) {
+      menuItem->Text = "Sound Enabled ✓";
+      UpdateStatus("Sound enabled");
+    } else {
+      menuItem->Text = "Sound Disabled";
+      UpdateStatus("Sound disabled");
+    }
+  }
+
+  // NEW FEATURE 3: Toggle heat hint system on/off
+  void ToggleHeat_Click(Object ^ sender, EventArgs ^ e) {
+    heatEnabled = !heatEnabled;
+    ToolStripMenuItem ^ menuItem = safe_cast<ToolStripMenuItem ^>(sender);
+    if (heatEnabled) {
+      menuItem->Text = "Heat Hint System ✓";
+      UpdateStatus("Heat hint system enabled");
+    } else {
+      menuItem->Text = "Heat Hint System";
+      UpdateStatus("Heat hint system disabled");
+      // Clear all heat visuals by updating cells
+      UpdateAllCells();
+    }
+  }
+
   void SetEasy_Click(Object ^ sender, EventArgs ^ e) {
+    currentDifficulty = 0; // Track current difficulty
     minesweeper->SetDifficulty(0);
     InitializeGrid();
     UpdateStatus("Difficulty set to Easy");
@@ -1004,6 +1276,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
   }
 
   void SetMedium_Click(Object ^ sender, EventArgs ^ e) {
+    currentDifficulty = 1; // Track current difficulty
     minesweeper->SetDifficulty(1);
     InitializeGrid();
     UpdateStatus("Difficulty set to Medium");
@@ -1011,6 +1284,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
   }
 
   void SetHard_Click(Object ^ sender, EventArgs ^ e) {
+    currentDifficulty = 2; // Track current difficulty
     minesweeper->SetDifficulty(2);
     InitializeGrid();
     UpdateStatus("Difficulty set to Hard");
@@ -1075,6 +1349,40 @@ public:
     minCellSize = 30; // Initialize minCellSize
     LoadBase64Images();
     SetApplicationIcon();
+    
+    // NEW FEATURE 2: Initialize sounds - Generate programmatically
+    try {
+      // Create bomb sound (explosion)
+      explosionSound = gcnew System::Media::SoundPlayer();
+      System::IO::MemoryStream ^ explosionStream = gcnew System::IO::MemoryStream();
+      GenerateBombSound(explosionStream);
+      explosionStream->Position = 0;
+      explosionSound->Stream = explosionStream;
+      
+      // Create happy sound (correct flag placement)
+      happySound = gcnew System::Media::SoundPlayer();
+      System::IO::MemoryStream ^ happyStream = gcnew System::IO::MemoryStream();
+      GenerateHappySound(happyStream);
+      happyStream->Position = 0;
+      happySound->Stream = happyStream;
+      
+      // Create flag sound
+      flagSound = gcnew System::Media::SoundPlayer();
+      System::IO::MemoryStream ^ flagStream = gcnew System::IO::MemoryStream();
+      GenerateFlagSound(flagStream);
+      flagStream->Position = 0;
+      flagSound->Stream = flagStream;
+      
+      // Create clear sound
+      clearSound = gcnew System::Media::SoundPlayer();
+      System::IO::MemoryStream ^ clearStream = gcnew System::IO::MemoryStream();
+      GenerateClearSound(clearStream);
+      clearStream->Position = 0;
+      clearSound->Stream = clearStream;
+    } catch (Exception ^ ex) {
+      // Sound generation failed, continue without sound
+    }
+    
     minesweeper = gcnew MinesweeperWrapper();
     InitializeComponent();
     this->Resize += gcnew EventHandler(this, &MainForm::MainForm_Resize);
