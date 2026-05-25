@@ -268,8 +268,10 @@ void GenerateWaveHeader(System::IO::Stream ^ stream, int sampleRate, int numSamp
   writer->Write((int)dataSize);
 }
 
-void GenerateTone(System::IO::Stream ^ stream, int frequency, int durationMs, float amplitude, int sampleRate) {
-  int numSamples = (sampleRate * durationMs) / 1000;
+// Bomb explosion sound - harsh burst with heavy bass
+void GenerateBombSound(System::IO::Stream ^ stream) {
+  int sampleRate = 44100;
+  int numSamples = (sampleRate * 800) / 1000; // 800ms
   GenerateWaveHeader(stream, sampleRate, numSamples, 1);
   
   System::IO::BinaryWriter ^ writer = gcnew System::IO::BinaryWriter(stream);
@@ -277,16 +279,32 @@ void GenerateTone(System::IO::Stream ^ stream, int frequency, int durationMs, fl
   
   for (int i = 0; i < numSamples; i++) {
     double t = i * sampleDuration;
-    double angle = 2.0 * 3.14159265359 * frequency * t;
-    double sample = amplitude * System::Math::Sin(angle);
+    double progress = t / 0.8;
+    
+    // Initial loud low frequency burst
+    double lowFreq = 150.0 - (100.0 * progress);
+    double highFreq = 600.0 - (400.0 * progress);
+    
+    // Mix of low and high frequencies for "boom" effect
+    double angle1 = 2.0 * 3.14159265359 * lowFreq * t;
+    double angle2 = 2.0 * 3.14159265359 * highFreq * t;
+    
+    // Heavy amplitude that decays
+    double amplitude = 0.5 * (1.0 - progress) * (1.0 - progress);
+    
+    // Add some noise for realism
+    double noise = (System::Math::Sin(angle1 * 3.7) + System::Math::Cos(angle2 * 2.3)) / 2.0;
+    double sample = amplitude * (System::Math::Sin(angle1) * 0.6 + System::Math::Sin(angle2) * 0.4 + noise * 0.3);
+    
     short intSample = (short)(sample * 32767);
     writer->Write(intSample);
   }
 }
 
-void GenerateExplosionSound(System::IO::Stream ^ stream) {
+// Happy sound - rising musical notes
+void GenerateHappySound(System::IO::Stream ^ stream) {
   int sampleRate = 44100;
-  int numSamples = (sampleRate * 500) / 1000; // 500ms
+  int numSamples = (sampleRate * 600) / 1000; // 600ms
   GenerateWaveHeader(stream, sampleRate, numSamples, 1);
   
   System::IO::BinaryWriter ^ writer = gcnew System::IO::BinaryWriter(stream);
@@ -294,14 +312,24 @@ void GenerateExplosionSound(System::IO::Stream ^ stream) {
   
   for (int i = 0; i < numSamples; i++) {
     double t = i * sampleDuration;
-    double progress = t / 0.5; // 0 to 1 over 500ms
+    double progress = t / 0.6;
     
-    // Descending frequency from 800Hz to 200Hz
-    double freq = 800.0 - (600.0 * progress);
+    // Three ascending notes: C (262Hz), E (330Hz), G (392Hz)
+    int freq = 262;
+    if (progress > 0.33 && progress < 0.66) {
+      freq = 330;
+    } else if (progress > 0.66) {
+      freq = 392;
+    }
+    
     double angle = 2.0 * 3.14159265359 * freq * t;
     
-    // Amplitude envelope - fade out
-    double amplitude = 0.3 * (1.0 - progress);
+    // Smooth amplitude envelope
+    double amplitude = 0.35;
+    double localProgress = System::Math::Fmod(progress * 3.0, 1.0); // Repeats for each note
+    if (localProgress > 0.8) {
+      amplitude *= (1.0 - localProgress) / 0.2; // Fade out each note
+    }
     
     double sample = amplitude * System::Math::Sin(angle);
     short intSample = (short)(sample * 32767);
@@ -309,7 +337,38 @@ void GenerateExplosionSound(System::IO::Stream ^ stream) {
   }
 }
 
+// Flag placement sound - simple beep
 void GenerateFlagSound(System::IO::Stream ^ stream) {
+  int sampleRate = 44100;
+  int numSamples = (sampleRate * 150) / 1000; // 150ms
+  GenerateWaveHeader(stream, sampleRate, numSamples, 1);
+  
+  System::IO::BinaryWriter ^ writer = gcnew System::IO::BinaryWriter(stream);
+  double sampleDuration = 1.0 / sampleRate;
+  
+  for (int i = 0; i < numSamples; i++) {
+    double t = i * sampleDuration;
+    double progress = t / 0.15;
+    
+    double freq = 800.0;
+    double angle = 2.0 * 3.14159265359 * freq * t;
+    
+    // Quick fade in and out
+    double amplitude = 0.3;
+    if (progress < 0.1) {
+      amplitude *= progress / 0.1; // Fade in
+    } else if (progress > 0.8) {
+      amplitude *= (1.0 - progress) / 0.2; // Fade out
+    }
+    
+    double sample = amplitude * System::Math::Sin(angle);
+    short intSample = (short)(sample * 32767);
+    writer->Write(intSample);
+  }
+}
+
+// Clear cell sound - ascending beep
+void GenerateClearSound(System::IO::Stream ^ stream) {
   int sampleRate = 44100;
   int numSamples = (sampleRate * 200) / 1000; // 200ms
   GenerateWaveHeader(stream, sampleRate, numSamples, 1);
@@ -321,52 +380,12 @@ void GenerateFlagSound(System::IO::Stream ^ stream) {
     double t = i * sampleDuration;
     double progress = t / 0.2;
     
-    // Ascending frequency from 400Hz to 800Hz
-    double freq = 400.0 + (400.0 * progress);
+    // Ascending frequency
+    double freq = 600.0 + (200.0 * progress);
     double angle = 2.0 * 3.14159265359 * freq * t;
     
-    // Amplitude envelope
-    double amplitude = 0.3;
-    if (progress > 0.8) {
-      amplitude *= (1.0 - progress) / 0.2; // Fade out at end
-    }
+    double amplitude = 0.3 * (1.0 - progress);
     
-    double sample = amplitude * System::Math::Sin(angle);
-    short intSample = (short)(sample * 32767);
-    writer->Write(intSample);
-  }
-}
-
-void GenerateClearSound(System::IO::Stream ^ stream) {
-  int sampleRate = 44100;
-  int numSamples = (sampleRate * 300) / 1000; // 300ms
-  GenerateWaveHeader(stream, sampleRate, numSamples, 1);
-  
-  System::IO::BinaryWriter ^ writer = gcnew System::IO::BinaryWriter(stream);
-  double sampleDuration = 1.0 / sampleRate;
-  
-  for (int i = 0; i < numSamples; i++) {
-    double t = i * sampleDuration;
-    double progress = t / 0.3;
-    
-    // Two beeps: first beep 0-0.15s, second beep 0.15-0.3s
-    double amplitude = 0.0;
-    int freq = 600;
-    
-    if (progress < 0.15) {
-      // First beep
-      amplitude = 0.3 * System::Math::Sin(3.14159265359 * progress / 0.15);
-    } else if (progress < 0.18) {
-      // Silent gap
-      amplitude = 0.0;
-    } else if (progress < 0.3) {
-      // Second beep
-      double beepProgress = (progress - 0.18) / 0.12;
-      amplitude = 0.3 * System::Math::Sin(3.14159265359 * beepProgress);
-      freq = 700;
-    }
-    
-    double angle = 2.0 * 3.14159265359 * freq * t;
     double sample = amplitude * System::Math::Sin(angle);
     short intSample = (short)(sample * 32767);
     writer->Write(intSample);
@@ -398,6 +417,8 @@ private:
   System::Media::SoundPlayer ^ explosionSound;
   System::Media::SoundPlayer ^ flagSound;
   System::Media::SoundPlayer ^ clearSound;
+  System::Media::SoundPlayer ^ happySound;
+  bool soundEnabled = true;
 
   Image ^ flagImage;
   Image ^ bombImage;
@@ -505,9 +526,16 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         "Custom... (F4)", nullptr,
         gcnew EventHandler(this, &MainForm::ShowCustomGame_Click)));
 
+    // NEW FEATURE 2: Add sound toggle menu item
+    ToolStripMenuItem ^ settingsMenu = gcnew ToolStripMenuItem("Settings");
+    settingsMenu->DropDownItems->Add(gcnew ToolStripMenuItem(
+        "Sound Enabled", nullptr,
+        gcnew EventHandler(this, &MainForm::ToggleSound_Click)));
+
     menuStrip->Items->Add(fileMenu);
     menuStrip->Items->Add(gameMenu);
     menuStrip->Items->Add(difficultyMenu);
+    menuStrip->Items->Add(settingsMenu);
     menuStrip->Items->Add(helpMenu);
 
     timerBox = gcnew Label();
@@ -921,20 +949,29 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         int adjacentMines = minesweeper->GetAdjacentMines(row, col);
         if (adjacentMines > 0 &&
             minesweeper->GetAdjacentFlags(row, col) == adjacentMines) {
+          // Correct flags placed around this number - play happy sound
+          if (soundEnabled && happySound) happySound->PlaySync();
           minesweeper->RevealAdjacent(row, col);
           UpdateAllCells();
         }
-      } else {
+      } else if (minesweeper->IsMine(row, col)) {
+        // Clicking on unrevealed mine - play bomb sound
+        if (soundEnabled && explosionSound) explosionSound->PlaySync();
         minesweeper->RevealCell(row, col);
         minesweeper->ResetCellHeat(row, col); // NEW FEATURE 3
-        if (clearSound) clearSound->Play(); // NEW FEATURE 2
+        UpdateAllCells();
+      } else {
+        // Safe cell - play clear sound
+        minesweeper->RevealCell(row, col);
+        minesweeper->ResetCellHeat(row, col); // NEW FEATURE 3
+        if (soundEnabled && clearSound) clearSound->PlaySync();
         UpdateAllCells();
       }
 
     } else if (e->Button == System::Windows::Forms::MouseButtons::Right) {
       minesweeper->ToggleFlag(row, col);
       minesweeper->ResetCellHeat(row, col); // NEW FEATURE 3
-      if (flagSound) flagSound->Play(); // NEW FEATURE 2
+      if (soundEnabled && flagSound) flagSound->PlaySync(); // NEW FEATURE 2
       UpdateCell(row, col);
     }
   }
@@ -1174,6 +1211,19 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
 
   void Exit_Click(Object ^ sender, EventArgs ^ e) { Application::Exit(); }
 
+  // NEW FEATURE 2: Toggle sound on/off
+  void ToggleSound_Click(Object ^ sender, EventArgs ^ e) {
+    soundEnabled = !soundEnabled;
+    ToolStripMenuItem ^ menuItem = safe_cast<ToolStripMenuItem ^>(sender);
+    if (soundEnabled) {
+      menuItem->Text = "Sound Enabled ✓";
+      UpdateStatus("Sound enabled");
+    } else {
+      menuItem->Text = "Sound Disabled";
+      UpdateStatus("Sound disabled");
+    }
+  }
+
   void SetEasy_Click(Object ^ sender, EventArgs ^ e) {
     minesweeper->SetDifficulty(0);
     InitializeGrid();
@@ -1256,21 +1306,28 @@ public:
     
     // NEW FEATURE 2: Initialize sounds - Generate programmatically
     try {
-      // Create explosion sound (descending beep)
+      // Create bomb sound (explosion)
       explosionSound = gcnew System::Media::SoundPlayer();
       System::IO::MemoryStream ^ explosionStream = gcnew System::IO::MemoryStream();
-      GenerateExplosionSound(explosionStream);
+      GenerateBombSound(explosionStream);
       explosionStream->Position = 0;
       explosionSound->Stream = explosionStream;
       
-      // Create flag sound (ascending beep)
+      // Create happy sound (correct flag placement)
+      happySound = gcnew System::Media::SoundPlayer();
+      System::IO::MemoryStream ^ happyStream = gcnew System::IO::MemoryStream();
+      GenerateHappySound(happyStream);
+      happyStream->Position = 0;
+      happySound->Stream = happyStream;
+      
+      // Create flag sound
       flagSound = gcnew System::Media::SoundPlayer();
       System::IO::MemoryStream ^ flagStream = gcnew System::IO::MemoryStream();
       GenerateFlagSound(flagStream);
       flagStream->Position = 0;
       flagSound->Stream = flagStream;
       
-      // Create clear sound (double beep)
+      // Create clear sound
       clearSound = gcnew System::Media::SoundPlayer();
       System::IO::MemoryStream ^ clearStream = gcnew System::IO::MemoryStream();
       GenerateClearSound(clearStream);
