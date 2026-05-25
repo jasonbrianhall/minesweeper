@@ -953,6 +953,15 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
       return;
     }
 
+    // NEW FEATURE 3: Reset heat timer for ALL cells on any click
+    for (int i = 0; i < minesweeper->GetHeight(); i++) {
+      for (int j = 0; j < minesweeper->GetWidth(); j++) {
+        if (!minesweeper->IsRevealed(i, j) && !minesweeper->IsFlagged(i, j)) {
+          minesweeper->ResetCellHeat(i, j);
+        }
+      }
+    }
+
     if (e->Button == System::Windows::Forms::MouseButtons::Left ||
         (minesweeper->IsRevealed(row, col) &&
          e->Button == System::Windows::Forms::MouseButtons::Right)) {
@@ -962,28 +971,25 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         if (adjacentMines > 0 &&
             minesweeper->GetAdjacentFlags(row, col) == adjacentMines) {
           // Correct flags placed around this number - play happy sound
-          if (soundEnabled && happySound) happySound->PlaySync();
+          if (soundEnabled && happySound) happySound->Play();
           minesweeper->RevealAdjacent(row, col);
           UpdateAllCells();
         }
       } else if (minesweeper->IsMine(row, col)) {
         // Clicking on unrevealed mine - play bomb sound
-        if (soundEnabled && explosionSound) explosionSound->PlaySync();
+        if (soundEnabled && explosionSound) explosionSound->Play();
         minesweeper->RevealCell(row, col);
-        minesweeper->ResetCellHeat(row, col); // NEW FEATURE 3
         UpdateAllCells();
       } else {
         // Safe cell - play clear sound
         minesweeper->RevealCell(row, col);
-        minesweeper->ResetCellHeat(row, col); // NEW FEATURE 3
-        if (soundEnabled && clearSound) clearSound->PlaySync();
+        if (soundEnabled && clearSound) clearSound->Play();
         UpdateAllCells();
       }
 
     } else if (e->Button == System::Windows::Forms::MouseButtons::Right) {
       minesweeper->ToggleFlag(row, col);
-      minesweeper->ResetCellHeat(row, col); // NEW FEATURE 3
-      if (soundEnabled && flagSound) flagSound->PlaySync(); // NEW FEATURE 2
+      if (soundEnabled && flagSound) flagSound->Play(); // NEW FEATURE 2
       UpdateCell(row, col);
     }
   }

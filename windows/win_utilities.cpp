@@ -2,6 +2,8 @@
 #include <sstream>
 #include <iomanip>
 #include <random>
+#include <algorithm>
+#include <cmath>
 
 // GameTimer implementation
 void GameTimer::start() {
@@ -96,19 +98,45 @@ int Minesweeper::getHeatIntensity(int row, int col) const {
         return 0;
     }
     
+    // Find minimum distance to any revealed cell
+    int minDistance = width + height; // Start with large value
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            if (revealed[i][j]) {
+                // Calculate Chebyshev distance (max of absolute differences)
+                int dx = std::abs(j - col);
+                int dy = std::abs(i - row);
+                int distance = std::max(dx, dy);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                }
+            }
+        }
+    }
+    
+    // If no revealed cells, no heat
+    if (minDistance == width + height) {
+        return 0;
+    }
+    
     auto now = std::chrono::steady_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(
         now - heatTimers[row][col]
     ).count();
     
-    // Heat starts showing after 10 seconds
-    if (elapsed < 10) {
+    // Heat delay based on distance from revealed cells
+    // Distance 1: starts showing after 3 seconds
+    // Distance 2: starts showing after 6 seconds
+    // Distance 3+: starts showing after 10+ seconds
+    int baseDelay = (minDistance - 1) * 3; // 0, 3, 6, 9, 12... seconds
+    
+    if (elapsed < baseDelay) {
         return 0;
     }
     
     // Gradually increase intensity (0-255 scale)
-    // After 10 seconds: intensity = (elapsed - 10) * 12.75, capped at 255
-    int intensity = static_cast<int>((elapsed - 10) * 12.75);
+    // After baseDelay: intensity = (elapsed - baseDelay) * 12.75, capped at 255
+    int intensity = static_cast<int>((elapsed - baseDelay) * 12.75);
     return intensity > 255 ? 255 : intensity;
 }
 
