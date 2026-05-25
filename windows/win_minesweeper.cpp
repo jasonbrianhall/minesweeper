@@ -151,6 +151,7 @@ public:
       void RevealCell(int row, int col) {
     if (nativeMinesweeper->firstMove) {
       nativeMinesweeper->initializeMinefield(row, col, getSeed());
+      nativeMinesweeper->initializeHeatTimers(); // Initialize heat on first move
       nativeMinesweeper->firstMove = false;
       nativeMinesweeper->timer.start();
     }

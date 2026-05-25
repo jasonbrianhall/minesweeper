@@ -75,12 +75,19 @@ void Minesweeper::initializeHeatTimers() {
 
 void Minesweeper::resetCellHeat(int row, int col) {
     if (row >= 0 && row < height && col >= 0 && col < width) {
-        heatTimers[row][col] = std::chrono::steady_clock::now();
+        if (!heatTimers.empty() && row < (int)heatTimers.size() && col < (int)heatTimers[row].size()) {
+            heatTimers[row][col] = std::chrono::steady_clock::now();
+        }
     }
 }
 
 int Minesweeper::getHeatIntensity(int row, int col) const {
     if (row < 0 || row >= height || col < 0 || col >= width) {
+        return 0;
+    }
+    
+    // Check if heatTimers is initialized
+    if (heatTimers.empty() || row >= (int)heatTimers.size() || col >= (int)heatTimers[row].size()) {
         return 0;
     }
     
