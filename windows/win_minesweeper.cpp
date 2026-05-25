@@ -241,6 +241,138 @@ public:
 
 };
 
+// NEW FEATURE 2: Sound generation helper functions
+void GenerateWaveHeader(System::IO::Stream ^ stream, int sampleRate, int numSamples, int numChannels) {
+  System::IO::BinaryWriter ^ writer = gcnew System::IO::BinaryWriter(stream);
+  int byteRate = sampleRate * numChannels * 2; // 16-bit
+  int blockAlign = numChannels * 2;
+  int dataSize = numSamples * blockAlign;
+  
+  // RIFF header
+  writer->Write(System::Text::Encoding::ASCII->GetBytes("RIFF"));
+  writer->Write((int)(36 + dataSize)); // Chunk size
+  writer->Write(System::Text::Encoding::ASCII->GetBytes("WAVE"));
+  
+  // fmt subchunk
+  writer->Write(System::Text::Encoding::ASCII->GetBytes("fmt "));
+  writer->Write((int)16); // Subchunk1Size
+  writer->Write((short)1); // AudioFormat (PCM)
+  writer->Write((short)numChannels); // NumChannels
+  writer->Write((int)sampleRate); // SampleRate
+  writer->Write((int)byteRate); // ByteRate
+  writer->Write((short)blockAlign); // BlockAlign
+  writer->Write((short)16); // BitsPerSample
+  
+  // data subchunk
+  writer->Write(System::Text::Encoding::ASCII->GetBytes("data"));
+  writer->Write((int)dataSize);
+}
+
+void GenerateTone(System::IO::Stream ^ stream, int frequency, int durationMs, float amplitude, int sampleRate) {
+  int numSamples = (sampleRate * durationMs) / 1000;
+  GenerateWaveHeader(stream, sampleRate, numSamples, 1);
+  
+  System::IO::BinaryWriter ^ writer = gcnew System::IO::BinaryWriter(stream);
+  double sampleDuration = 1.0 / sampleRate;
+  
+  for (int i = 0; i < numSamples; i++) {
+    double t = i * sampleDuration;
+    double angle = 2.0 * 3.14159265359 * frequency * t;
+    double sample = amplitude * System::Math::Sin(angle);
+    short intSample = (short)(sample * 32767);
+    writer->Write(intSample);
+  }
+}
+
+void GenerateExplosionSound(System::IO::Stream ^ stream) {
+  int sampleRate = 44100;
+  int numSamples = (sampleRate * 500) / 1000; // 500ms
+  GenerateWaveHeader(stream, sampleRate, numSamples, 1);
+  
+  System::IO::BinaryWriter ^ writer = gcnew System::IO::BinaryWriter(stream);
+  double sampleDuration = 1.0 / sampleRate;
+  
+  for (int i = 0; i < numSamples; i++) {
+    double t = i * sampleDuration;
+    double progress = t / 0.5; // 0 to 1 over 500ms
+    
+    // Descending frequency from 800Hz to 200Hz
+    double freq = 800.0 - (600.0 * progress);
+    double angle = 2.0 * 3.14159265359 * freq * t;
+    
+    // Amplitude envelope - fade out
+    double amplitude = 0.3 * (1.0 - progress);
+    
+    double sample = amplitude * System::Math::Sin(angle);
+    short intSample = (short)(sample * 32767);
+    writer->Write(intSample);
+  }
+}
+
+void GenerateFlagSound(System::IO::Stream ^ stream) {
+  int sampleRate = 44100;
+  int numSamples = (sampleRate * 200) / 1000; // 200ms
+  GenerateWaveHeader(stream, sampleRate, numSamples, 1);
+  
+  System::IO::BinaryWriter ^ writer = gcnew System::IO::BinaryWriter(stream);
+  double sampleDuration = 1.0 / sampleRate;
+  
+  for (int i = 0; i < numSamples; i++) {
+    double t = i * sampleDuration;
+    double progress = t / 0.2;
+    
+    // Ascending frequency from 400Hz to 800Hz
+    double freq = 400.0 + (400.0 * progress);
+    double angle = 2.0 * 3.14159265359 * freq * t;
+    
+    // Amplitude envelope
+    double amplitude = 0.3;
+    if (progress > 0.8) {
+      amplitude *= (1.0 - progress) / 0.2; // Fade out at end
+    }
+    
+    double sample = amplitude * System::Math::Sin(angle);
+    short intSample = (short)(sample * 32767);
+    writer->Write(intSample);
+  }
+}
+
+void GenerateClearSound(System::IO::Stream ^ stream) {
+  int sampleRate = 44100;
+  int numSamples = (sampleRate * 300) / 1000; // 300ms
+  GenerateWaveHeader(stream, sampleRate, numSamples, 1);
+  
+  System::IO::BinaryWriter ^ writer = gcnew System::IO::BinaryWriter(stream);
+  double sampleDuration = 1.0 / sampleRate;
+  
+  for (int i = 0; i < numSamples; i++) {
+    double t = i * sampleDuration;
+    double progress = t / 0.3;
+    
+    // Two beeps: first beep 0-0.15s, second beep 0.15-0.3s
+    double amplitude = 0.0;
+    int freq = 600;
+    
+    if (progress < 0.15) {
+      // First beep
+      amplitude = 0.3 * System::Math::Sin(3.14159265359 * progress / 0.15);
+    } else if (progress < 0.18) {
+      // Silent gap
+      amplitude = 0.0;
+    } else if (progress < 0.3) {
+      // Second beep
+      double beepProgress = (progress - 0.18) / 0.12;
+      amplitude = 0.3 * System::Math::Sin(3.14159265359 * beepProgress);
+      freq = 700;
+    }
+    
+    double angle = 2.0 * 3.14159265359 * freq * t;
+    double sample = amplitude * System::Math::Sin(angle);
+    short intSample = (short)(sample * 32767);
+    writer->Write(intSample);
+  }
+}
+
 public
 ref class MainForm : public System::Windows::Forms::Form {
 private:
@@ -1122,16 +1254,30 @@ public:
     LoadBase64Images();
     SetApplicationIcon();
     
-    // NEW FEATURE 2: Initialize sounds
+    // NEW FEATURE 2: Initialize sounds - Generate programmatically
     try {
-      explosionSound = gcnew System::Media::SoundPlayer("explosion.wav");
-      flagSound = gcnew System::Media::SoundPlayer("flag.wav");
-      clearSound = gcnew System::Media::SoundPlayer("clear.wav");
-      explosionSound->Load();
-      flagSound->Load();
-      clearSound->Load();
+      // Create explosion sound (descending beep)
+      explosionSound = gcnew System::Media::SoundPlayer();
+      System::IO::MemoryStream ^ explosionStream = gcnew System::IO::MemoryStream();
+      GenerateExplosionSound(explosionStream);
+      explosionStream->Position = 0;
+      explosionSound->Stream = explosionStream;
+      
+      // Create flag sound (ascending beep)
+      flagSound = gcnew System::Media::SoundPlayer();
+      System::IO::MemoryStream ^ flagStream = gcnew System::IO::MemoryStream();
+      GenerateFlagSound(flagStream);
+      flagStream->Position = 0;
+      flagSound->Stream = flagStream;
+      
+      // Create clear sound (double beep)
+      clearSound = gcnew System::Media::SoundPlayer();
+      System::IO::MemoryStream ^ clearStream = gcnew System::IO::MemoryStream();
+      GenerateClearSound(clearStream);
+      clearStream->Position = 0;
+      clearSound->Stream = clearStream;
     } catch (Exception ^ ex) {
-      // Sound files not found, game will continue without sound
+      // Sound generation failed, continue without sound
     }
     
     minesweeper = gcnew MinesweeperWrapper();
