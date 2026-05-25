@@ -420,6 +420,7 @@ private:
   System::Media::SoundPlayer ^ clearSound;
   System::Media::SoundPlayer ^ happySound;
   bool soundEnabled = true;
+  bool heatEnabled = false; // Heat system OFF by default (NEW FEATURE 3)
   int currentDifficulty = 0; // 0=Easy, 1=Medium, 2=Hard (NEW FEATURE 1)
 
   Image ^ flagImage;
@@ -533,6 +534,11 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
     settingsMenu->DropDownItems->Add(gcnew ToolStripMenuItem(
         "Sound Enabled", nullptr,
         gcnew EventHandler(this, &MainForm::ToggleSound_Click)));
+    
+    // NEW FEATURE 3: Add heat toggle menu item
+    settingsMenu->DropDownItems->Add(gcnew ToolStripMenuItem(
+        "Heat Hint System", nullptr,
+        gcnew EventHandler(this, &MainForm::ToggleHeat_Click)));
 
     menuStrip->Items->Add(fileMenu);
     menuStrip->Items->Add(gameMenu);
@@ -1010,13 +1016,15 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
           cell->ImageAlign = ContentAlignment::MiddleCenter;
         }
         
-        // NEW FEATURE 3: Apply heat tint to revealed mines
-        int heat = minesweeper->GetCellHeatIntensity(row, col);
-        if (heat > 0) {
-          int r = Math::Min(255, (int)cell->BackColor.R + heat);
-          int g = cell->BackColor.G;
-          int b = cell->BackColor.B;
-          cell->BackColor = Color::FromArgb(r, g, b);
+        // NEW FEATURE 3: Apply heat tint to revealed mines (if enabled)
+        if (heatEnabled) {
+          int heat = minesweeper->GetCellHeatIntensity(row, col);
+          if (heat > 0) {
+            int r = Math::Min(255, (int)cell->BackColor.R + heat);
+            int g = cell->BackColor.G;
+            int b = cell->BackColor.B;
+            cell->BackColor = Color::FromArgb(r, g, b);
+          }
         }
       } else {
         int count = minesweeper->GetAdjacentMines(row, col);
@@ -1055,16 +1063,18 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
           Color::FromArgb(212, 212, 212); // #D4D4D4
       cell->FlatAppearance->BorderSize = 2;
       
-      // NEW FEATURE 3: Show heat for unrevealed mines
-      int heat = minesweeper->GetCellHeatIntensity(row, col);
-      if (heat > 0) {
-        int baseR = 240;
-        int baseG = 240;
-        int baseB = 240;
-        int r = Math::Min(255, baseR + heat);
-        int g = Math::Max(0, baseG - (heat / 3));
-        int b = Math::Max(0, baseB - (heat / 3));
-        cell->BackColor = Color::FromArgb(r, g, b);
+      // NEW FEATURE 3: Show heat for unrevealed mines (if enabled)
+      if (heatEnabled) {
+        int heat = minesweeper->GetCellHeatIntensity(row, col);
+        if (heat > 0) {
+          int baseR = 240;
+          int baseG = 240;
+          int baseB = 240;
+          int r = Math::Min(255, baseR + heat);
+          int g = Math::Max(0, baseG - (heat / 3));
+          int b = Math::Max(0, baseB - (heat / 3));
+          cell->BackColor = Color::FromArgb(r, g, b);
+        }
       }
       
       // Use BorderStyle property to create the raised effect
@@ -1239,6 +1249,21 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
     } else {
       menuItem->Text = "Sound Disabled";
       UpdateStatus("Sound disabled");
+    }
+  }
+
+  // NEW FEATURE 3: Toggle heat hint system on/off
+  void ToggleHeat_Click(Object ^ sender, EventArgs ^ e) {
+    heatEnabled = !heatEnabled;
+    ToolStripMenuItem ^ menuItem = safe_cast<ToolStripMenuItem ^>(sender);
+    if (heatEnabled) {
+      menuItem->Text = "Heat Hint System ✓";
+      UpdateStatus("Heat hint system enabled");
+    } else {
+      menuItem->Text = "Heat Hint System";
+      UpdateStatus("Heat hint system disabled");
+      // Clear all heat visuals by updating cells
+      UpdateAllCells();
     }
   }
 
