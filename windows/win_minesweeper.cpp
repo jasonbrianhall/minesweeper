@@ -949,6 +949,11 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
 
     // NEW FEATURE 1: If game ended, clicking any cell starts new game at same difficulty
     if (minesweeper->IsGameOver() || minesweeper->HasWon()) {
+      // Generate new random seed for new game
+      Random ^ rand = gcnew Random();
+      int newSeed = rand->Next(0, Int32::MaxValue);
+      minesweeper->setSeed(newSeed);
+      
       minesweeper->SetDifficulty(currentDifficulty);
       InitializeGrid();
       gameEndHandled = false;
