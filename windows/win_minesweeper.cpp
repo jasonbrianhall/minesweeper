@@ -224,6 +224,20 @@ public:
     }
     return true;
   }
+
+  // NEW FEATURE 1 & 3: Game end detection and heat system
+  bool IsGameEnded() {
+    return nativeMinesweeper->gameOver || nativeMinesweeper->won;
+  }
+
+  int GetCellHeatIntensity(int row, int col) {
+    return nativeMinesweeper->getHeatIntensity(row, col);
+  }
+
+  void ResetCellHeat(int row, int col) {
+    nativeMinesweeper->resetCellHeat(row, col);
+  }
+
 };
 
 public
@@ -246,6 +260,11 @@ private:
   bool gameEndHandled = false;
   Label ^ flagCounterBox;
   Label ^ timerBox;
+
+  // NEW FEATURE 2: Sound effects
+  System::Media::SoundPlayer ^ explosionSound;
+  System::Media::SoundPlayer ^ flagSound;
+  System::Media::SoundPlayer ^ clearSound;
 
   Image ^ flagImage;
   Image ^ bombImage;
@@ -774,11 +793,15 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         }
       } else {
         minesweeper->RevealCell(row, col);
+        minesweeper->ResetCellHeat(row, col); // NEW FEATURE 3
+        if (clearSound) clearSound->Play(); // NEW FEATURE 2
         UpdateAllCells();
       }
 
     } else if (e->Button == System::Windows::Forms::MouseButtons::Right) {
       minesweeper->ToggleFlag(row, col);
+      minesweeper->ResetCellHeat(row, col); // NEW FEATURE 3
+      if (flagSound) flagSound->Play(); // NEW FEATURE 2
       UpdateCell(row, col);
     }
   }
@@ -797,6 +820,15 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         if (bombImage) {
           cell->Image = bombImage;
           cell->ImageAlign = ContentAlignment::MiddleCenter;
+        }
+        
+        // NEW FEATURE 3: Apply heat tint to revealed mines
+        int heat = minesweeper->GetCellHeatIntensity(row, col);
+        if (heat > 0) {
+          int r = Math::Min(255, (int)cell->BackColor.R + heat);
+          int g = cell->BackColor.G;
+          int b = cell->BackColor.B;
+          cell->BackColor = Color::FromArgb(r, g, b);
         }
       } else {
         int count = minesweeper->GetAdjacentMines(row, col);
@@ -834,6 +866,19 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
       cell->FlatAppearance->BorderColor =
           Color::FromArgb(212, 212, 212); // #D4D4D4
       cell->FlatAppearance->BorderSize = 2;
+      
+      // NEW FEATURE 3: Show heat for unrevealed mines
+      int heat = minesweeper->GetCellHeatIntensity(row, col);
+      if (heat > 0) {
+        int baseR = 240;
+        int baseG = 240;
+        int baseB = 240;
+        int r = Math::Min(255, baseR + heat);
+        int g = Math::Max(0, baseG - (heat / 3));
+        int b = Math::Max(0, baseB - (heat / 3));
+        cell->BackColor = Color::FromArgb(r, g, b);
+      }
+      
       // Use BorderStyle property to create the raised effect
       cell->FlatAppearance->BorderColor = SystemColors::ButtonHighlight;
       cell->FlatAppearance->MouseOverBackColor = cell->BackColor;
@@ -1075,6 +1120,19 @@ public:
     minCellSize = 30; // Initialize minCellSize
     LoadBase64Images();
     SetApplicationIcon();
+    
+    // NEW FEATURE 2: Initialize sounds
+    try {
+      explosionSound = gcnew System::Media::SoundPlayer("explosion.wav");
+      flagSound = gcnew System::Media::SoundPlayer("flag.wav");
+      clearSound = gcnew System::Media::SoundPlayer("clear.wav");
+      explosionSound->Load();
+      flagSound->Load();
+      clearSound->Load();
+    } catch (Exception ^ ex) {
+      // Sound files not found, game will continue without sound
+    }
+    
     minesweeper = gcnew MinesweeperWrapper();
     InitializeComponent();
     this->Resize += gcnew EventHandler(this, &MainForm::MainForm_Resize);

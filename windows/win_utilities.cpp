@@ -59,6 +59,50 @@ void Minesweeper::reset() {
     won = false;
     firstMove = true;
     timer.stop();
+    initializeHeatTimers();
+}
+
+void Minesweeper::initializeHeatTimers() {
+    heatTimers = std::vector<std::vector<std::chrono::steady_clock::time_point>>(
+        height, std::vector<std::chrono::steady_clock::time_point>(width)
+    );
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            heatTimers[i][j] = std::chrono::steady_clock::now();
+        }
+    }
+}
+
+void Minesweeper::resetCellHeat(int row, int col) {
+    if (row >= 0 && row < height && col >= 0 && col < width) {
+        heatTimers[row][col] = std::chrono::steady_clock::now();
+    }
+}
+
+int Minesweeper::getHeatIntensity(int row, int col) const {
+    if (row < 0 || row >= height || col < 0 || col >= width) {
+        return 0;
+    }
+    
+    // Only show heat for unrevealed, unflagged cells that contain mines
+    if (revealed[row][col] || flagged[row][col] || !minefield[row][col]) {
+        return 0;
+    }
+    
+    auto now = std::chrono::steady_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(
+        now - heatTimers[row][col]
+    ).count();
+    
+    // Heat starts showing after 30 seconds
+    if (elapsed < 30) {
+        return 0;
+    }
+    
+    // Gradually increase intensity (0-255 scale)
+    // After 30 seconds: intensity = (elapsed - 30) * 8.5, capped at 255
+    int intensity = static_cast<int>((elapsed - 30) * 8.5);
+    return intensity > 255 ? 255 : intensity;
 }
 
 void Minesweeper::initializeMinefield(int firstY, int firstX, int seed) {
@@ -158,7 +202,7 @@ void Minesweeper::saveHighscore() {
         case 9: difficultyStr = "Easy"; break;
         case 16: difficultyStr = "Medium"; break;
         case 30: difficultyStr = "Hard"; break;
-        default: difficultyStr = "Unknown"; break;  // Handle custom board sizes (should never hit this)
+        default: difficultyStr = "Unknown"; break;
     }
     
     Score score;

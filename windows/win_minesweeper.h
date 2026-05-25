@@ -47,7 +47,9 @@ public:
     std::vector<std::vector<bool>> minefield;
     std::vector<std::vector<bool>> revealed;
     std::vector<std::vector<bool>> flagged;
+    std::vector<std::vector<std::chrono::steady_clock::time_point>> heatTimers;
     int currentSeed;
+    
     Minesweeper();
     void setDifficulty(Difficulty diff);
     void reset();
@@ -58,6 +60,11 @@ public:
     bool checkWin();
     bool isHighScore(int time, const std::string& difficulty);
     void saveHighscore();
+    
+    // Heat system methods
+    void initializeHeatTimers();
+    void resetCellHeat(int row, int col);
+    int getHeatIntensity(int row, int col) const;
 };
 
 namespace MinesweeperGame {
