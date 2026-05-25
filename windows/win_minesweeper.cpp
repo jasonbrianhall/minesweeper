@@ -2,6 +2,7 @@
 #include "win_minesweeper.h"
 #include "highscores.h"
 #include <msclr/marshal_cppstd.h>
+#include <cmath>
 
 using namespace System;
 using namespace System::ComponentModel;
@@ -326,7 +327,7 @@ void GenerateHappySound(System::IO::Stream ^ stream) {
     
     // Smooth amplitude envelope
     double amplitude = 0.35;
-    double localProgress = System::Math::Fmod(progress * 3.0, 1.0); // Repeats for each note
+    double localProgress = fmod(progress * 3.0, 1.0); // Repeats for each note
     if (localProgress > 0.8) {
       amplitude *= (1.0 - localProgress) / 0.2; // Fade out each note
     }

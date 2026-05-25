@@ -21,8 +21,8 @@ void GameTimer::stop() {
 int GameTimer::getElapsedSeconds() const {
     if (running) {
         auto now = std::chrono::steady_clock::now();
-        return std::chrono::duration_cast<std::chrono::seconds>(
-            now - startTime).count();
+        return static_cast<int>(std::chrono::duration_cast<std::chrono::seconds>(
+            now - startTime).count());
     }
     return elapsedSeconds;
 }
