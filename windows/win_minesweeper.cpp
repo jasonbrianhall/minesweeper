@@ -1249,7 +1249,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
     soundEnabled = !soundEnabled;
     ToolStripMenuItem ^ menuItem = safe_cast<ToolStripMenuItem ^>(sender);
     if (soundEnabled) {
-      menuItem->Text = "Sound Enabled ✓";
+      menuItem->Text = "Sound Enabled";
       UpdateStatus("Sound enabled");
     } else {
       menuItem->Text = "Sound Disabled";
@@ -1262,7 +1262,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
     heatEnabled = !heatEnabled;
     ToolStripMenuItem ^ menuItem = safe_cast<ToolStripMenuItem ^>(sender);
     if (heatEnabled) {
-      menuItem->Text = "Heat Hint System ✓";
+      menuItem->Text = "Heat Hint System enabled";
       UpdateStatus("Heat hint system enabled");
     } else {
       menuItem->Text = "Heat Hint System";
