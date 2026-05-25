@@ -419,6 +419,7 @@ private:
   System::Media::SoundPlayer ^ clearSound;
   System::Media::SoundPlayer ^ happySound;
   bool soundEnabled = true;
+  int currentDifficulty = 0; // 0=Easy, 1=Medium, 2=Hard (NEW FEATURE 1)
 
   Image ^ flagImage;
   Image ^ bombImage;
@@ -607,6 +608,8 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         String ^ time = minesweeper->GetTime();
         timerBox->Text = time;
         timeLabel->Text = "Time: " + time;
+        // NEW FEATURE 3: Update all cells to show heat progression
+        UpdateAllCells();
       } else {
         timerBox->Text = "00:00";
         timeLabel->Text = "Time: 00:00";
@@ -937,7 +940,15 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
     int row = position[0];
     int col = position[1];
 
+    // NEW FEATURE 1: If game ended, clicking any cell starts new game at same difficulty
     if (minesweeper->IsGameOver() || minesweeper->HasWon()) {
+      minesweeper->SetDifficulty(currentDifficulty);
+      InitializeGrid();
+      gameEndHandled = false;
+      UpdateStatus("New game started at same difficulty");
+      gameTimer->Start();
+      timerBox->Text = "00:00";
+      timeLabel->Text = "Time: 00:00";
       return;
     }
 
@@ -1225,6 +1236,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
   }
 
   void SetEasy_Click(Object ^ sender, EventArgs ^ e) {
+    currentDifficulty = 0; // Track current difficulty
     minesweeper->SetDifficulty(0);
     InitializeGrid();
     UpdateStatus("Difficulty set to Easy");
@@ -1232,6 +1244,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
   }
 
   void SetMedium_Click(Object ^ sender, EventArgs ^ e) {
+    currentDifficulty = 1; // Track current difficulty
     minesweeper->SetDifficulty(1);
     InitializeGrid();
     UpdateStatus("Difficulty set to Medium");
@@ -1239,6 +1252,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
   }
 
   void SetHard_Click(Object ^ sender, EventArgs ^ e) {
+    currentDifficulty = 2; // Track current difficulty
     minesweeper->SetDifficulty(2);
     InitializeGrid();
     UpdateStatus("Difficulty set to Hard");

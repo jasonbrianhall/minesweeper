@@ -101,14 +101,14 @@ int Minesweeper::getHeatIntensity(int row, int col) const {
         now - heatTimers[row][col]
     ).count();
     
-    // Heat starts showing after 30 seconds
-    if (elapsed < 30) {
+    // Heat starts showing after 10 seconds
+    if (elapsed < 10) {
         return 0;
     }
     
     // Gradually increase intensity (0-255 scale)
-    // After 30 seconds: intensity = (elapsed - 30) * 8.5, capped at 255
-    int intensity = static_cast<int>((elapsed - 30) * 8.5);
+    // After 10 seconds: intensity = (elapsed - 10) * 12.75, capped at 255
+    int intensity = static_cast<int>((elapsed - 10) * 12.75);
     return intensity > 255 ? 255 : intensity;
 }
 
