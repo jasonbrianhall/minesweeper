@@ -302,37 +302,68 @@ void GenerateBombSound(System::IO::Stream ^ stream) {
   }
 }
 
-// Happy sound - rising musical notes
+// Victory fanfare - a proper multi-note celebratory melody
 void GenerateHappySound(System::IO::Stream ^ stream) {
   int sampleRate = 44100;
-  int numSamples = (sampleRate * 600) / 1000; // 600ms
+  // Total duration ~1.8 seconds
+  int numSamples = (sampleRate * 1800) / 1000;
   GenerateWaveHeader(stream, sampleRate, numSamples, 1);
-  
+
   System::IO::BinaryWriter ^ writer = gcnew System::IO::BinaryWriter(stream);
   double sampleDuration = 1.0 / sampleRate;
-  
+
+  // Fanfare: C4 E4 G4 | C5 E5 G5 C6 (ascending triads then top C)
+  // Each note: freq (Hz), start (s), duration (s)
+  struct Note { double freq; double start; double dur; };
+  Note notes[] = {
+    { 261.63, 0.000, 0.12 },  // C4
+    { 329.63, 0.110, 0.12 },  // E4
+    { 392.00, 0.220, 0.12 },  // G4
+    { 523.25, 0.340, 0.14 },  // C5
+    { 659.25, 0.470, 0.14 },  // E5
+    { 783.99, 0.600, 0.14 },  // G5
+    { 1046.50, 0.730, 0.30 }, // C6 - held
+    { 783.99, 0.900, 0.10 },  // G5
+    { 1046.50, 0.980, 0.50 }, // C6 - final long note
+  };
+  int noteCount = 9;
+
   for (int i = 0; i < numSamples; i++) {
     double t = i * sampleDuration;
-    double progress = t / 0.6;
-    
-    // Three ascending notes: C (262Hz), E (330Hz), G (392Hz)
-    int freq = 262;
-    if (progress > 0.33 && progress < 0.66) {
-      freq = 330;
-    } else if (progress > 0.66) {
-      freq = 392;
+    double sample = 0.0;
+
+    for (int n = 0; n < noteCount; n++) {
+      double noteStart = notes[n].start;
+      double noteDur   = notes[n].dur;
+      double noteEnd   = noteStart + noteDur;
+
+      if (t >= noteStart && t < noteEnd) {
+        double localT    = t - noteStart;
+        double progress  = localT / noteDur;
+        double angle     = 2.0 * 3.14159265359 * notes[n].freq * t;
+
+        // ADSR-ish: quick attack, short decay, sustain, release
+        double env = 1.0;
+        double attack = 0.02;
+        double release = 0.15;
+        if (progress < attack / noteDur) {
+          env = progress / (attack / noteDur);
+        } else if (progress > 1.0 - release / noteDur) {
+          env = (1.0 - progress) / (release / noteDur);
+        }
+        env = env < 0.0 ? 0.0 : (env > 1.0 ? 1.0 : env);
+
+        // Mix fundamental + octave harmonic for brightness
+        double fundamental = System::Math::Sin(angle);
+        double harmonic    = 0.3 * System::Math::Sin(2.0 * angle);
+        sample += 0.30 * env * (fundamental + harmonic);
+      }
     }
-    
-    double angle = 2.0 * 3.14159265359 * freq * t;
-    
-    // Smooth amplitude envelope
-    double amplitude = 0.35;
-    double localProgress = fmod(progress * 3.0, 1.0); // Repeats for each note
-    if (localProgress > 0.8) {
-      amplitude *= (1.0 - localProgress) / 0.2; // Fade out each note
-    }
-    
-    double sample = amplitude * System::Math::Sin(angle);
+
+    // Soft clip
+    if (sample >  1.0) sample =  1.0;
+    if (sample < -1.0) sample = -1.0;
+
     short intSample = (short)(sample * 32767);
     writer->Write(intSample);
   }
@@ -422,6 +453,11 @@ private:
   bool soundEnabled = true;
   bool heatEnabled = false; // Heat system OFF by default (NEW FEATURE 3)
   int currentDifficulty = 0; // 0=Easy, 1=Medium, 2=Hard (NEW FEATURE 1)
+
+  // Victory celebration
+  System::Windows::Forms::Timer ^ celebrationTimer;
+  int celebrationStep = 0;
+  static const int CELEBRATION_TOTAL_STEPS = 60; // wave sweeps across then fades
 
   Image ^ flagImage;
   Image ^ bombImage;
@@ -629,6 +665,94 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
     statusStrip->Refresh();
   }
 
+  // ---------------------------------------------------------------
+  // Victory celebration: diagonal gold→green wave across the grid
+  // ---------------------------------------------------------------
+  void StartVictoryCelebration() {
+    // Play the victory fanfare
+    if (soundEnabled && happySound) {
+      happySound->Load();
+      happySound->Play();
+    }
+
+    celebrationStep = 0;
+    if (celebrationTimer == nullptr) {
+      celebrationTimer = gcnew System::Windows::Forms::Timer();
+      celebrationTimer->Interval = 30; // ~33fps
+      celebrationTimer->Tick += gcnew EventHandler(this, &MainForm::CelebrationTick);
+    }
+    celebrationTimer->Start();
+  }
+
+  void CelebrationTick(Object ^ sender, EventArgs ^ e) {
+    int height = minesweeper->GetHeight();
+    int width  = minesweeper->GetWidth();
+    int maxDiag = height + width - 2; // max possible diagonal index
+
+    // Phase 1 (steps 0..maxDiag+8): wave sweeps diagonally top-left → bottom-right
+    // Phase 2 (steps maxDiag+9..CELEBRATION_TOTAL_STEPS): fade back to normal
+
+    int totalSteps = maxDiag + 25;
+
+    for (int row = 0; row < height; row++) {
+      for (int col = 0; col < width; col++) {
+        Button ^ cell = grid[row, col];
+        int diag = row + col; // 0 = top-left corner
+
+        // How far the wave front has travelled (in diagonal units)
+        // Wave width = 6 diagonals wide
+        int waveFront = celebrationStep - 4;
+        int waveBack  = celebrationStep - 10;
+
+        bool inWave = (diag <= waveFront && diag >= waveBack);
+        bool behindWave = (diag < waveBack);
+
+        if (inWave) {
+          // Peak of wave: bright gold
+          double t = (double)(waveFront - diag) / 6.0; // 0 = leading edge, 1 = trailing edge
+          int r = 255;
+          int g = (int)(215 - t * 130); // gold (255,215,0) → lime-green (0,200,0)
+          int b = (int)(t * 30);
+          r = Math::Max(0, Math::Min(255, r));
+          g = Math::Max(0, Math::Min(255, g));
+          b = Math::Max(0, Math::Min(255, b));
+          cell->BackColor = Color::FromArgb(r, g, b);
+          cell->FlatStyle = FlatStyle::Flat;
+        } else if (behindWave) {
+          // Settled glow: soft green that fades back to normal
+          int fadeStepsTotal = totalSteps - (waveBack); // approximate fade window
+          int fadeStepsDone  = celebrationStep - (diag + 10);
+          double fadeFraction = (double)fadeStepsDone / Math::Max(1, (totalSteps - maxDiag - 10));
+          fadeFraction = Math::Max(0.0, Math::Min(1.0, fadeFraction));
+
+          // Lerp from (100, 220, 80) → original unrevealed grey (224, 224, 224)
+          int r = (int)(100 + fadeFraction * (224 - 100));
+          int g = (int)(220 + fadeFraction * (224 - 220));
+          int b = (int)(80  + fadeFraction * (224 - 80));
+          cell->BackColor = Color::FromArgb(r, g, b);
+          cell->FlatStyle = FlatStyle::Flat;
+        }
+        // cells ahead of wave: untouched
+      }
+    }
+
+    celebrationStep++;
+
+    if (celebrationStep > totalSteps) {
+      celebrationTimer->Stop();
+      // Restore proper cell rendering
+      UpdateAllCells();
+      // Now show high score entry / high scores as normal
+      if (minesweeper->IsHighScore(
+              int::Parse(minesweeper->GetTime()->Split(':')[0]) * 60 +
+              int::Parse(minesweeper->GetTime()->Split(':')[1]))) {
+        ShowHighScoreEntry();
+      } else {
+        ShowHighScores();
+      }
+    }
+  }
+
   void HandleGameEnd() {
     if (gameEndHandled)
       return;
@@ -638,13 +762,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
       UpdateStatus("Game Over!");
     } else if (minesweeper->HasWon()) {
       UpdateStatus("Congratulations! You've won!");
-      if (minesweeper->IsHighScore(
-              int ::Parse(minesweeper->GetTime()->Split(':')[0]) * 60 +
-              int ::Parse(minesweeper->GetTime()->Split(':')[1]))) {
-        ShowHighScoreEntry();
-      } else {
-        ShowHighScores();
-      }
+      StartVictoryCelebration();
     }
   }
 
@@ -949,6 +1067,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
 
     // NEW FEATURE 1: If game ended, clicking any cell starts new game at same difficulty
     if (minesweeper->IsGameOver() || minesweeper->HasWon()) {
+      if (celebrationTimer != nullptr) celebrationTimer->Stop();
       // Generate new random seed for new game
       Random ^ rand = gcnew Random();
       int newSeed = rand->Next(0, Int32::MaxValue);
@@ -1215,6 +1334,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
   }
 
   void NewGame_Click(Object ^ sender, EventArgs ^ e) {
+    if (celebrationTimer != nullptr) celebrationTimer->Stop();
     Random ^ rand = gcnew Random();
     int newSeed = rand->Next(0, Int32::MaxValue);
     minesweeper->setSeed(newSeed);
@@ -1232,6 +1352,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
   }
 
   void ResetGame_Click(Object ^ sender, EventArgs ^ e) {
+    if (celebrationTimer != nullptr) celebrationTimer->Stop();
     minesweeper->Reset();
     gameEndHandled = false;
     UpdateAllCells();
