@@ -60,7 +60,7 @@ public:
     return count;
   }
 
-  // Returns true if a mine was detonated, false otherwise
+  // Returns true if a mine was detonated
   bool RevealAdjacent(int row, int col) {
     if (!nativeMinesweeper->revealed[row][col])
       return false;
@@ -81,14 +81,13 @@ public:
                 nativeMinesweeper->gameOver = true;
                 nativeMinesweeper->revealAllMines();
                 nativeMinesweeper->timer.stop();
-                return true; // mine hit
+                return true;
               }
               nativeMinesweeper->revealCell(newY, newX);
             }
           }
         }
       }
-      // Check win condition after revealing adjacent cells
       if (CheckWin()) {
         nativeMinesweeper->won = true;
         nativeMinesweeper->timer.stop();
@@ -371,6 +370,33 @@ void GenerateHappySound(System::IO::Stream ^ stream) {
   }
 }
 
+// Chord sound - original 3-note C-E-G arpeggio for correct flag reveals
+void GenerateChordSound(System::IO::Stream ^ stream) {
+  int sampleRate = 44100;
+  int numSamples = (sampleRate * 600) / 1000; // 600ms
+  GenerateWaveHeader(stream, sampleRate, numSamples, 1);
+
+  System::IO::BinaryWriter ^ writer = gcnew System::IO::BinaryWriter(stream);
+  double sampleDuration = 1.0 / sampleRate;
+
+  for (int i = 0; i < numSamples; i++) {
+    double t = i * sampleDuration;
+    double progress = t / 0.6;
+
+    int freq = 262; // C
+    if (progress > 0.33 && progress < 0.66) freq = 330; // E
+    else if (progress > 0.66)               freq = 392; // G
+
+    double angle = 2.0 * 3.14159265359 * freq * t;
+    double amplitude = 0.35;
+    double localProgress = fmod(progress * 3.0, 1.0);
+    if (localProgress > 0.8) amplitude *= (1.0 - localProgress) / 0.2;
+
+    short intSample = (short)(amplitude * System::Math::Sin(angle) * 32767);
+    writer->Write(intSample);
+  }
+}
+
 // Flag placement sound - simple beep
 void GenerateFlagSound(System::IO::Stream ^ stream) {
   int sampleRate = 44100;
@@ -452,7 +478,9 @@ private:
   System::Media::SoundPlayer ^ flagSound;
   System::Media::SoundPlayer ^ clearSound;
   System::Media::SoundPlayer ^ happySound;
+  System::Media::SoundPlayer ^ chordSound;
   System::IO::MemoryStream ^ happySoundStream; // kept so we can seek back to 0 before replay
+  System::IO::MemoryStream ^ chordSoundStream;
   bool soundEnabled = true;
   bool heatEnabled = false; // Heat system OFF by default (NEW FEATURE 3)
   int currentDifficulty = 0; // 0=Easy, 1=Medium, 2=Hard (NEW FEATURE 1)
@@ -669,7 +697,6 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
       }
     }
 
-    // Trigger end-of-game handling (sets gameEndHandled so this only fires once)
     if (minesweeper->IsGameOver() || minesweeper->HasWon()) {
       HandleGameEnd();
     }
@@ -1115,7 +1142,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
           if (hitMine) {
             if (soundEnabled && explosionSound) explosionSound->Play();
           } else {
-            if (soundEnabled && happySound) happySound->Play();
+            if (soundEnabled && chordSound) chordSound->Play();
           }
           UpdateAllCells();
         }
@@ -1499,13 +1526,21 @@ public:
       explosionStream->Position = 0;
       explosionSound->Stream = explosionStream;
       
-      // Create happy sound (victory fanfare) - store stream as member for reuse
+      // Victory fanfare - stored as member so stream can be rewound before replay
       happySoundStream = gcnew System::IO::MemoryStream();
       GenerateHappySound(happySoundStream);
       happySoundStream->Position = 0;
       happySound = gcnew System::Media::SoundPlayer();
       happySound->Stream = happySoundStream;
       happySound->Load();
+
+      // Chord sound (C-E-G) for correct flag reveals
+      chordSoundStream = gcnew System::IO::MemoryStream();
+      GenerateChordSound(chordSoundStream);
+      chordSoundStream->Position = 0;
+      chordSound = gcnew System::Media::SoundPlayer();
+      chordSound->Stream = chordSoundStream;
+      chordSound->Load();
       
       // Create flag sound
       flagSound = gcnew System::Media::SoundPlayer();
