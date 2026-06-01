@@ -60,9 +60,10 @@ public:
     return count;
   }
 
-  void RevealAdjacent(int row, int col) {
+  // Returns true if a mine was detonated, false otherwise
+  bool RevealAdjacent(int row, int col) {
     if (!nativeMinesweeper->revealed[row][col])
-      return;
+      return false;
 
     int mineCount = GetAdjacentMines(row, col);
     int flagCount = GetAdjacentFlags(row, col);
@@ -80,7 +81,7 @@ public:
                 nativeMinesweeper->gameOver = true;
                 nativeMinesweeper->revealAllMines();
                 nativeMinesweeper->timer.stop();
-                return;
+                return true; // mine hit
               }
               nativeMinesweeper->revealCell(newY, newX);
             }
@@ -93,6 +94,7 @@ public:
         nativeMinesweeper->timer.stop();
       }
     }
+    return false;
   }
 
   void SetDifficulty(int difficulty) {
@@ -450,6 +452,7 @@ private:
   System::Media::SoundPlayer ^ flagSound;
   System::Media::SoundPlayer ^ clearSound;
   System::Media::SoundPlayer ^ happySound;
+  System::IO::MemoryStream ^ happySoundStream; // kept so we can seek back to 0 before replay
   bool soundEnabled = true;
   bool heatEnabled = false; // Heat system OFF by default (NEW FEATURE 3)
   int currentDifficulty = 0; // 0=Easy, 1=Medium, 2=Hard (NEW FEATURE 1)
@@ -666,6 +669,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
       }
     }
 
+    // Trigger end-of-game handling (sets gameEndHandled so this only fires once)
     if (minesweeper->IsGameOver() || minesweeper->HasWon()) {
       HandleGameEnd();
     }
@@ -676,9 +680,9 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
   // Victory celebration: diagonal gold→green wave across the grid
   // ---------------------------------------------------------------
   void StartVictoryCelebration() {
-    // Play the victory fanfare
-    if (soundEnabled && happySound) {
-      happySound->Load();
+    if (soundEnabled && happySound && happySoundStream) {
+      happySoundStream->Position = 0;
+      happySound->Stream = happySoundStream;
       happySound->Play();
     }
 
@@ -1107,9 +1111,12 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         int adjacentMines = minesweeper->GetAdjacentMines(row, col);
         if (adjacentMines > 0 &&
             minesweeper->GetAdjacentFlags(row, col) == adjacentMines) {
-          // Correct flags placed around this number - play happy sound
-          if (soundEnabled && happySound) happySound->Play();
-          minesweeper->RevealAdjacent(row, col);
+          bool hitMine = minesweeper->RevealAdjacent(row, col);
+          if (hitMine) {
+            if (soundEnabled && explosionSound) explosionSound->Play();
+          } else {
+            if (soundEnabled && happySound) happySound->Play();
+          }
           UpdateAllCells();
         }
       } else if (minesweeper->IsMine(row, col)) {
@@ -1492,12 +1499,13 @@ public:
       explosionStream->Position = 0;
       explosionSound->Stream = explosionStream;
       
-      // Create happy sound (correct flag placement)
+      // Create happy sound (victory fanfare) - store stream as member for reuse
+      happySoundStream = gcnew System::IO::MemoryStream();
+      GenerateHappySound(happySoundStream);
+      happySoundStream->Position = 0;
       happySound = gcnew System::Media::SoundPlayer();
-      System::IO::MemoryStream ^ happyStream = gcnew System::IO::MemoryStream();
-      GenerateHappySound(happyStream);
-      happyStream->Position = 0;
-      happySound->Stream = happyStream;
+      happySound->Stream = happySoundStream;
+      happySound->Load();
       
       // Create flag sound
       flagSound = gcnew System::Media::SoundPlayer();
