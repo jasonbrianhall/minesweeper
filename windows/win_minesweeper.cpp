@@ -634,6 +634,13 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
   }
 
   void UpdateTimer(Object ^ sender, EventArgs ^ e) {
+    // Once the game has ended, the celebration timer takes over rendering.
+    // Stop the game timer from interfering.
+    if (gameEndHandled) {
+      statusStrip->Refresh();
+      return;
+    }
+
     // Update flag counter
     int totalBombs = minesweeper->NativeMinesweeper->mines;
     
@@ -692,40 +699,37 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
     // Phase 1 (steps 0..maxDiag+8): wave sweeps diagonally top-left → bottom-right
     // Phase 2 (steps maxDiag+9..CELEBRATION_TOTAL_STEPS): fade back to normal
 
-    int totalSteps = maxDiag + 25;
+    int totalSteps = maxDiag + 30;
 
     for (int row = 0; row < height; row++) {
       for (int col = 0; col < width; col++) {
         Button ^ cell = grid[row, col];
         int diag = row + col; // 0 = top-left corner
 
-        // How far the wave front has travelled (in diagonal units)
-        // Wave width = 6 diagonals wide
-        int waveFront = celebrationStep - 4;
-        int waveBack  = celebrationStep - 10;
+        // Wave is 8 diagonals wide. Front = celebrationStep, back = celebrationStep - 8.
+        int waveFront = celebrationStep;
+        int waveBack  = celebrationStep - 8;
 
-        bool inWave = (diag <= waveFront && diag >= waveBack);
+        bool inWave    = (diag <= waveFront && diag >= waveBack);
         bool behindWave = (diag < waveBack);
 
         if (inWave) {
-          // Peak of wave: bright gold
-          double t = (double)(waveFront - diag) / 6.0; // 0 = leading edge, 1 = trailing edge
-          int r = 255;
-          int g = (int)(215 - t * 130); // gold (255,215,0) → lime-green (0,200,0)
-          int b = (int)(t * 30);
-          r = Math::Max(0, Math::Min(255, r));
-          g = Math::Max(0, Math::Min(255, g));
-          b = Math::Max(0, Math::Min(255, b));
-          cell->BackColor = Color::FromArgb(r, g, b);
+          // Gradient across the 8-diagonal wave: gold at front, green at back
+          double t = (double)(waveFront - diag) / 8.0; // 0.0=leading edge, 1.0=trailing edge
+          int r = (int)(255 - t * 155); // 255→100
+          int g = (int)(200 + t * 20);  // 200→220
+          int b = (int)(t * 30);        // 0→30
+          cell->BackColor = Color::FromArgb(
+            Math::Max(0, Math::Min(255, r)),
+            Math::Max(0, Math::Min(255, g)),
+            Math::Max(0, Math::Min(255, b)));
           cell->FlatStyle = FlatStyle::Flat;
         } else if (behindWave) {
-          // Settled glow: soft green that fades back to normal
-          int fadeStepsTotal = totalSteps - (waveBack); // approximate fade window
-          int fadeStepsDone  = celebrationStep - (diag + 10);
-          double fadeFraction = (double)fadeStepsDone / Math::Max(1, (totalSteps - maxDiag - 10));
+          // After the wave passes: green glow fades back to normal grey
+          int fadeStepsDone = celebrationStep - (diag + 8);
+          double fadeFraction = (double)fadeStepsDone / Math::Max(1, 30);
           fadeFraction = Math::Max(0.0, Math::Min(1.0, fadeFraction));
-
-          // Lerp from (100, 220, 80) → original unrevealed grey (224, 224, 224)
+          // Lerp from green (100, 220, 80) → unrevealed grey (224, 224, 224)
           int r = (int)(100 + fadeFraction * (224 - 100));
           int g = (int)(220 + fadeFraction * (224 - 220));
           int b = (int)(80  + fadeFraction * (224 - 80));
@@ -735,6 +739,9 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         // cells ahead of wave: untouched
       }
     }
+
+    // Force the grid to repaint immediately
+    this->Refresh();
 
     celebrationStep++;
 
