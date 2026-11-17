@@ -470,6 +470,9 @@ private:
   int minCellSize;
   TextBox ^ seedInput;
   bool gameEndHandled = false;
+  // True once the high-score check/prompt for a won game has run. Until then,
+  // clicks on the board must not start a new game, or the win is lost.
+  bool winScoreHandled = false;
   Label ^ flagCounterBox;
   Label ^ timerBox;
 
@@ -723,6 +726,12 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
   }
 
   void CelebrationTick(Object ^ sender, EventArgs ^ e) {
+    // A new game was started (menu / F-key) mid-celebration: just stop.
+    if (!minesweeper->HasWon()) {
+      celebrationTimer->Stop();
+      return;
+    }
+
     int height = minesweeper->GetHeight();
     int width  = minesweeper->GetWidth();
     int maxDiag = height + width - 2; // max possible diagonal index
@@ -777,17 +786,27 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
     celebrationStep++;
 
     if (celebrationStep > totalSteps) {
-      celebrationTimer->Stop();
-      // Restore proper cell rendering
-      UpdateAllCells();
-      // Now show high score entry / high scores as normal
-      if (minesweeper->IsHighScore(
-              int::Parse(minesweeper->GetTime()->Split(':')[0]) * 60 +
-              int::Parse(minesweeper->GetTime()->Split(':')[1]))) {
-        ShowHighScoreEntry();
-      } else {
-        ShowHighScores();
-      }
+      FinishWin();
+    }
+  }
+
+  // Ends the victory celebration (if running) and records the score.
+  // Safe to call more than once; only the first call per win does anything.
+  void FinishWin() {
+    if (winScoreHandled || !minesweeper->HasWon())
+      return;
+    winScoreHandled = true;
+
+    if (celebrationTimer != nullptr) celebrationTimer->Stop();
+    // Restore proper cell rendering
+    UpdateAllCells();
+    // Now show high score entry / high scores as normal
+    array<String ^> ^ parts = minesweeper->GetTime()->Split(':');
+    int seconds = int::Parse(parts[0]) * 60 + int::Parse(parts[1]);
+    if (minesweeper->IsHighScore(seconds)) {
+      ShowHighScoreEntry();
+    } else {
+      ShowHighScores();
     }
   }
 
@@ -941,6 +960,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
         UpdateAllCells();
         UpdateStatus("Custom game started");
         gameEndHandled = false;
+        winScoreHandled = false;
       } else {
         MessageBox::Show(L"Invalid game settings", L"Error",
                          MessageBoxButtons::OK, MessageBoxIcon::Error);
@@ -1103,6 +1123,20 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
     int row = position[0];
     int col = position[1];
 
+    // A won game whose score hasn't been recorded yet must never be discarded
+    // by a click (e.g. the second half of a double-click on the last cell, or
+    // an impatient click during the celebration). Instead, finish the win:
+    // start the celebration if the 100ms poll hasn't yet, otherwise skip the
+    // rest of the animation and go straight to the high-score prompt.
+    if (minesweeper->HasWon() && !winScoreHandled) {
+      if (!gameEndHandled) {
+        HandleGameEnd();
+      } else {
+        FinishWin();
+      }
+      return;
+    }
+
     // NEW FEATURE 1: If game ended, clicking any cell starts new game at same difficulty
     if (minesweeper->IsGameOver() || minesweeper->HasWon()) {
       if (celebrationTimer != nullptr) celebrationTimer->Stop();
@@ -1114,6 +1148,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
       minesweeper->SetDifficulty(currentDifficulty);
       InitializeGrid();
       gameEndHandled = false;
+      winScoreHandled = false;
       UpdateStatus("New game started at same difficulty");
       gameTimer->Start();
       timerBox->Text = "00:00";
@@ -1384,6 +1419,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
     }
     minesweeper->Reset();
     gameEndHandled = false;
+    winScoreHandled = false;
     UpdateAllCells();
     UpdateStatus("New game started");
     gameTimer->Start();
@@ -1396,6 +1432,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
     if (celebrationTimer != nullptr) celebrationTimer->Stop();
     minesweeper->Reset();
     gameEndHandled = false;
+    winScoreHandled = false;
     UpdateAllCells();
     UpdateStatus("Reset current game");
     gameTimer->Start();
@@ -1440,6 +1477,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
     InitializeGrid();
     UpdateStatus("Difficulty set to Easy");
     gameEndHandled = false;
+    winScoreHandled = false;
   }
 
   void SetMedium_Click(Object ^ sender, EventArgs ^ e) {
@@ -1448,6 +1486,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
     InitializeGrid();
     UpdateStatus("Difficulty set to Medium");
     gameEndHandled = false;
+    winScoreHandled = false;
   }
 
   void SetHard_Click(Object ^ sender, EventArgs ^ e) {
@@ -1456,6 +1495,7 @@ LYx9Yppc2K6rnkZS3u1c8sXk6BRi54Lg1mbtV/gBxfI7i3nTTAoAAAAASUVORK5CYII=)";
     InitializeGrid();
     UpdateStatus("Difficulty set to Hard");
     gameEndHandled = false;
+    winScoreHandled = false;
   }
 
   void UpdateStatus(String ^ message) {
